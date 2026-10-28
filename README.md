@@ -10,7 +10,7 @@ Die Ordner sind erst nach Thema, dann nach Stufe (Unterstufe, Mittelstufe, Obers
 
 ```
 index.html                    Startseite mit allen Simulationen
-impressum.html                Impressum und Datenschutzhinweis
+datenschutz.html              Datenschutzhinweis
 mechanik/
   oberstufe/
     Kreisbewegung.html
