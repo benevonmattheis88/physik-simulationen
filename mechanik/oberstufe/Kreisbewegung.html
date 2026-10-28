@@ -35,6 +35,7 @@
   .checks { display:flex; flex-wrap:wrap; gap:.3rem .9rem; font-size:1rem; }
   .checks label { display:flex; align-items:center; gap:5px; min-height:1.9rem; }
   .checks input { width:1.3rem; height:1.3rem; }
+  button.mini { min-height:1.9rem; padding:.1rem .6rem; font-size:.93rem; }
   table { border-collapse:collapse; width:100%; font-size:.93rem; font-variant-numeric:tabular-nums; }
   td, th { border-bottom:1px solid var(--line); padding:.2rem .3rem; text-align:right; }
   td:first-child, th:first-child { text-align:left; }
@@ -126,6 +127,7 @@
         <label><input id="cbArc" type="checkbox" checked>Winkel und Bogen</label>
         <label><input id="cbV" type="checkbox">v-Pfeile</label>
         <label class="force"><input id="cbF" type="checkbox" checked>Kraftpfeile</label>
+        <button id="fscale" class="force mini" title="Maßstab der Kraftpfeile umschalten">Maßstab: fein</button>
       </div>
       <div class="btns">
         <button id="play" class="on">Pause</button>
@@ -167,7 +169,9 @@
   const $ = id => document.getElementById(id);
   const cv = $("cv"), ctx = cv.getContext("2d");
   const pc = $("plot"), pctx = pc.getContext("2d");
-  const S = { mode: "desc", view: "3d", fs: 1, phi: 0, running: true, released: false, rel: null, data: [] };
+  // feste Maßstäbe für Kraftpfeile: Bildlänge in m pro N
+  const FSCALE = [{ name:"fein", k:0.25, N:1, txt:"1 N" }, { name:"grob", k:0.025, N:10, txt:"10 N" }];
+  const S = { mode: "desc", view: "3d", fs: 1, fsc: 0, phi: 0, running: true, released: false, rel: null, data: [] };
   const C = { blue:"#1F4E79", red:"#C0392B", green:"#2E7D32", orange:"#E67E22", purple:"#7B3FA0", grey:"#9aa4b1" };
   const store = {
     get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
@@ -301,9 +305,9 @@
     label("Umläufe: " + Math.max(0, turns), xr, y, "#5b6675", 14, "right");
     y -= 26 * S.fs;
     if (S.mode === "force" && p.f) {
-      const L = 0.30 * scale;               // 5 N
+      const fsc = FSCALE[S.fsc], L = fsc.k * fsc.N * scale;
       arrow(xr - L, y - 5, xr, y - 5, C.blue, 3);
-      label("5 N", xr - L - 8, y, C.blue, 13, "right", true);
+      label(fsc.txt, xr - L - 8, y, C.blue, 13, "right", true);
       y -= 24 * S.fs;
     }
     if (p.v) {
@@ -369,6 +373,7 @@
     if (three) hub3D(cx, cy, phi);
     else { ctx.fillStyle = "#333"; ctx.beginPath(); ctx.arc(cx, cy, 4, 0, 2 * Math.PI); ctx.fill(); }
 
+    let cut = false;
     for (const b of bodies) {
       const X = b.X, Y = b.Y, tags = [];
       if (p.v) {
@@ -378,10 +383,19 @@
       }
       if (S.mode === "force" && p.f && !b.free) {
         const F = p.m * p.w * p.w * b.r;
-        const k = 0.30 * scale / 5;  // 5 N = 0,30 m Bildlänge
         const ux = -Math.cos(phi), uy = -Math.sin(phi);
-        arrow(X, Y, X + ux * F * k, Y - uy * F * k, C.blue, 3);
-        if (F * k > 12) tags.push(["F_Z", X + ux * F * k * 0.5 + 8, Y - uy * F * k * 0.5 - 8, C.blue]);
+        let L = F * FSCALE[S.fsc].k * scale;
+        const Lmax = b.r * scale - 22;        // Pfeil endet spätestens vor der Achse
+        if (L > Lmax) {                        // zu lang: gekürzt zeichnen, mit Bruchzeichen
+          L = Math.max(0, Lmax); cut = true;
+          const mx = X + ux * L * 0.5, my = Y - uy * L * 0.5, nx = -uy, ny = -ux;
+          arrow(X, Y, X + ux * L, Y - uy * L, C.blue, 3);
+          ctx.strokeStyle = C.blue; ctx.lineWidth = 2.5;
+          for (const d of [-4, 4]) {
+            ctx.beginPath(); ctx.moveTo(mx + ux * d + nx * 9, my - uy * d + ny * 9); ctx.lineTo(mx + ux * d - nx * 9, my - uy * d - ny * 9); ctx.stroke();
+          }
+        } else arrow(X, Y, X + ux * L, Y - uy * L, C.blue, 3);
+        if (L > 12) tags.push(["F_Z", X + ux * L * 0.5 + 8, Y - uy * L * 0.5 - 8, C.blue]);
       }
       const rad = S.mode === "force" ? 8 + 10 * Math.sqrt(p.m) : 11;
       if (three) sphere3D(X, Y, rad, b.col);
@@ -394,7 +408,9 @@
     }
     scaleBar(scale, H);
     legends(p, scale, W, H, turns);
-    if (S.released) label("Körper 2 ohne Faden: Er bewegt sich geradeaus weiter (Trägheit).", W / 2, 76, C.red, 16, "center", true);
+    let ty = 76;
+    if (S.released) { label("Körper 2 ohne Faden: Er bewegt sich geradeaus weiter (Trägheit).", W / 2, ty, C.red, 16, "center", true); ty += 24 * S.fs; }
+    if (cut) label("Kraftpfeil gekürzt (zu lang): Maßstab „grob“ wählen", W / 2, ty, C.blue, 16, "center", true);
   }
 
   function table() {
@@ -489,6 +505,7 @@
     if (cur) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
     else reqFS.call(de);
   };
+  $("fscale").onclick = () => { S.fsc = 1 - S.fsc; $("fscale").textContent = "Maßstab: " + FSCALE[S.fsc].name; };
   $("rotGo").onclick = () => document.body.classList.add("quer");
 
   $("tabDesc").onclick = () => setMode("desc");
