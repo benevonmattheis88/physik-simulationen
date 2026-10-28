@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stoßlabor</title>
+<style>
+/* Layout: Messplatz-Prinzip. Oben die Fahrbahn als Bühne, darunter Bedienpult links und Messwerte (Bilanz, v-t-Diagramm) rechts. */
+:root {
+  --bg: #f3f5f6;
+  --panel: #ffffff;
+  --ink: #17212b;
+  --muted: #5b6875;
+  --line: #d5dce2;
+  --rail: #9aa7b2;
+  --cart1: #e0a21b;   /* Wagen 1 gelb wie Kugel 1 in Abb. 9.15 */
+  --cart2: #2f6fd1;   /* Wagen 2 blau wie Kugel 2 */
+  --accent: #0f7b6c;
+  --warn: #b5482b;
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11171c; --panel: #1a2229; --ink: #e6ecf0; --muted: #9aa8b4; --line: #2c3842;
+    --rail: #5d6c78; --cart1: #f0b73a; --cart2: #5b93ec; --accent: #3cc3ad; --warn: #ef7a59;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11171c; --panel: #1a2229; --ink: #e6ecf0; --muted: #9aa8b4; --line: #2c3842;
+  --rail: #5d6c78; --cart1: #f0b73a; --cart2: #5b93ec; --accent: #3cc3ad; --warn: #ef7a59;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 32px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 16px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; }
+h1 { font-family: var(--display); font-weight: 800; font-size: 1.9rem; margin: 0; letter-spacing: -0.01em; }
+header p { margin: 0; color: var(--muted); max-width: 62ch; }
+h2 { font-family: var(--display); font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 10px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; min-width: 0; }
+.stage canvas { width: 100%; height: 170px; display: block; }
+.presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.presets button, .run button {
+  font: 600 0.95rem var(--body); color: var(--ink); background: transparent; border: 1px solid var(--line);
+  border-radius: 6px; padding: 7px 12px; cursor: pointer;
+}
+.presets button:hover, .run button:hover { border-color: var(--accent); }
+.presets button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.run { display: flex; gap: 8px; flex-wrap: wrap; }
+.run .go { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+.grid { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 16px; }
+@media (max-width: 760px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.ctrl { display: grid; gap: 12px; align-content: start; }
+.field { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; }
+.field label { font-weight: 700; font-size: 0.95rem; }
+.field output { font-family: var(--mono); font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+.field input { grid-column: 1 / -1; width: 100%; }
+.c1 { color: var(--cart1); } .c2 { color: var(--cart2); }
+.note { font-size: 0.85rem; color: var(--muted); margin: 0; }
+.check { display: flex; gap: 8px; align-items: center; font-size: 0.95rem; }
+.right { display: grid; gap: 16px; min-width: 0; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+.tablebox { overflow-x: auto; }
+th, td { text-align: right; padding: 5px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { font-family: var(--display); font-weight: 700; font-size: 0.8rem; color: var(--muted); }
+td { font-family: var(--mono); font-size: 0.9rem; }
+.bars { display: grid; gap: 8px; margin-top: 12px; }
+.bar { display: grid; grid-template-columns: 11.5em 1fr 6.5em; gap: 10px; align-items: center; font-size: 0.9rem; }
+.bar .track { position: relative; height: 16px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+.bar .fill { position: absolute; top: 0; bottom: 0; border-radius: 3px; }
+.bar .zero { position: absolute; top: -2px; bottom: -2px; left: 50%; width: 1px; background: var(--muted); }
+.bar .val { font-family: var(--mono); text-align: right; font-variant-numeric: tabular-nums; }
+.pfill { background: var(--accent); }
+.efill { background: var(--warn); }
+.summary { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 12px; font-size: 0.95rem; }
+.summary b { font-family: var(--mono); }
+.vt canvas { width: 100%; height: 210px; display: block; }
+.legend { display: flex; gap: 16px; font-size: 0.85rem; color: var(--muted); margin-top: 6px; flex-wrap: wrap; }
+.swatch { display: inline-block; width: 14px; height: 3px; vertical-align: middle; margin-right: 6px; }
+/* iPad und Beamer im Querformat: alles auf einen Bildschirm */
+@media (min-width: 900px) and (orientation: landscape) {
+  body { padding-block: 12px; }
+  .wrap { max-width: 1400px; grid-template-columns: 330px minmax(0, 1fr); grid-template-areas: "head head" "pre stage" "ctrl right"; gap: 12px; align-items: start; }
+  header { grid-area: head; }
+  h1 { font-size: 1.5rem; }
+  header p { font-size: 0.9rem; max-width: none; }
+  .stage { grid-area: stage; }
+  .pre { grid-area: pre; }
+  .grid { display: contents; }
+  .ctrl { grid-area: ctrl; gap: 8px; }
+  .right { grid-area: right; gap: 12px; }
+  .panel { padding: 10px 12px; }
+  .stage canvas { height: 128px; }
+  .vt canvas { height: 135px; }
+  .legend { margin-top: 2px; }
+  .vt h2, .right h2, .ctrl h2, .pre h2 { margin-bottom: 6px; }
+  .presets { gap: 6px; }
+  .presets button { padding: 5px 9px; font-size: 0.85rem; }
+  .bars { gap: 5px; margin-top: 8px; }
+  th, td { padding: 3px 8px; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Stoßlabor</h1>
+    <p>Wähle einen Fall, stelle Massen, Geschwindigkeiten und die Stoßzahl k ein und vergleiche die Bilanz vor und nach dem Stoß.</p>
+  </header>
+
+  <section class="panel stage" aria-label="Fahrbahn">
+    <canvas id="track" role="img" aria-label="Fahrbahn mit Wagen 1 (gelb) und Wagen 2 (blau)"></canvas>
+  </section>
+
+  <section class="panel pre">
+    <h2>Fall wählen</h2>
+    <div class="presets" id="presets"></div>
+  </section>
+
+  <div class="grid">
+    <section class="panel ctrl" aria-label="Einstellungen">
+      <h2>Einstellungen</h2>
+      <div class="field"><label for="m1" class="c1">Masse Wagen 1</label><output id="m1o"></output>
+        <input id="m1" type="range" min="0.25" max="1" step="0.25"></div>
+      <div class="field"><label for="m2" class="c2">Masse Wagen 2</label><output id="m2o"></output>
+        <input id="m2" type="range" min="0.25" max="1" step="0.25"></div>
+      <div class="field"><label for="v1" class="c1">v₁ vor dem Stoß</label><output id="v1o"></output>
+        <input id="v1" type="range" min="0" max="0.8" step="0.02"></div>
+      <div class="field"><label for="v2" class="c2">v₂ vor dem Stoß</label><output id="v2o"></output>
+        <input id="v2" type="range" min="-0.8" max="0" step="0.02"></div>
+      <div class="field"><label for="k">Stoßzahl k</label><output id="ko"></output>
+        <input id="k" type="range" min="0" max="1" step="0.05"></div>
+      <p class="note">k = 1: ideal elastisch · k = 0: plastisch (Wagen haften aneinander) · dazwischen: teilelastisch</p>
+      <label class="check"><input id="fric" type="checkbox"> Rollreibung wie an der echten Schiene</label>
+      <div class="run">
+        <button class="go" id="start">Stoß starten</button>
+        <button id="reset">Zurücksetzen</button>
+      </div>
+    </section>
+
+    <div class="right">
+      <section class="panel" aria-label="Bilanz">
+        <h2>Bilanz unmittelbar vor und nach dem Stoß</h2>
+        <div class="tablebox">
+          <table>
+            <thead><tr><th></th><th>v vorher</th><th>v nachher</th><th>p vorher</th><th>p nachher</th></tr></thead>
+            <tbody>
+              <tr><td class="c1">Wagen 1</td><td id="t1v">–</td><td id="t1vn">–</td><td id="t1p">–</td><td id="t1pn">–</td></tr>
+              <tr><td class="c2">Wagen 2</td><td id="t2v">–</td><td id="t2vn">–</td><td id="t2p">–</td><td id="t2pn">–</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="bars">
+          <div class="bar"><span>Gesamtimpuls vorher</span><div class="track"><div class="zero"></div><div class="fill pfill" id="bp0"></div></div><span class="val" id="vp0">–</span></div>
+          <div class="bar"><span>Gesamtimpuls nachher</span><div class="track"><div class="zero"></div><div class="fill pfill" id="bp1"></div></div><span class="val" id="vp1">–</span></div>
+          <div class="bar"><span>E<sub>kin</sub> vorher</span><div class="track"><div class="fill efill" id="be0"></div></div><span class="val" id="ve0">–</span></div>
+          <div class="bar"><span>E<sub>kin</sub> nachher</span><div class="track"><div class="fill efill" id="be1"></div></div><span class="val" id="ve1">–</span></div>
+        </div>
+        <div class="summary">
+          <span>Impulsänderung: <b id="sp">–</b></span>
+          <span>Energieverlust: <b id="se">–</b></span>
+        </div>
+      </section>
+
+      <section class="panel vt" aria-label="v-t-Diagramm">
+        <h2>v-t-Diagramm</h2>
+        <canvas id="plot" role="img" aria-label="Geschwindigkeit beider Wagen über der Zeit"></canvas>
+        <div class="legend"><span><i class="swatch" style="background:var(--cart1)"></i>Wagen 1</span><span><i class="swatch" style="background:var(--cart2)"></i>Wagen 2</span><span>Zeit in s, Geschwindigkeit in m/s</span></div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const L = 1.6;          // Fahrbahnlänge in m
+  const CART = 0.17;      // Wagenlänge in m
+  const ARR = 0.03;       // Rollreibung in m/s²
+  const PRESETS = [
+    { id: "C", label: "Demo C: elastisch m/m", m1: 0.25, m2: 0.25, v1: 0.5, v2: 0, k: 1 },
+    { id: "A", label: "A: plastisch m/m", m1: 0.25, m2: 0.25, v1: 0.5, v2: 0, k: 0 },
+    { id: "B", label: "B: plastisch 2m/m", m1: 0.5, m2: 0.25, v1: 0.5, v2: 0, k: 0 },
+    { id: "D", label: "D: elastisch 2m/m", m1: 0.5, m2: 0.25, v1: 0.5, v2: 0, k: 1 },
+    { id: "E", label: "E: elastisch m/2m", m1: 0.25, m2: 0.5, v1: 0.5, v2: 0, k: 1 },
+    { id: "F", label: "F: Gegenstoß", m1: 0.25, m2: 0.25, v1: 0.5, v2: -0.3, k: 1 },
+    { id: "G", label: "G: plastischer Gegenstoß", m1: 0.25, m2: 0.25, v1: 0.5, v2: -0.5, k: 0 },
+    { id: "HA", label: "Hausaufgabe", m1: 0.25, m2: 0.5, v1: 0.6, v2: 0, k: 0.8 }
+  ];
+  const $ = id => document.getElementById(id);
+  const inputs = ["m1", "m2", "v1", "v2", "k"].reduce((o, id) => (o[id] = $(id), o), {});
+  const fmt = (x, d = 2) => x.toLocaleString("de-DE", { minimumFractionDigits: d, maximumFractionDigits: d });
+
+  let state, running = false, raf = 0, last = 0, active = "C";
+
+  function params() {
+    return { m1: +inputs.m1.value, m2: +inputs.m2.value, v1: +inputs.v1.value, v2: +inputs.v2.value, k: +inputs.k.value, fric: $("fric").checked };
+  }
+  function showParams() {
+    const p = params();
+    $("m1o").textContent = fmt(p.m1) + " kg";
+    $("m2o").textContent = fmt(p.m2) + " kg";
+    $("v1o").textContent = fmt(p.v1) + " m/s";
+    $("v2o").textContent = fmt(p.v2) + " m/s";
+    $("ko").textContent = fmt(p.k);
+  }
+
+  function reset() {
+    running = false; cancelAnimationFrame(raf);
+    const p = params();
+    const x2 = p.v2 < 0 ? L - 0.3 - CART : 0.85;
+    state = { t: 0, x1: 0.2, x2, u1: 0, u2: 0, p, hit: false, before: null, after: null, samples: [], stuck: false };
+    clearBilanz(); draw(); plot();
+  }
+
+  function clearBilanz() {
+    ["t1v", "t1vn", "t1p", "t1pn", "t2v", "t2vn", "t2p", "t2pn", "vp0", "vp1", "ve0", "ve1", "sp", "se"].forEach(id => $(id).textContent = "–");
+    ["bp0", "bp1", "be0", "be1"].forEach(id => { $(id).style.left = "50%"; $(id).style.width = "0"; });
+  }
+
+  function start() {
+    reset();
+    state.u1 = state.p.v1; state.u2 = state.p.v2;
+    running = true; last = performance.now();
+    raf = requestAnimationFrame(loop);
+  }
+
+  function friction(u, dt) {
+    if (!state.p.fric || u === 0) return u;
+    const du = ARR * dt;
+    return Math.abs(u) <= du ? 0 : u - Math.sign(u) * du;
+  }
+
+  function step(dt) {
+    const s = state;
+    s.u1 = friction(s.u1, dt); s.u2 = friction(s.u2, dt);
+    s.x1 += s.u1 * dt; s.x2 += s.u2 * dt;
+    if (!s.hit && s.x1 + CART >= s.x2 && s.u1 > s.u2) {
+      const { m1, m2, k } = s.p;
+      const P = m1 * s.u1 + m2 * s.u2, rel = s.u1 - s.u2;
+      s.before = { v1: s.u1, v2: s.u2 };
+      const n1 = (P - m2 * k * rel) / (m1 + m2);
+      const n2 = (P + m1 * k * rel) / (m1 + m2);
+      s.u1 = n1; s.u2 = n2; s.hit = true; s.stuck = k === 0;
+      s.x1 = s.x2 - CART;
+      s.after = { v1: n1, v2: n2 };
+      bilanz();
+    }
+    if (s.stuck) { const u = (s.p.m1 * s.u1 + s.p.m2 * s.u2) / (s.p.m1 + s.p.m2); s.u1 = s.u2 = u; s.x1 = s.x2 - CART; }
+    // Endanschläge: Wagen bleibt stehen
+    if (s.x1 < 0) { s.x1 = 0; s.u1 = 0; }
+    if (s.x2 + CART > L) { s.x2 = L - CART; s.u2 = 0; if (s.stuck) s.u1 = 0; }
+    if (s.x1 + CART > s.x2) s.x1 = s.x2 - CART;
+    s.t += dt;
+  }
+
+  function loop(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    const sub = 8;
+    for (let i = 0; i < sub; i++) step(dt / sub);
+    state.samples.push([state.t, state.u1, state.u2]);
+    draw(); plot();
+    const still = state.u1 === 0 && state.u2 === 0;
+    if (state.t < 7 && !(still && state.hit)) raf = requestAnimationFrame(loop);
+    else running = false;
+  }
+
+  function bilanz() {
+    const { m1, m2 } = state.p, b = state.before, a = state.after;
+    const p0 = m1 * b.v1 + m2 * b.v2, p1 = m1 * a.v1 + m2 * a.v2;
+    const e0 = 0.5 * m1 * b.v1 ** 2 + 0.5 * m2 * b.v2 ** 2, e1 = 0.5 * m1 * a.v1 ** 2 + 0.5 * m2 * a.v2 ** 2;
+    $("t1v").textContent = fmt(b.v1) + " m/s"; $("t1vn").textContent = fmt(a.v1) + " m/s";
+    $("t2v").textContent = fmt(b.v2) + " m/s"; $("t2vn").textContent = fmt(a.v2) + " m/s";
+    $("t1p").textContent = fmt(m1 * b.v1, 3) + " Ns"; $("t1pn").textContent = fmt(m1 * a.v1, 3) + " Ns";
+    $("t2p").textContent = fmt(m2 * b.v2, 3) + " Ns"; $("t2pn").textContent = fmt(m2 * a.v2, 3) + " Ns";
+    $("vp0").textContent = fmt(p0, 3) + " Ns"; $("vp1").textContent = fmt(p1, 3) + " Ns";
+    $("ve0").textContent = fmt(e0, 4) + " J"; $("ve1").textContent = fmt(e1, 4) + " J";
+    const pmax = Math.max(Math.abs(p0), Math.abs(p1), 0.3);
+    setSigned("bp0", p0 / pmax); setSigned("bp1", p1 / pmax);
+    const emax = Math.max(e0, 0.08);
+    $("be0").style.left = "0"; $("be0").style.width = (e0 / emax * 100) + "%";
+    $("be1").style.left = "0"; $("be1").style.width = (e1 / emax * 100) + "%";
+    $("sp").textContent = Math.abs(p0) < 1e-9 ? fmt(p1 - p0, 3) + " Ns" : fmt((p1 - p0) / Math.abs(p0) * 100, 1) + " %";
+    $("se").textContent = e0 > 0 ? fmt((e0 - e1) / e0 * 100, 1) + " %" : "–";
+  }
+  function setSigned(id, f) {
+    const el = $(id), w = Math.abs(f) * 50;
+    el.style.width = w + "%";
+    el.style.left = f >= 0 ? "50%" : (50 - w) + "%";
+  }
+
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  function fit(c) {
+    const r = c.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+    if (c.width !== Math.round(r.width * d) || c.height !== Math.round(r.height * d)) { c.width = Math.round(r.width * d); c.height = Math.round(r.height * d); }
+    const g = c.getContext("2d"); g.setTransform(d, 0, 0, d, 0, 0); return [g, r.width, r.height];
+  }
+
+  function draw() {
+    const [g, W, H] = fit($("track"));
+    g.clearRect(0, 0, W, H);
+    const pad = 14, sx = (W - 2 * pad) / L, y = H - 46;
+    g.fillStyle = css("--rail"); g.fillRect(pad, y + 22, W - 2 * pad, 6);
+    g.fillStyle = css("--muted"); g.font = "12px " + css("--mono"); g.textAlign = "center";
+    for (let m = 0; m <= L + 1e-9; m += 0.2) {
+      const x = pad + m * sx; g.fillRect(x, y + 30, 1, 6);
+      g.fillText(fmt(m, 1), x, y + 46);
+    }
+    cart(g, pad + state.x1 * sx, y, CART * sx, css("--cart1"), "1", state.p.m1, state.u1);
+    cart(g, pad + state.x2 * sx, y, CART * sx, css("--cart2"), "2", state.p.m2, state.u2);
+  }
+  function cart(g, x, y, w, col, n, m, u) {
+    const h = 22 + (m - 0.25) * 16;
+    g.fillStyle = col; g.fillRect(x, y + 22 - h, w, h);
+    g.fillStyle = css("--panel"); g.font = "700 13px " + css("--display"); g.textAlign = "center";
+    g.fillText(n, x + w / 2, y + 22 - h / 2 + 5);
+    g.fillStyle = css("--ink");
+    [0.22, 0.78].forEach(f => { g.beginPath(); g.arc(x + w * f, y + 24, 4, 0, 7); g.fill(); });
+    if (Math.abs(u) > 0.005) {
+      const len = u * 90, ay = y + 2 - h;
+      g.strokeStyle = col; g.fillStyle = col; g.lineWidth = 3;
+      const cx = x + w / 2;
+      g.beginPath(); g.moveTo(cx, ay); g.lineTo(cx + len, ay); g.stroke();
+      const dir = Math.sign(len);
+      g.beginPath(); g.moveTo(cx + len + dir * 8, ay); g.lineTo(cx + len, ay - 5); g.lineTo(cx + len, ay + 5); g.fill();
+      g.font = "12px " + css("--mono"); g.fillText(fmt(u) + " m/s", cx + len / 2, ay - 8);
+    }
+  }
+
+  function plot() {
+    const [g, W, H] = fit($("plot"));
+    g.clearRect(0, 0, W, H);
+    const l = 46, r = 10, t = 10, b = 26, pw = W - l - r, ph = H - t - b;
+    const p = state.p, vmax = Math.max(0.2, Math.abs(p.v1), Math.abs(p.v2)) * 1.4;
+    const tmax = Math.max(3, Math.ceil(state.t));
+    const X = s => l + s / tmax * pw, Y = v => t + (vmax - v) / (2 * vmax) * ph;
+    g.strokeStyle = css("--line"); g.fillStyle = css("--muted"); g.lineWidth = 1;
+    g.font = "11px " + css("--mono"); g.textAlign = "right";
+    const stepV = vmax > 0.6 ? 0.2 : 0.1;
+    for (let v = -Math.floor(vmax / stepV) * stepV; v <= vmax + 1e-9; v += stepV) {
+      g.beginPath(); g.moveTo(l, Y(v)); g.lineTo(W - r, Y(v)); g.stroke();
+      g.fillText(fmt(Math.abs(v) < 1e-9 ? 0 : v, 1), l - 6, Y(v) + 4);
+    }
+    g.textAlign = "center";
+    for (let s = 0; s <= tmax; s++) g.fillText(s, X(s), H - 8);
+    g.strokeStyle = css("--muted"); g.beginPath(); g.moveTo(l, Y(0)); g.lineTo(W - r, Y(0)); g.stroke();
+    [[1, "--cart1"], [2, "--cart2"]].forEach(([i, c]) => {
+      if (!state.samples.length) return;
+      g.strokeStyle = css(c); g.lineWidth = 2.5; g.beginPath();
+      state.samples.forEach((s, j) => j ? g.lineTo(X(s[0]), Y(s[i])) : g.moveTo(X(s[0]), Y(s[i])));
+      g.stroke();
+    });
+  }
+
+  function applyPreset(pr) {
+    active = pr.id;
+    ["m1", "m2", "v1", "v2", "k"].forEach(key => inputs[key].value = pr[key]);
+    document.querySelectorAll("#presets button").forEach(b => b.setAttribute("aria-pressed", b.dataset.id === pr.id));
+    showParams(); reset();
+  }
+
+  const box = $("presets");
+  PRESETS.forEach(pr => {
+    const b = document.createElement("button");
+    b.textContent = pr.label; b.dataset.id = pr.id; b.setAttribute("aria-pressed", "false");
+    b.addEventListener("click", () => applyPreset(pr));
+    box.appendChild(b);
+  });
+  Object.values(inputs).forEach(i => i.addEventListener("input", () => {
+    document.querySelectorAll("#presets button").forEach(b => b.setAttribute("aria-pressed", "false"));
+    showParams(); reset();
+  }));
+  $("fric").addEventListener("change", reset);
+  $("start").addEventListener("click", start);
+  $("reset").addEventListener("click", reset);
+  window.addEventListener("resize", () => { draw(); plot(); });
+  applyPreset(PRESETS[0]);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { draw(); plot(); });
+})();
+</script>
+
+</body>
+</html>
