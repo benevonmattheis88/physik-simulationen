@@ -400,10 +400,11 @@ document.getElementById('fs').onclick=()=>{ const d=document, el=d.documentEleme
 document.getElementById('hideTop').onclick=()=>document.getElementById('top').classList.add('hidden');
 document.getElementById('showTop').onclick=()=>document.getElementById('top').classList.remove('hidden');
 let tab=1;
-document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{ tab=+b.dataset.tab;
-  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t===b));
-  [1,2,3].forEach(n=>document.getElementById('page'+n).classList.toggle('on',tab===n));
-  if(tab===1) render1(); else if(tab===2) render2(); else render3(); });
+function goTab(n){ tab=n;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',+t.dataset.tab===n));
+  [1,2,3].forEach(k=>document.getElementById('page'+k).classList.toggle('on',tab===k));
+  if(tab===1) render1(); else if(tab===2) render2(); else render3(); }
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>goTab(+b.dataset.tab));
 
 /* =================================================================
    TEIL 1: Herleitung Parallelschaltung
@@ -540,14 +541,13 @@ function render1(){
   document.getElementById('dots').dataset.pos=`${step+1} / ${STEPS.length}`;
   document.getElementById('dots').innerHTML=STEPS.map((_,i)=>`<button class="dot ${i<step?'done':''} ${i===step?'on':''}" data-i="${i}" aria-label="Schritt ${i+1}"></button>`).join('');
   document.getElementById('prev').disabled=step===0;
-  document.getElementById('next').disabled=step===STEPS.length-1;
-  document.getElementById('next').textContent=step===P_EQ?'Zum Beispiel ▶':step===P_OWN-1?'Selbst rechnen ▶':'Weiter ▶';
+  document.getElementById('next').textContent=step===P_EQ?'Zum Beispiel ▶':step===P_OWN-1?'Selbst rechnen ▶':step===STEPS.length-1?'Weiter zu 2 · Reihe ▶':'Weiter ▶';
   b.querySelectorAll('input[type=range]').forEach(r=>r.oninput=()=>{ own[r.dataset.k]=+r.value; r.nextElementSibling.textContent=fmt(own[r.dataset.k])+' '+r.dataset.u;
     document.getElementById('ownOut').innerHTML=ownOut(); drawCircuits1(); });
   drawCircuits1();
   const cur=b.querySelector('.ln.cur'); if(cur) cur.scrollIntoView({block:'nearest',behavior:'smooth'});
 }
-document.getElementById('next').onclick=()=>{ if(step<STEPS.length-1){step++;render1();} };
+document.getElementById('next').onclick=()=>{ if(step<STEPS.length-1){step++;render1();} else { s2=0; goTab(2); } };
 document.getElementById('prev').onclick=()=>{ if(step>0){step--;render1();} };
 document.getElementById('restart').onclick=()=>{ step=0; render1(); };
 document.getElementById('dots').onclick=e=>{ const d=e.target.closest('.dot'); if(d){ step=+d.dataset.i; render1(); } };
@@ -697,8 +697,8 @@ function render2(){
   const d=document.getElementById('dots2'); d.dataset.pos=`${s2+1} / ${RS.length}`;
   d.innerHTML=RS.map((_,i)=>`<button class="dot ${i<s2?'done':''} ${i===s2?'on':''}" data-i="${i}" ${i>reach2?'disabled':''} aria-label="Schritt ${i+1}"></button>`).join('');
   document.getElementById('prev2').disabled=s2===0;
-  const nx=document.getElementById('next2'); nx.disabled=s2===R_LAST||!solved2(s2);
-  nx.textContent=s2===0?'Los geht’s ▶':'Weiter ▶';
+  const nx=document.getElementById('next2'); nx.disabled=!solved2(s2);
+  nx.textContent=s2===0?'Los geht’s ▶':s2===R_LAST?'Weiter zu 3 · Übungen ▶':'Weiter ▶';
   document.querySelectorAll('#q2 .opt').forEach(o=>o.onclick=()=>{ const z=R2S[s2]; z.ans=+o.dataset.j; z.tries++; if(solved2(s2)) z.tip=false; render2(); showFb(); });
   const tp=document.getElementById('q2tip'); if(tp) tp.onclick=()=>{ R2S[s2].tip=!R2S[s2].tip; render2(); };
   const so=document.getElementById('q2sol'); if(so) so.onclick=()=>{ R2S[s2].shown=true; render2(); showFb(); };
@@ -708,7 +708,7 @@ function render2(){
   if(keep) sc.scrollTop=y; else { sc.scrollTop=0; sc.dataset.s=s2; }
 }
 function showFb(){ const f=[...document.querySelectorAll('#q2 .fb')].pop(); if(f) f.scrollIntoView({block:'nearest',behavior:'smooth'}); }
-document.getElementById('next2').onclick=()=>{ if(s2<R_LAST&&solved2(s2)){ s2++; reach2=Math.max(reach2,s2); render2(); } };
+document.getElementById('next2').onclick=()=>{ if(s2===R_LAST){ tI=0; goTab(3); document.getElementById('scroll3').scrollTop=0; } else if(solved2(s2)){ s2++; reach2=Math.max(reach2,s2); render2(); } };
 document.getElementById('prev2').onclick=()=>{ if(s2>0){ s2--; render2(); } };
 document.getElementById('restart2').onclick=()=>{ s2=0; reach2=0; numIn2=''; R2S.forEach(z=>Object.assign(z,{ans:null,tries:0,tip:false,shown:false})); render2(); };
 document.getElementById('dots2').onclick=e=>{ const d=e.target.closest('.dot'); if(d&&!d.disabled){ s2=+d.dataset.i; render2(); } };
