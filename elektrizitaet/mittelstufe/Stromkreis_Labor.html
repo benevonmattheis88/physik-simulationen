@@ -1606,8 +1606,11 @@ cv.addEventListener('pointerdown',ev=>{ ev.preventDefault(); cv.setPointerCaptur
   drag={x0:ev.clientX,y0:ev.clientY,lx:p.x,ly:p.y,moved:false,hit:(st.tool==='A'||st.tool==='V')?hitPoint(p.x,p.y):null}; });
 cv.addEventListener('pointermove',ev=>{ if(!drag) return; const p=toLogical(ev); drag.lx=p.x; drag.ly=p.y; if(Math.hypot(ev.clientX-drag.x0,ev.clientY-drag.y0)>12) drag.moved=true; });
 cv.addEventListener('pointerup',ev=>{ if(!drag) return; const d=drag; drag=null; const p=toLogical(ev);
-  if(d.moved&&(st.tool==='A'||st.tool==='V')){ const h2=hitPoint(p.x,p.y); if(d.hit&&h2) insertParallel(d.hit,h2,st.tool); else flash('Ziehe von einem Kabel oder Anschluss zu einem anderen.'); return; }
-  if(!d.moved) tap(p.x,p.y); });
+  const nM=S.meters.length;
+  if(d.moved&&(st.tool==='A'||st.tool==='V')){ const h2=hitPoint(p.x,p.y); if(d.hit&&h2) insertParallel(d.hit,h2,st.tool); else flash('Ziehe von einem Kabel oder Anschluss zu einem anderen.'); }
+  else if(!d.moved) tap(p.x,p.y);
+  // nach dem Einfügen eines Messgeräts wieder auf „Auswahl“ zurückschalten
+  if(S.meters.length>nM) setTool('select'); });
 cv.addEventListener('pointercancel',()=>{drag=null;});
 function tap(x,y){
   const t=st.tool;
@@ -1770,8 +1773,9 @@ $('tempo').addEventListener('input',()=>{ const v=+$('tempo').value; st.tempo=+M
 $('uSlider').addEventListener('input',()=>{ st.U=+$('uSlider').value/10; solve(); });
 $('riSlider').addEventListener('input',()=>{ st.Ri=+$('riSlider').value/10; solve(); });
 $('cabSlider').addEventListener('input',()=>{ st.cableR=+$('cabSlider').value/20; for(const k in S.cables) S.cables[k]=st.cableR; solve(); if(st.sel&&st.sel.kind==='edge'&&st.sel.e.type==='wire') renderSel(); });
-document.querySelectorAll('.tool').forEach(b=>b.addEventListener('click',()=>{ st.tool=b.dataset.t; document.querySelectorAll('.tool').forEach(x=>x.classList.toggle('on',x===b)); $('toolHint').innerHTML=TOOLHINT[st.tool];
-  if(st.tool==='M'){ st.meshI=0; findMeshes(); } else S.meshes=null; renderSel(); }));
+function setTool(t){ st.tool=t; document.querySelectorAll('.tool').forEach(x=>x.classList.toggle('on',x.dataset.t===t)); $('toolHint').innerHTML=TOOLHINT[st.tool];
+  if(st.tool==='M'){ st.meshI=0; findMeshes(); } else S.meshes=null; renderSel(); }
+document.querySelectorAll('.tool').forEach(b=>b.addEventListener('click',()=>setTool(b.dataset.t)));
 $('mAdd').onclick=addPoint;
 $('mUndo').onclick=()=>{ const e=measDut(); if(e) e.comp.pts.pop(); };
 $('mClr').onclick=()=>{ const e=measDut(); if(e) e.comp.pts=[]; };
