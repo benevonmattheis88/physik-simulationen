@@ -32,6 +32,7 @@ kernphysik/
 
 - Jede Simulation ist eine eigenständige HTML-Datei ohne Nachladen aus dem Netz.
 - Link für eine Simulation: `https://benevonmattheis88.github.io/physik-simulationen/` plus Ordner und Dateiname, z. B. `.../mechanik/oberstufe/Kurvenlabor.html`. Groß- und Kleinschreibung zählt.
+- Auf der Startseite gibt es bei jeder Simulation einen Knopf „HTML-Datei herunterladen“, z. B. zum Hochladen in Moodle oder für die Offline-Nutzung.
 - In Moodle als Aktivität „Link/URL“ mit Anzeige „Im neuen Fenster“ einbinden, oder die Datei herunterladen und als Aktivität „Datei“ hochladen.
 - Dateien bitte nicht umbenennen oder verschieben, sonst funktionieren Links und QR-Codes nicht mehr.
 - Änderungen an `Kernlabor.html` müssen auch in die Dateien in `Kernlabor_einzeln/` übernommen werden.
