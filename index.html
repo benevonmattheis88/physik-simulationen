@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Physik-Simulationen</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --text:#1d2330; --muted:#5b6475; --line:#dde1e8; --accent:#1f5fbf; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#14171d; --card:#1d2129; --text:#e7eaf0; --muted:#9aa3b2; --line:#2e3440; --accent:#7fb0ff; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text);
+         font:17px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+  main { max-width:960px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { font-size:1.9em; margin:0 0 4px; }
+  .lead { color:var(--muted); margin:0 0 24px; }
+  h2 { font-size:1.4em; margin:32px 0 8px; padding-bottom:4px; border-bottom:2px solid var(--line); }
+  h3 { font-size:1em; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:16px 0 8px; }
+  ul.sims { list-style:none; padding:0; margin:0; display:grid; gap:10px;
+            grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); }
+  ul.sims > li { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; }
+  ul.sims a.titel { font-weight:600; font-size:1.08em; color:var(--accent); text-decoration:none; }
+  ul.sims a.titel:hover { text-decoration:underline; }
+  .info { color:var(--muted); font-size:.92em; margin-top:4px; }
+  details { margin-top:8px; font-size:.92em; }
+  details ul { margin:6px 0 0; padding-left:20px; }
+  details a { color:var(--accent); }
+  footer { margin-top:40px; color:var(--muted); font-size:.85em; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Physik-Simulationen</h1>
+  <p class="lead">Interaktive Simulationen für den Physikunterricht, gemacht für das iPad im Querformat und für Moodle. Jede Simulation ist eine eigenständige Datei und braucht nach dem Laden kein Internet.</p>
+
+  <h2>Mechanik</h2>
+  <h3>Oberstufe</h3>
+  <ul class="sims">
+    <li><a class="titel" href="mechanik/oberstufe/Kreisbewegung.html">Kreisbewegung</a>
+      <div class="info">Zwei Körper auf Kreisbahnen mit verschiedenen Radien: Bewegung beschreiben, Kraft anzeigen, Faden loslassen, messen.</div></li>
+    <li><a class="titel" href="mechanik/oberstufe/Kurvenlabor.html">Kurvenlabor</a>
+      <div class="info">Wer liefert die Zentripetalkraft? Kurvenfahrt und Looping mit realistischen Werten und festem Maßstab.</div></li>
+    <li><a class="titel" href="mechanik/oberstufe/Stosslabor.html">Stoßlabor</a>
+      <div class="info">Elastische, teilelastische und unelastische Stöße mit Impuls- und Energiebilanz.</div></li>
+  </ul>
+
+  <h2>Elektrizität</h2>
+  <h3>Mittelstufe</h3>
+  <ul class="sims">
+    <li><a class="titel" href="elektrizitaet/mittelstufe/Stromkreis_Labor.html">Stromkreis-Labor</a>
+      <div class="info">Reihen- und Parallelschaltung, Potenzialfarben, Messgeräte, Kennlinie, Draht, Wasserkreis-Modell.</div></li>
+    <li><a class="titel" href="elektrizitaet/mittelstufe/Ersatzwiderstand_herleiten.html">Ersatzwiderstand herleiten</a>
+      <div class="info">Schrittweise Herleitung für die Parallelschaltung, Reihenschaltung selbst herleiten, Übungsaufgaben.</div></li>
+  </ul>
+
+  <h2>Kernphysik</h2>
+  <h3>Mittelstufe</h3>
+  <ul class="sims">
+    <li><a class="titel" href="kernphysik/mittelstufe/Kernlabor.html">Kernlabor (alle Reiter)</a>
+      <div class="info">Atomkern, Rutherford, Zerfälle, Ablenkung, Abschirmung, Strahlenschutz, Halbwertszeit, Spaltung, Kettenreaktion, Reaktor.</div>
+      <details><summary>Einzelne Reiter als eigene Seiten</summary>
+        <ul>
+          <li><a href="kernphysik/mittelstufe/Kernlabor_einzeln/01_Atomkern_bauen.html">Atomkern bauen</a></li>
+          <li><a href="kernphysik/mittelstufe/Kernlabor_einzeln/02_Rutherford.html">Rutherford</a></li>
+          <li><a href="kernphysik/mittelstufe/Kernlabor_einzeln/03_Zerfaelle.html">Zerfälle</a></li>
+          <li><a href="kernphysik/mittelstufe/Kernlabor_einzeln/04_Ablenkung.html">Ablenkung</a></li>
+          <li><a href="kernphysik/mittelstufe/Kernlabor_einzeln/05_Abschirmung.html">Abschirmung</a></li>
+          <li><a href="kernphysik/mittelstufe/Kernlabor_einzeln/06_Strahlenschutz.html">Strahlenschutz</a></li>
+          <li><a href="kernphysik/mittelstufe/Kernlabor_einzeln/07_Halbwertszeit.html">Halbwertszeit</a></li>
+          <li><a href="kernphysik/mittelstufe/Kernlabor_einzeln/08_Spaltung.html">Spaltung</a></li>
+          <li><a href="kernphysik/mittelstufe/Kernlabor_einzeln/09_Kettenreaktion.html">Kettenreaktion</a></li>
+          <li><a href="kernphysik/mittelstufe/Kernlabor_einzeln/10_Reaktor.html">Reaktor</a></li>
+        </ul>
+      </details></li>
+  </ul>
+
+  <footer>Stand: 28.10.2026</footer>
+</main>
+</body>
+</html>
