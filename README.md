@@ -2,6 +2,8 @@
 
 Physik-Simulationen für den Schulunterricht, erstellt mit Claude. In HTML, passend für die Nutzung am iPad und in Moodle.
 
+> **Hinweis:** Die Simulationen wurden mit Hilfe von KI (Claude) erstellt. Ihre physikalische Korrektheit wurde nicht systematisch geprüft. Bitte vor dem Einsatz im Unterricht selbst kontrollieren.
+
 **Startseite mit allen Simulationen:** https://benevonmattheis88.github.io/physik-simulationen/
 
 ## Aufbau
