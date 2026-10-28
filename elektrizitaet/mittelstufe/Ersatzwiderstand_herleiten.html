@@ -42,16 +42,30 @@ button{font:inherit;color:inherit;cursor:pointer}
 .btn:disabled{opacity:.4;cursor:default}
 .dots{flex:1;display:flex;gap:.25rem;justify-content:center;flex-wrap:wrap}
 .dot{width:.62rem;height:.62rem;border-radius:50%;background:#cfd6e2;border:0;padding:0}
+.dot:disabled{opacity:.35;cursor:default}
 .dot.done{background:#93b4f5}.dot.on{background:var(--accent);transform:scale(1.3)}
-.phases{display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.55rem}
-.ph{font-size:.75rem;border-radius:1rem;padding:.15rem .6rem;background:#e7ebf2;color:var(--muted);font-weight:600}
+.phases{display:flex;gap:.25rem;flex-wrap:wrap;margin-bottom:.4rem}
+.ph{font-size:.7rem;border-radius:1rem;padding:.12rem .45rem;background:#e7ebf2;color:var(--muted);font-weight:600}
 .ph.on{background:var(--accent-soft);color:#1e40af}
-h2{font-size:1.15rem;margin:.1rem 0 .5rem}
+h2{font-size:1.15rem;margin:.1rem 0 .4rem}
 .board{background:#fff;border:1px solid var(--line);border-radius:.8rem;padding:.5rem .7rem;display:flex;flex-direction:column;gap:.15rem}
 .ln{display:grid;grid-template-columns:1.6rem minmax(0,1fr) auto;align-items:center;gap:.5rem;padding:.3rem .2rem;border-radius:.5rem;animation:slide .45s ease}
-.ln .nr{width:1.4rem;height:1.4rem;border-radius:50%;background:#e7ebf2;color:var(--muted);font-size:.75rem;font-weight:700;display:flex;align-items:center;justify-content:center}
+.ln .nr,.pre .nr{width:1.4rem;height:1.4rem;border-radius:50%;background:#e7ebf2;color:var(--muted);font-size:.75rem;font-weight:700;display:flex;align-items:center;justify-content:center}
 .ln.cur{background:#f3f7ff}.ln.cur .nr{background:var(--accent);color:#fff}
 .ln.old .eq{opacity:.75}
+.ln .nr:empty{background:transparent}
+.lhs{visibility:hidden}
+.ln.ch{padding:.05rem .2rem}
+.ln.ch .eq{font-size:1.15rem}
+.pre{display:flex;flex-wrap:wrap;gap:.15rem 1.1rem;padding:.15rem .2rem .35rem;margin-bottom:.15rem;border-bottom:1px dashed var(--line)}
+.pre>span{display:flex;align-items:center;gap:.35rem}
+.pre .eq{font-size:1rem;opacity:.8}
+.opts.row{flex-direction:row;flex-wrap:wrap}
+.opts.row .opt{flex:1 1 auto}
+.opts.row .eqi{white-space:nowrap}
+.opts.row .txt .eqi{white-space:normal}
+.opt:disabled{cursor:default;opacity:1}
+.opt:disabled:not(.right){opacity:.5}
 .eq{font-size:1.25rem;font-family:"Cambria Math","STIX Two Math","Times New Roman",serif;white-space:nowrap;overflow-x:auto;overflow-y:hidden;padding:.1rem 0}
 .tag{font-size:.72rem;color:var(--muted);text-align:right;white-space:nowrap}
 .op{color:#b45309;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:.85rem;margin-left:.8rem;font-weight:700;animation:fade .5s}
@@ -84,16 +98,6 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .barrow{display:grid;grid-template-columns:3.2rem minmax(0,1fr) 4.5rem;align-items:center;gap:.4rem;font-size:.85rem}
 .barrow .b{height:.9rem;border-radius:.3rem;transition:width .25s}
 .barrow span:last-child{text-align:right;font-variant-numeric:tabular-nums}
-/* Teil 2 */
-.task{background:#f3f7ff;border:1px solid #bfd2fb;border-radius:.8rem;padding:.6rem .8rem;margin-bottom:.6rem}
-.task p{margin:.25rem 0}
-.hints{display:flex;gap:.35rem;flex-wrap:wrap;margin:.2rem 0 .5rem}
-.hbtn{border:1px solid var(--line);background:#fff;border-radius:.6rem;padding:.4rem .65rem;font-size:.85rem;display:flex;align-items:center;gap:.3rem}
-.hbtn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
-.hbtn.used:not(.on){background:#e8eefb;border-color:#bfd2fb}
-.hbtn:disabled{opacity:.45;cursor:default}
-.lock{font-size:.8em}
-.status{font-size:.8rem;color:var(--muted);margin-bottom:.4rem}
 .mcq{margin:.35rem 0 .7rem}
 .mcq .qq{font-weight:650;margin-bottom:.3rem}
 .opts{display:flex;flex-direction:column;gap:.3rem}
@@ -103,29 +107,8 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
 .fb{font-size:.88rem;border-radius:.5rem;padding:.35rem .6rem;margin-top:.3rem;animation:fade .4s}
 .fb.ok{background:var(--ok-bg);color:#14532d}.fb.no{background:var(--bad-bg);color:#7f1d1d}.fb.info{background:#eef4ff;color:#1e3a8a}
-.pool{display:flex;flex-wrap:wrap;gap:.4rem;min-height:3rem;padding:.4rem;border:1.5px dashed var(--line);border-radius:.7rem;background:#fafbfd}
-.dc{border:1.5px solid #93b4f5;background:#fff;border-radius:.55rem;padding:.3rem .6rem;font-family:"Cambria Math","STIX Two Math","Times New Roman",serif;font-size:1.05rem;touch-action:none;cursor:grab;box-shadow:0 1px 2px rgba(0,0,0,.08)}
-.dc.sel{outline:3px solid var(--hl)}
-.dc.ghost{position:fixed;z-index:50;pointer-events:none;opacity:.92;box-shadow:0 6px 16px rgba(0,0,0,.25)}
-.dc.dragging{opacity:.3}
-.slots{display:flex;flex-direction:column;gap:.35rem;margin:.5rem 0}
-.slot{display:grid;grid-template-columns:1.6rem minmax(0,1fr);align-items:center;gap:.5rem}
-.slot .nr{width:1.4rem;height:1.4rem;border-radius:50%;background:#e7ebf2;color:var(--muted);font-size:.75rem;font-weight:700;display:flex;align-items:center;justify-content:center}
-.drop{min-height:2.6rem;border:1.5px dashed #b8c3d6;border-radius:.6rem;display:flex;align-items:center;padding:.2rem .3rem;background:#fff}
-.drop.over{background:#fff7d6;border-color:#e0b100}
-.drop.right{border-style:solid;border-color:var(--ok);background:var(--ok-bg)}
-.drop.wrong{border-style:solid;border-color:var(--bad);background:var(--bad-bg)}
-.drop .ph2{color:#9aa5b8;font-size:.82rem;padding-left:.3rem}
-.gaptext{font-size:1rem;line-height:2.3}
-.gaptext .eqi{font-family:"Cambria Math","STIX Two Math","Times New Roman",serif;font-size:1.08em}
-.gap{border:1.5px dashed #93b4f5;background:#f3f7ff;border-radius:.45rem;padding:.05rem .5rem;min-width:4rem;font-family:"Cambria Math","STIX Two Math","Times New Roman",serif;font-size:1.05rem;line-height:1.4}
-.gap.right{border-style:solid;border-color:var(--ok);background:var(--ok-bg)}
-.gap.wrong{border-style:solid;border-color:var(--bad);background:var(--bad-bg)}
-#menu{position:fixed;z-index:60;background:#fff;border:1px solid var(--line);border-radius:.6rem;box-shadow:0 8px 24px rgba(0,0,0,.2);padding:.3rem;display:none;flex-direction:column;gap:.2rem}
-#menu button{border:0;background:#f6f8fb;border-radius:.45rem;padding:.4rem .8rem;text-align:left;font-family:"Cambria Math","STIX Two Math","Times New Roman",serif;font-size:1.05rem}
 .numin{font:inherit;font-size:1rem;width:6rem;padding:.3rem .5rem;border:1.5px solid var(--line);border-radius:.5rem;-webkit-user-select:text;user-select:text}
 .sol .ln,.noanim .ln{animation:none}
-.gaptext .eqi{white-space:nowrap}
 table.cmp{border-collapse:collapse;width:100%;font-size:.9rem;margin-top:.4rem}
 table.cmp td,table.cmp th{border:1px solid var(--line);padding:.3rem .45rem;text-align:left}
 table.cmp th{background:#f3f5f9}
@@ -182,8 +165,8 @@ svg .val{font-weight:600}
  .nav{padding:.4rem .45rem;gap:.35rem}
  .nav .btn{padding:.45rem .6rem;font-size:.85rem}
  .nav .btn.primary{padding:.5rem .8rem}
- #restart{font-size:0!important;padding:.45rem .55rem!important}
- #restart::before{content:"↺";font-size:1rem}
+ #restart,#restart2{font-size:0!important;padding:.45rem .55rem!important}
+ #restart::before,#restart2::before{content:"↺";font-size:1rem}
  .dots .dot{display:none}
  .dots::after{content:attr(data-pos);font-size:.85rem;color:var(--muted);font-weight:600}
  .ln{grid-template-columns:1.3rem minmax(0,1fr);gap:.35rem}
@@ -262,14 +245,17 @@ svg .val{font-weight:600}
   </div>
   <div class="right">
    <div class="scroll" id="scroll2">
-    <div class="task">
-     <p><b>Dein Auftrag:</b> Leite die Formel für den Ersatzwiderstand <i>R</i><sub>ges</sub> von zwei <b>in Reihe</b> geschalteten Widerständen her.</p>
-     <p>Geh vor wie bei der Parallelschaltung in Teil 1. Schreib deine Herleitung ins Heft und prüf dann dein Ergebnis unten. Wenn du nicht weiterkommst, helfen dir nach deinem ersten Versuch die Hilfen.</p>
-    </div>
-    <div class="card" id="checkCard"></div>
-    <div class="status" id="hstatus"></div>
-    <div class="hints" id="hints"></div>
-    <div id="hintBody"></div>
+    <div class="phases" id="phases2"></div>
+    <h2 id="stTitle2"></h2>
+    <div id="board2"></div>
+    <div id="q2"></div>
+    <div id="comment2"></div>
+   </div>
+   <div class="nav">
+    <button class="btn" id="restart2">↺ Von vorn</button>
+    <button class="btn" id="prev2">◀ Zurück</button>
+    <div class="dots" id="dots2"></div>
+    <button class="btn primary" id="next2">Weiter ▶</button>
    </div>
   </div>
  </div>
@@ -294,7 +280,6 @@ svg .val{font-weight:600}
   </div>
  </div>
 </div>
-<div id="menu"></div>
 <div id="rotate"><div class="rbox"><div style="font-size:3rem">📱↻</div><p><b>Bitte dreh dein Handy ins Hochformat.</b></p><p>Auf dem Handy ist das Programm für das Hochformat gebaut.</p><button class="btn" id="rotOk">Trotzdem quer weiter</button></div></div>
 
 <script>
@@ -397,7 +382,7 @@ function svgSeries(o){
   s+=g('sU1',hArrow(162,238,18,'q1')+stext(248,24,'U','1',L('U1',o.U1,'V'),{c:'q1'}),haloPath('M162 18 H238',14));
   s+=g('sU2',vArrow(452,108,172,'q2')+stext(460,172,'U','2',L('U2',o.U2,'V'),{c:'q2'}),haloPath('M452 108 V172',14));
   const il=L('I',o.I,'A');
-  s+=g('sI',tri(100,50,'r','qg')+stext(100,32,'I','',il,{anchor:'middle'})+tri(330,50,'r','qg')+stext(330,32,'I','',il,{anchor:'middle'})+tri(230,230,'l','qg')+stext(230,255,'I','',il,{anchor:'middle'}),
+  s+=g('sI',tri(100,50,'r','qg')+stext(100,32,'I','',il,{anchor:'middle'})+tri(330,50,'r','qg')+stext(330,80,'I','',il,{anchor:'middle'})+tri(230,230,'l','qg')+stext(230,255,'I','',il,{anchor:'middle'}),
     haloPath('M82 50 H118',20)+haloPath('M312 50 H348',20)+haloPath('M212 230 H248',20));
   if(o.lbl&&o.lbl.Rg) s+=`<text x="545" y="252" text-anchor="end" style="fill:#0f172a;font-weight:600"><tspan class="sym">R</tspan><tspan dy="5" font-size="12">ges</tspan><tspan dy="-5"> = ${o.lbl.Rg}</tspan></text>`;
   return s+'</svg>';
@@ -427,69 +412,86 @@ const EX={R1:100,R2:300,U:12};
 const own={R1:200,R2:300,U:12};
 function calcP(o){ const Rg=1/(1/o.R1+1/o.R2); return {...o,Rg,I1:o.U/o.R1,I2:o.U/o.R2,Ig:o.U/Rg}; }
 
-const PH=['Ziel','Herleitung','Ergebnis','Rechenbeispiel','Selbst rechnen'];
+const PH=['Ziel','Voraussetzungen','Kette','Ergebnis','Beispiel','Selbst rechnen'];
 const STEPS=[
  {ph:0,t:'Worum geht es?',board:'d',hl:['pR1','pR2','eRg'],
   c:`<p>Zwei Widerstände ${R1} und ${R2} sind <b>parallel</b> geschaltet. Wir wollen sie gedanklich durch <b>einen einzigen</b> Widerstand ersetzen, den <b>Ersatzwiderstand</b> ${Rg}.</p>
      <p>Die Quelle darf dabei keinen Unterschied merken: Bei gleicher Spannung ${U} soll derselbe Gesamtstrom ${Ig} fließen.</p>
-     <p>Gesucht ist eine Formel, mit der man ${Rg} aus ${R1} und ${R2} berechnet.</p>`},
+     <p>Gesucht ist eine Formel, mit der man ${Rg} aus ${R1} und ${R2} berechnet. Dazu sammeln wir zuerst, was in der Schaltung gilt, und bauen dann eine lange Gleichungskette.</p>`},
  {ph:1,t:'Schritt 1: Was ist bei beiden Widerständen gleich?',board:'d',hl:['pHi','pLo','pU1','pU2','pU'],
   c:`<p>Schau auf die Farben im Schaltplan: Die obere Leitung hat überall <b>dasselbe Potenzial</b> wie der Pluspol, die untere überall dasselbe Potenzial wie der Minuspol.</p>
      <p>Jeder Widerstand liegt also zwischen <b>denselben beiden Farben</b>. Die Spannung ist der Potenzialunterschied, deshalb ist sie an beiden Widerständen gleich groß, nämlich gleich der Spannung der Quelle.</p>`},
  {ph:1,t:'Schritt 2: Was teilt sich auf?',board:'d',hl:['pNode','pIg','pI1','pI2'],
   c:`<p>Am <b>Knoten</b> teilt sich der Gesamtstrom auf die beiden Zweige auf. Nach der <b>Knotenregel</b> geht dabei keine Ladung verloren:</p>
      <p>Was in den Knoten hineinfließt, fließt auch wieder heraus. Also ist ${Ig} die Summe von ${I1} und ${I2}.</p>`},
- {ph:1,t:'Schritt 3: Ohmsches Gesetz für jeden Widerstand',board:'d',hl:['pR1','pR2','eRg','pI1','pI2','eIg'],
+ {ph:1,t:'Schritt 3: Ohmsches Gesetz für jeden Widerstand',board:'d',hl:['pR1','pR2','pI1','pI2'],
   c:`<p>Für jeden Widerstand gilt <span class="eqi"><i>R</i> = ${fr('<i>U</i>','<i>I</i>')}</span>, umgestellt nach der Stromstärke: <span class="eqi"><i>I</i> = ${fr('<i>U</i>','<i>R</i>')}</span>.</p>
-     <p>Wir wenden das auf ${R1}, auf ${R2} und auf den Ersatzwiderstand ${Rg} an. An allen dreien liegt dieselbe Spannung ${U} (Schritt 1).</p>`},
- {ph:1,t:'Schritt 4: Einsetzen',board:'d',hl:['pIg','pI1','pI2'],
-  c:`<p>Jetzt ersetzen wir in der Knotenregel (Zeile 2) jede Stromstärke durch den Bruch aus Zeile 3. Die Farben zeigen dir, was wohin gehört.</p>
-     <p>Damit steht in einer einzigen Gleichung nur noch Spannung und Widerstände, keine Stromstärke mehr.</p>`},
- {ph:1,t:'Schritt 5: Durch U teilen',board:'d',hl:['pU','pU1','pU2'],
-  c:`<p>In jedem Bruch steht ${U} im Zähler. Wir teilen beide Seiten der Gleichung durch ${U}. Das ist erlaubt, weil ${U} nicht null ist.</p>
-     <p>Übrig bleibt eine Gleichung, in der nur noch Widerstände vorkommen: <b>Die Kehrwerte der Widerstände addieren sich.</b></p>
-     <p class="note">Gut zu wissen: Den Kehrwert ${fr('1','<i>R</i>')} nennt man auch <b>Leitwert</b>. In der Parallelschaltung addieren sich die Leitwerte.</p>`},
- {ph:2,t:'Schritt 6: Nach R<sub>ges</sub> auflösen',board:'d',hl:['eRg'],
-  c:`<p>Links steht noch der Kehrwert ${fr('1',Rg)}. Wir bilden auf beiden Seiten den Kehrwert, also „Bruch umdrehen“.</p>
-     <p><b>Vorsicht, typischer Fehler:</b> Man darf nicht jeden Summanden einzeln umdrehen. ${Rg} ist <b>nicht</b> ${R1} + ${R2}! Erst wird rechts die ganze Summe berechnet, dann der Kehrwert davon.</p>`},
- {ph:2,t:'Was bedeutet das Ergebnis?',board:'d',hl:['pR1','pR2','eRg'],
+     <p>Wir wenden das auf ${R1} und auf ${R2} an. An beiden liegt dieselbe Spannung ${U} (Zeile 1).</p>`},
+ {ph:2,t:'Schritt 4: Die Kette beginnt',board:'d',hl:['eRg','eUr','eIg'],
+  c:`<p>Jetzt berechnen wir ${Rg} in <b>einer langen Gleichungskette</b>. Am Anfang steht das ohmsche Gesetz für den Ersatzwiderstand: An ihm liegt die Spannung ${U}, durch ihn fließt der Gesamtstrom ${Ig}.</p>
+     <p>Ab jetzt ersetzen wir Schritt für Schritt, bis rechts nur noch ${R1} und ${R2} stehen.</p>`},
+ {ph:2,t:'Schritt 5: Knotenregel einsetzen',board:'d',hl:['pNode','pIg','pI1','pI2'],
+  c:`<p>Für ${Ig} setzen wir die Knotenregel aus Zeile 2 ein. Die ganze Summe ${I1} + ${I2} steht dabei unter dem Bruchstrich.</p>`},
+ {ph:2,t:'Schritt 6: Ohmsches Gesetz einsetzen',board:'d',hl:['pR1','pR2','pI1','pI2'],
+  c:`<p>Jetzt ersetzen wir ${I1} und ${I2} durch die Brüche aus Zeile 3.</p>
+     <p>Damit kommt in der Kette keine Stromstärke mehr vor, nur noch die Spannung und Widerstände.</p>`},
+ {ph:2,t:'Schritt 7: U ausklammern',board:'d',hl:['pU','pU1','pU2'],
+  c:`<p>Im Nenner steht in beiden Summanden ${U}. Wir klammern ${U} aus:</p>
+     <p class="eqi">${fr(U,R1)} + ${fr(U,R2)} = ${U} · (${fr('1',R1)} + ${fr('1',R2)})</p>`},
+ {ph:2,t:'Schritt 8: U kürzen',board:'d',hl:['eRg'],
+  c:`<p>${U} steht im Zähler und als Faktor im Nenner, also kürzen wir es heraus (${U} ist nicht null). Übrig bleiben nur Widerstände: <b>Der Ersatzwiderstand hängt nicht von der Spannung ab.</b></p>`},
+ {ph:3,t:'Was bedeutet das Ergebnis?',board:'d',hl:['pR1','pR2','eRg'],
   c:`<p><b>${Rg} ist kleiner als der kleinste Einzelwiderstand.</b> Durch den zweiten Zweig bekommt der Strom einen zusätzlichen Weg, deshalb fließt insgesamt mehr Strom als durch einen Widerstand allein.</p>
+     <p>Kehrwert auf beiden Seiten ergibt die Kurzform in Zeile 2: <b>Die Kehrwerte (Leitwerte) addieren sich.</b> Vorsicht: ${Rg} ist <b>nicht</b> ${R1} + ${R2}, man darf nicht jeden Bruch einzeln umdrehen.</p>
      <p>Sonderfall: Sind beide Widerstände gleich groß (${R1} = ${R2} = <i>R</i>), dann ist ${Rg} = ${fr('<i>R</i>','2')}.</p>`},
- {ph:3,t:'Rechenbeispiel: Gegeben und gesucht',board:'e',vals:true,hl:['pR1','pR2','pU'],
+ {ph:4,t:'Rechenbeispiel: Gegeben und gesucht',board:'e',vals:true,hl:['pR1','pR2','pU'],
   c:`<p>Im Schaltplan siehst du jetzt die Werte. Gesucht ist der Ersatzwiderstand ${Rg}.</p>`},
- {ph:3,t:'Rechenbeispiel: Werte einsetzen',board:'e',vals:true,hl:['pR1','pR2'],
-  c:`<p>Wir setzen in die Gleichung mit den Kehrwerten ein. Die Einheit Ω kommt mit in den Nenner.</p>`},
- {ph:3,t:'Rechenbeispiel: Brüche addieren',board:'e',vals:true,hl:[],
+ {ph:4,t:'Rechenbeispiel: Werte einsetzen',board:'e',vals:true,hl:['pR1','pR2'],
+  c:`<p>Wir setzen die Werte in das Ergebnis der Gleichungskette ein. Die Einheit Ω kommt mit in die Nenner.</p>`},
+ {ph:4,t:'Rechenbeispiel: Brüche addieren',board:'e',vals:true,hl:[],
   c:`<p>Brüche addiert man, indem man sie auf einen gemeinsamen Nenner bringt. Hier ist 300 Ω der Hauptnenner: ${fr('1','100 Ω')} = ${fr('3','300 Ω')}.</p>`},
- {ph:3,t:'Rechenbeispiel: Kehrwert bilden',board:'e',vals:true,hl:['eRg'],
-  c:`<p>Jetzt drehen wir den Bruch um. Ergebnis: <b>${Rg} = 75 Ω</b>. Das ist kleiner als 100 Ω und kleiner als 300 Ω, wie erwartet.</p>
+ {ph:4,t:'Rechenbeispiel: Durch den Bruch teilen',board:'e',vals:true,hl:['eRg'],
+  c:`<p>1 durch einen Bruch heißt: den Bruch umdrehen. Ergebnis: <b>${Rg} = 75 Ω</b>. Das ist kleiner als 100 Ω und kleiner als 300 Ω, wie erwartet.</p>
      <p>Mit dem Taschenrechner geht es auch in einem Rutsch: <span class="eqi">1 ÷ (1 ÷ 100 + 1 ÷ 300) = 75</span>.</p>`},
- {ph:3,t:'Rechenbeispiel: Probe mit den Stromstärken',board:'e',vals:true,hl:['pIg','pI1','pI2','eIg'],
+ {ph:4,t:'Rechenbeispiel: Probe mit den Stromstärken',board:'e',vals:true,hl:['pIg','pI1','pI2','eIg'],
   c:`<p>Wir prüfen, ob der Ersatzwiderstand wirklich dasselbe bewirkt: Durch die beiden Zweige fließen zusammen 0,16 A, durch den Ersatzwiderstand bei 12 V ebenfalls 0,16 A. <b>Passt!</b></p>`},
- {ph:4,t:'Selbst rechnen',board:'o',vals:true,hl:[],
+ {ph:5,t:'Selbst rechnen',board:'o',vals:true,hl:[],
   c:`<p>Stell eigene Werte ein und beobachte: Wie verändert sich ${Rg}, wenn du ${R2} sehr groß machst? Was passiert bei zwei gleich großen Widerständen?</p>`}
 ];
+const P_EQ=9, P_EX=10, P_KW=13, P_OWN=15; // Schrittnummern: Ergebnis, Beispiel, Kehrwert, Selbst rechnen
 let step=0;
 
 function dLine(nr,eq,tag,cur){ return `<div class="ln ${cur?'cur':'old'}"><span class="nr">${nr}</span><span class="eq">${eq}</span><span class="tag">${tag}</span></div>`; }
+/* Zeile einer Gleichungskette: links steht R_ges nur in der ersten Zeile, sonst unsichtbar (damit die = untereinander stehen) */
+function cLine(eq,tag,cur,first){ return `<div class="ln ch ${cur?'cur':'old'}"><span class="nr"></span><span class="eq">${first?Rg:`<span class="lhs">${Rg}</span>`} = ${eq}</span><span class="tag">${tag}</span></div>`; }
+const sumKw=(a,b)=>fr('1',a)+' + '+fr('1',b);
+/* Voraussetzungen als schmale Leiste, sobald die Kette läuft */
+function preStrip(items){ return `<div class="pre">${items.map(([n,eq])=>`<span><span class="nr">${n}</span><span class="eq">${eq}</span></span>`).join('')}</div>`; }
 function boardDeriv(s){
   const L=[];
   if(s===0) L.push(`<div class="ln cur"><span class="nr">?</span><span class="eq">${Rg} = ?</span><span class="tag">gesucht</span></div>`);
-  if(s>=1) L.push(dLine(1,`${U1} = ${U2} = ${U}`,'gleiche Spannung',s===1));
-  if(s>=2) L.push(dLine(2,`${Ig} = ${I1} + ${I2}`,'Knotenregel',s===2));
-  if(s>=3) L.push(dLine(3,`${I1} = ${fr(U,R1)}&emsp;${I2} = ${fr(U,R2)}&emsp;${Ig} = ${fr(U,Rg)}`,'ohmsches Gesetz',s===3));
-  if(s>=4) L.push(dLine(4,`${fr(cx(U,'a'),Rg)} = ${fr(cx(U,'b'),R1)} + ${fr(cx(U,'c'),R2)}${s>=5?'<span class="op">| : <i>U</i></span>':''}`,'3 in 2 eingesetzt',s===4));
-  if(s>=5) L.push(dLine(5,`${fr('1',Rg)} = ${fr('1',R1)} + ${fr('1',R2)}${s>=6?'<span class="op">| Kehrwert</span>':''}`,'durch U geteilt',s===5));
-  if(s>=6) L.push(dLine(6,`<span class="final">${Rg} = ${fr('1',fr('1',R1)+' + '+fr('1',R2))}</span>`,'Ergebnis',s===6||s===7));
+  if(s>=P_EQ){ // Ergebnis kompakt
+    L.push(dLine('',`<span class="final">${Rg} = ${fr('1',sumKw(R1,R2))}</span>`,'Ergebnis',true));
+    L.push(dLine('',`⇔&ensp;${fr('1',Rg)} = ${sumKw(R1,R2)}`,'Kehrwert beider Seiten',true));
+    return `<div class="board">${L.join('')}</div>`;
+  }
+  const pre=[[1,`${U1} = ${U2} = ${U}`,'gleiche Spannung'],[2,`${Ig} = ${I1} + ${I2}`,'Knotenregel'],[3,`${I1} = ${fr(U,R1)}&emsp;${I2} = ${fr(U,R2)}`,'ohmsches Gesetz']];
+  if(s>=4) L.push(preStrip(pre));
+  else pre.slice(0,s).forEach(([n,eq,tag])=>L.push(dLine(n,eq,tag,s===n)));
+  if(s>=4) L.push(cLine(fr(U,Ig),'ohmsches Gesetz für R<sub>ges</sub>',s===4,true));
+  if(s>=5) L.push(cLine(fr(U,`${I1} + ${I2}`),'Zeile 2 eingesetzt',s===5));
+  if(s>=6) L.push(cLine(fr(U,`${fr(U,R1)} + ${fr(U,R2)}`),'Zeile 3 eingesetzt',s===6));
+  if(s>=7) L.push(cLine(fr(cx(U,'a'),`${cx(U,'b')} · (${sumKw(R1,R2)})`)+(s>=8?'<span class="op">| <i>U</i> kürzen</span>':''),'<i>U</i> ausgeklammert',s===7));
+  if(s>=8) L.push(cLine(`<span class="final">${fr('1',sumKw(R1,R2))}</span>`,'<i>U</i> gekürzt',s===8));
   return `<div class="board">${L.join('')}</div>`;
 }
 function boardEx(s){
-  const L=[], k=s-8;
-  L.push(dLine('G',`${R1} = 100${OHM}&emsp;${R2} = 300${OHM}&emsp;${U} = 12${VOLT}`,'gegeben',k===0));
-  if(k>=1) L.push(dLine('1',`${fr('1',Rg)} = ${fr('1',`100${OHM}`)} + ${fr('1',`300${OHM}`)}`,'eingesetzt',k===1));
-  if(k>=2) L.push(dLine('2',`${fr('1',Rg)} = ${fr('3',`300${OHM}`)} + ${fr('1',`300${OHM}`)} = ${fr('4',`300${OHM}`)}`,'Hauptnenner',k===2));
-  if(k>=3) L.push(dLine('3',`<span class="final">${Rg} = ${fr(`300${OHM}`,'4')} = 75${OHM}</span>`,'Kehrwert',k===3));
-  if(k>=4) L.push(dLine('P',`${I1} = ${fr(`12${VOLT}`,`100${OHM}`)} = 0,12${AMP}&emsp;${I2} = ${fr(`12${VOLT}`,`300${OHM}`)} = 0,04${AMP}`,'Probe',k===4)
+  const L=[], k=s-P_EX, o1=`100${OHM}`, o3=`300${OHM}`;
+  L.push(dLine('G',`${R1} = ${o1}&emsp;${R2} = ${o3}&emsp;${U} = 12${VOLT}`,'gegeben',k===0));
+  if(k>=1) L.push(cLine(fr('1',sumKw(o1,o3)),'eingesetzt',k===1,true));
+  if(k>=2) L.push(cLine(`${fr('1',`${fr('3',o3)} + ${fr('1',o3)}`)} = ${fr('1',fr('4',o3))}`,'Hauptnenner',k===2));
+  if(k>=3) L.push(cLine(`<span class="final">${fr(o3,'4')} = 75${OHM}</span>`,'Bruch umgedreht',k===3));
+  if(k>=4) L.push(dLine('P',`${I1} = ${fr(`12${VOLT}`,o1)} = 0,12${AMP}&emsp;${I2} = ${fr(`12${VOLT}`,o3)} = 0,04${AMP}`,'Probe',k===4)
      + dLine('',`${Ig} = 0,12${AMP} + 0,04${AMP} = 0,16${AMP}`,'Knotenregel',k===4)
      + dLine('',`${Ig} = ${fr(`12${VOLT}`,`75${OHM}`)} = 0,16${AMP} ✓`,'mit R<sub>ges</sub>',k===4));
   return `<div class="board">${L.join('')}</div>`;
@@ -503,9 +505,9 @@ function ownOut(){
   const mx=Math.max(o.R1,o.R2);
   const bar=(lab,v,c)=>`<div class="barrow"><span>${lab}</span><span class="b" style="width:${(v/mx*100).toFixed(1)}%;background:${c}"></span><span>${fmt(v)} Ω</span></div>`;
   return `<div class="board noanim">
-   ${dLine('1',`${fr('1',Rg)} = ${fr('1',`${fmt(o.R1)}${OHM}`)} + ${fr('1',`${fmt(o.R2)}${OHM}`)}`,'',false)}
-   ${dLine('',`${fr('1',Rg)} = ${fmt(g1)}${OHM}<sup class="u">−1</sup> + ${fmt(g2)}${OHM}<sup class="u">−1</sup> = ${fmt(g1+g2)}${OHM}<sup class="u">−1</sup>`,'',false)}
-   ${dLine('2',`<span class="final">${Rg} = ${fr('1',`${fmt(g1+g2)}${OHM}<sup class="u">−1</sup>`)} = ${fmt(o.Rg)}${OHM}</span>`,'',false)}
+   ${cLine(fr('1',sumKw(`${fmt(o.R1)}${OHM}`,`${fmt(o.R2)}${OHM}`)),'',false,true)}
+   ${cLine(fr('1',`${fmt(g1)}${OHM}<sup class="u">−1</sup> + ${fmt(g2)}${OHM}<sup class="u">−1</sup>`),'',false)}
+   ${cLine(`<span class="final">${fr('1',`${fmt(g1+g2)}${OHM}<sup class="u">−1</sup>`)} = ${fmt(o.Rg)}${OHM}</span>`,'',false)}
    ${dLine('P',`${Ig} = ${fmt(o.I1)}${AMP} + ${fmt(o.I2)}${AMP} = ${fmt(o.Ig)}${AMP}`,'Probe',false)}
   </div>
   <div class="bars">${bar('R<sub>1</sub>',o.R1,SV.q1)}${bar('R<sub>2</sub>',o.R2,SV.q2)}${bar('R<sub>ges</sub>',o.Rg,'#0f172a')}</div>
@@ -514,12 +516,12 @@ function ownOut(){
 function drawCircuits1(){
   const st=STEPS[step];
   const o=st.board==='o'?calcP(own):calcP(EX);
-  o.vals=!!st.vals; if(st.board==='e'&&step<11){ o.rgUnknown=true; }
-  const e={...o}; if(st.board==='e'&&step<11) e.vals=false;
+  o.vals=!!st.vals; if(st.board==='e'&&step<P_KW){ o.rgUnknown=true; }
+  const e={...o}; if(st.board==='e'&&step<P_KW) e.vals=false;
   document.getElementById('svgP').innerHTML=svgParallel(o);
   e.rgUnknown=!e.vals;
   document.getElementById('svgPE').innerHTML=svgEquiv(e,'e','ges');
-  if(st.board==='e'&&step<11){ // Ersatzschaltung: U bekannt, R_ges noch gesucht
+  if(st.board==='e'&&step<P_KW){ // Ersatzschaltung: U bekannt, R_ges noch gesucht
     document.getElementById('svgPE').innerHTML=svgEquiv({...o,vals:false,rgUnknown:true},'e','ges');
   }
   document.getElementById('p1vals').style.display=o.vals?'':'none';
@@ -533,13 +535,13 @@ function render1(){
   document.getElementById('stTitle').innerHTML=st.t;
   const b=document.getElementById('board1');
   b.innerHTML=st.board==='d'?boardDeriv(step):st.board==='e'?boardEx(step):boardOwn();
-  if(step>=5&&st.board==='d') setTimeout(()=>b.querySelectorAll('.cx').forEach(e=>e.classList.add('on')),350);
+  if(step>=8&&st.board==='d') setTimeout(()=>b.querySelectorAll('.cx').forEach(e=>e.classList.add('on')),350);
   document.getElementById('comment1').innerHTML=`<div class="comment">${st.c}</div>`;
   document.getElementById('dots').dataset.pos=`${step+1} / ${STEPS.length}`;
   document.getElementById('dots').innerHTML=STEPS.map((_,i)=>`<button class="dot ${i<step?'done':''} ${i===step?'on':''}" data-i="${i}" aria-label="Schritt ${i+1}"></button>`).join('');
   document.getElementById('prev').disabled=step===0;
   document.getElementById('next').disabled=step===STEPS.length-1;
-  document.getElementById('next').textContent=step===7?'Zum Beispiel ▶':step===12?'Selbst rechnen ▶':'Weiter ▶';
+  document.getElementById('next').textContent=step===P_EQ?'Zum Beispiel ▶':step===P_OWN-1?'Selbst rechnen ▶':'Weiter ▶';
   b.querySelectorAll('input[type=range]').forEach(r=>r.oninput=()=>{ own[r.dataset.k]=+r.value; r.nextElementSibling.textContent=fmt(own[r.dataset.k])+' '+r.dataset.u;
     document.getElementById('ownOut').innerHTML=ownOut(); drawCircuits1(); });
   drawCircuits1();
@@ -549,211 +551,167 @@ document.getElementById('next').onclick=()=>{ if(step<STEPS.length-1){step++;ren
 document.getElementById('prev').onclick=()=>{ if(step>0){step--;render1();} };
 document.getElementById('restart').onclick=()=>{ step=0; render1(); };
 document.getElementById('dots').onclick=e=>{ const d=e.target.closest('.dot'); if(d){ step=+d.dataset.i; render1(); } };
-document.addEventListener('keydown',e=>{ if(tab!==1||e.target.tagName==='INPUT') return;
-  if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){ e.preventDefault(); document.getElementById('next').click(); }
-  if(e.key==='ArrowLeft'||e.key==='PageUp'){ e.preventDefault(); document.getElementById('prev').click(); } });
+document.addEventListener('keydown',e=>{ if(tab===3||e.target.tagName==='INPUT') return; const k=tab===1?'':'2';
+  if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){ e.preventDefault(); document.getElementById('next'+k).click(); }
+  if(e.key==='ArrowLeft'||e.key==='PageUp'){ e.preventDefault(); document.getElementById('prev'+k).click(); } });
 
 /* =================================================================
-   TEIL 2: Reihenschaltung selbst herleiten
+   TEIL 2: Reihenschaltung selbst herleiten (Schritt für Schritt)
    ================================================================= */
 const SE={R1:100,R2:300,U:12}; SE.Rg=SE.R1+SE.R2; SE.I=SE.U/SE.Rg; SE.U1=SE.R1*SE.I; SE.U2=SE.R2*SE.I;
 let meas=false;
-const H={tried:false, solved:false, open:0, worked:[false,false,false,false], used:new Set()};
-const ck={formula:null, num:''};
-const HINTS=['Denkanstoß','Grundideen','Schritte ordnen','Lückentext','Musterlösung'];
-
-function drawCircuits2(hl){
-  document.getElementById('svgS').innerHTML=svgSeries({...SE,vals:meas});
-  document.getElementById('svgSE').innerHTML=svgEquiv({U:SE.U,Rg:SE.Rg,Ig:SE.I,vals:meas,rgUnknown:!H.solved},'f','');
-  setHL(hl||[]);
-}
-document.getElementById('meas').onclick=()=>{ meas=!meas; document.getElementById('meas').classList.toggle('on',meas); document.getElementById('meas').textContent=meas?'Messwerte aus':'Messwerte zeigen'; drawCircuits2(lastHL2); };
-let lastHL2=[];
-
-/* ---- Ergebnis prüfen ---- */
-const FORMS=[
- {h:`${Rg} = ${R1} + ${R2}`,ok:true},
- {h:`${Rg} = ${fr('1',fr('1',R1)+' + '+fr('1',R2))}`,ok:false,fb:'Das ist die Formel für die Parallelschaltung. In der Reihenschaltung muss der Strom durch beide Widerstände nacheinander, das kann den Gesamtwiderstand nicht kleiner machen.'},
- {h:`${Rg} = ${R1} · ${R2}`,ok:false,fb:'Prüf die Einheit: Ω · Ω ergibt Ω², das ist kein Widerstand.'},
- {h:`${Rg} = ${R2} − ${R1}`,ok:false,fb:'Ein zusätzlicher Widerstand kann den Gesamtwiderstand nicht verkleinern. Rechne mal mit zwei gleich großen Widerständen.'}
+const PH2=['Ziel','Voraussetzungen','Kette','Ergebnis'];
+/* Jeder Schritt: Frage q mit Antworten o (genau eine ok). Richtig beantwortet erscheint line an der Tafel. */
+const RS=[
+ {ph:0,t:'Worum geht es?',hl:['sR1','sR2','fRg'],
+  c:`<p>Jetzt sind ${R1} und ${R2} <b>in Reihe</b> geschaltet. Auch hier suchen wir den Ersatzwiderstand ${Rg}: Bei gleicher Spannung ${U} soll derselbe Strom ${I} fließen.</p>
+     <p>Diesmal findest <b>du</b> die Herleitung. Wir gehen vor wie in Teil 1: Erst sammeln wir, was in der Reihenschaltung gilt, dann bauen wir eine Gleichungskette.</p>
+     <p>Bei jedem Schritt wählst du die passende Antwort. Wenn du unsicher bist, hol dir einen Tipp. Schreib die Herleitung mit ins Heft.</p>`},
+ {ph:1,t:'Schritt 1: Wie ist es mit der Stromstärke?',hl:['sI'],
+  q:'Was gilt für die Stromstärken in der Reihenschaltung?',
+  tip:'Schau dir den Schaltplan an: Gibt es einen Knoten, an dem sich der Strom aufteilen kann?',
+  o:[{h:`${I} = ${I1} + ${I2}`,fb:'Das ist die Knotenregel aus Teil 1. In der Reihenschaltung gibt es aber keinen Knoten, an dem sich der Strom aufteilen könnte.'},
+     {h:`${I1} = ${I2} = ${I}`,ok:true,fb:'Genau! Es gibt nur einen Weg. Durch jede Stelle des Stromkreises fließt in einer Sekunde gleich viel Ladung.'},
+     {h:`${I2} ist kleiner als ${I1}, weil ${R1} Strom verbraucht.`,txt:true,fb:'Typische Fehlvorstellung: Strom wird nicht verbraucht. Die Ladung fließt vollständig weiter. Umgewandelt wird Energie.'}],
+  line:{eq:`${I1} = ${I2} = ${I}`,tag:'nur ein Weg'}},
+ {ph:1,t:'Schritt 2: Wie ist es mit der Spannung?',hl:['sU','sU1','sU2','sHi','sMid','sLo'],
+  q:'Was gilt für die Spannungen?',
+  tip:`Schau auf die Potenzialfarben: Zwischen ${R1} und ${R2} gibt es eine dritte Farbe. Die Ladung „verliert“ einen Teil des Potenzials an ${R1} und den Rest an ${R2}.`,
+  o:[{h:`${U1} = ${U2} = ${U}`,fb:'So ist es in der Parallelschaltung. Schau auf die Farben: Hier liegt kein Widerstand direkt zwischen Rot und Grün.'},
+     {h:`${U} = ${U1} + ${U2}`,ok:true,fb:`Genau! Der Potenzialunterschied der Quelle wird in zwei Stufen „abgebaut“: erst an ${R1}, dann an ${R2}. Die Farben zeigen die Zwischenstufe.`},
+     {h:`${U} = ${U1} · ${U2}`,fb:'Prüf die Einheit: V · V ist keine Spannung.'}],
+  line:{eq:`${U} = ${U1} + ${U2}`,tag:'Spannung teilt sich auf'}},
+ {ph:1,t:'Schritt 3: Ohmsches Gesetz für jeden Widerstand',hl:['sR1','sR2','sU1','sU2'],
+  q:`Wie lautet das ohmsche Gesetz für ${R1} und ${R2}, umgestellt nach der Spannung?`,
+  tip:`Starte mit <span class="eqi"><i>R</i> = ${fr('<i>U</i>','<i>I</i>')}</span> und multipliziere beide Seiten mit <i>I</i>. Denk an Zeile 1: Durch beide Widerstände fließt derselbe Strom ${I}.`,
+  o:[{h:`${U1} = ${fr(I,R1)}&emsp;${U2} = ${fr(I,R2)}`,fb:`Stell <i>R</i> = <i>U</i> / <i>I</i> noch einmal um: Multipliziere beide Seiten mit <i>I</i>.`},
+     {h:`${U1} = ${fr(R1,I)}&emsp;${U2} = ${fr(R2,I)}`,fb:`Stell <i>R</i> = <i>U</i> / <i>I</i> noch einmal um: Multipliziere beide Seiten mit <i>I</i>.`},
+     {h:`${U1} = ${R1} · ${I}&emsp;${U2} = ${R2} · ${I}`,ok:true,fb:`Richtig! Weil überall derselbe Strom fließt, steht in beiden Gleichungen dasselbe ${I}.`}],
+  line:{eq:`${U1} = ${R1} · ${I}&emsp;${U2} = ${R2} · ${I}`,tag:'ohmsches Gesetz'}},
+ {ph:2,t:'Schritt 4: Die Kette beginnt',hl:['fRg','fUr','fIg'],
+  q:`Womit beginnt die Gleichungskette für ${Rg}?`,
+  tip:`Wie in Teil 1: mit dem ohmschen Gesetz für den Ersatzwiderstand. An ihm liegt die Spannung ${U}, durch ihn fließt der Strom ${I}.`,
+  o:[{h:`${Rg} = ${fr(U,I)}`,ok:true,fb:'Genau! Das ist das ohmsche Gesetz für den Ersatzwiderstand. Jetzt ersetzen wir Schritt für Schritt, bis rechts nur noch Widerstände stehen.'},
+     {h:`${Rg} = ${U} · ${I}`,fb:'Prüf die Einheit: V · A ist die Einheit der Leistung (Watt), nicht Ω.'},
+     {h:`${Rg} = ${fr(I,U)}`,fb:`Umgekehrt: Widerstand ist Spannung durch Stromstärke, <i>R</i> = <i>U</i> / <i>I</i>.`}],
+  line:{chain:true,first:true,eq:fr(U,I),tag:'ohmsches Gesetz für R<sub>ges</sub>'}},
+ {ph:2,t:'Schritt 5: Spannung einsetzen',hl:['sU','sU1','sU2'],
+  q:`Was setzt du für ${U} ein? Wie geht die Kette weiter?`,
+  tip:'Schau auf Zeile 2: Woraus setzt sich die Spannung der Quelle zusammen?',
+  o:[{h:`= ${fr(U1,I)}`,fb:`${U1} ist nur die Spannung an ${R1}. Für ${U} brauchst du die ganze Spannung der Quelle.`},
+     {h:`= ${fr(`${U1} · ${U2}`,I)}`,fb:'In Zeile 2 steht eine Summe, kein Produkt.'},
+     {h:`= ${fr(`${U1} + ${U2}`,I)}`,ok:true,fb:'Richtig! Die ganze Summe steht über dem Bruchstrich.'}],
+  line:{chain:true,eq:fr(`${U1} + ${U2}`,I),tag:'Zeile 2 eingesetzt'}},
+ {ph:2,t:'Schritt 6: Ohmsches Gesetz einsetzen',hl:['sR1','sR2','sU1','sU2'],
+  q:`Jetzt ersetzt du ${U1} und ${U2}. Wie geht die Kette weiter?`,
+  tip:'Nimm die beiden Gleichungen aus Zeile 3.',
+  o:[{h:`= ${fr(`${R1} · ${I} + ${R2} · ${I}`,I)}`,ok:true,fb:`Richtig! Jetzt kommen keine Spannungen mehr vor, nur noch Widerstände und ${I}.`},
+     {h:`= ${fr(`${fr(I,R1)} + ${fr(I,R2)}`,I)}`,fb:`Prüf Zeile 3: ${U1} = ${R1} · ${I}, nicht ${I} durch ${R1}.`},
+     {h:`= ${fr(`${R1} + ${R2}`,I)}`,fb:`Beim Einsetzen fehlt die Stromstärke: ${U1} = ${R1} · ${I}.`}],
+  line:{chain:true,eq:fr(`${R1} · ${I} + ${R2} · ${I}`,I),tag:'Zeile 3 eingesetzt'}},
+ {ph:2,t:'Schritt 7: Ausklammern',hl:['sI'],
+  q:`Im Zähler steht in beiden Summanden ${I}. Wie geht es weiter?`,
+  tip:`Wie in Teil 1 mit <i>U</i>: Einen Faktor, der in jedem Summanden steht, kann man ausklammern.`,
+  o:[{h:`= ${R1} + ${fr(`${R2} · ${I}`,I)}`,fb:`Aus einer Summe darf man nicht einfach kürzen. Klammere zuerst ${I} aus, dann kannst du kürzen.`},
+     {h:`= ${fr(`${I} · (${R1} + ${R2})`,I)}`,ok:true,fb:`Genau! ${I} ist ausgeklammert. Jetzt steht ${I} im Zähler und im Nenner als Faktor.`},
+     {h:`= ${fr(`${I} · ${R1} · ${R2}`,I)}`,fb:`Ausklammern heißt, den gemeinsamen Faktor vor eine Klammer zu ziehen. Probe durch Ausmultiplizieren: ${I} · ${R1} · ${R2} ist nicht ${R1} · ${I} + ${R2} · ${I}.`}],
+  line:{chain:true,eq:fr(`${cx(I,'s1')} · (${R1} + ${R2})`,cx(I,'s2')),tag:'<i>I</i> ausgeklammert'}},
+ {ph:2,t:'Schritt 8: Kürzen',hl:['fRg'],
+  q:'Wie lautet das Ergebnis?',
+  tip:`${I} steht im Zähler und im Nenner als Faktor. Kürze es.`,
+  o:[{h:`= ${fr('1',fr('1',R1)+' + '+fr('1',R2))}`,fb:'Das ist das Ergebnis der Parallelschaltung aus Teil 1. Hier hast du eine andere Kette.'},
+     {h:`= ${R1} · ${R2}`,fb:'Prüf die Einheit: Ω · Ω ergibt Ω², das ist kein Widerstand.'},
+     {h:`= ${R1} + ${R2}`,ok:true,fb:`Richtig! Die Stromstärke kürzt sich heraus. Der Ersatzwiderstand hängt nur von ${R1} und ${R2} ab.`}],
+  line:{chain:true,eq:`<span class="final">${R1} + ${R2}</span>`,tag:'<i>I</i> gekürzt'}},
+ {ph:3,t:'Was bedeutet das Ergebnis?',hl:['sR1','sR2','fRg'],res:true,
+  c:`<p><b>In der Reihenschaltung addieren sich die Widerstände.</b> ${Rg} ist größer als jeder Einzelwiderstand: Der Strom muss durch beide hindurch.</p>`}
 ];
-function renderCheck(){
-  const c=document.getElementById('checkCard');
-  let s=`<h3>Ergebnis prüfen</h3><div class="mcq"><div class="qq">1. Welche Formel hast du herausgefunden?</div><div class="opts">`;
-  FORMS.forEach((f,i)=>{ const cls=ck.formula===i?(f.ok?'right':'wrong'):''; s+=`<button class="opt ${cls}" data-f="${i}"><span class="eqi">${f.h}</span></button>`; });
-  s+='</div>';
-  if(ck.formula!==null){ const f=FORMS[ck.formula]; s+=f.ok?`<div class="fb ok">Richtig! Mach jetzt noch die Probe mit Messwerten.</div>`:`<div class="fb no">${f.fb}${H.tried?' Nutze die Hilfen unten.':''}</div>`; }
-  s+='</div>';
-  if(ck.formula!==null&&FORMS[ck.formula].ok){
-    s+=`<div class="mcq"><div class="qq">2. Probe: Schalte die Messwerte im Schaltplan ein. Berechne ${Rg} einmal mit deiner Formel und einmal mit ${Rg} = ${fr(U,I)}.</div>
-     <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap"><span class="eqi" style="font-family:'Cambria Math','Times New Roman',serif;font-size:1.1em">${Rg} =</span><input class="numin" id="numIn" inputmode="decimal" value="${ck.num}" placeholder="Wert"><span>Ω</span><button class="btn" id="numBtn">Prüfen</button></div><div id="numFb">${numFb()}</div></div>`;
-  }
-  c.innerHTML=s;
-  c.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ ck.formula=+b.dataset.f; H.tried=true; renderAll2(); });
-  const nb=document.getElementById('numBtn'); if(nb) nb.onclick=()=>{ ck.num=document.getElementById('numIn').value; if(numOk()){ H.solved=true; } renderAll2(); };
+const R_LAST=RS.length-1, R_SOLVED=R_LAST-1; // Schritt mit dem Ergebnis
+const R2S=RS.map(()=>({ans:null,tries:0,tip:false,shown:false}));
+let s2=0, reach2=0, numIn2='';
+const okIdx=st=>st.o.findIndex(o=>o.ok);
+function solved2(i){ const st=RS[i], z=R2S[i]; return !st.q||z.shown||(z.ans!==null&&st.o[z.ans].ok); }
+
+function drawCircuits2(){
+  const st=RS[s2];
+  document.getElementById('svgS').innerHTML=svgSeries({...SE,vals:meas});
+  document.getElementById('svgSE').innerHTML=svgEquiv({U:SE.U,Rg:SE.Rg,Ig:SE.I,vals:meas&&solved2(R_SOLVED),rgUnknown:!solved2(R_SOLVED)},'f','');
+  setHL(st.hl);
+  const lf=document.querySelector('#page2 .left'); if(lastStep2!==s2){ lf.classList.toggle('alt',st.hl.length>0&&st.hl.every(id=>id[0]==='f')); lastStep2=s2; }
 }
-function numOk(){ const v=parseFloat(String(ck.num).replace(',','.')); return Math.abs(v-400)<0.5; }
-function numFb(){ if(ck.num==='') return ''; const v=parseFloat(String(ck.num).replace(',','.'));
-  if(numOk()) return `<div class="fb ok">Beide Wege ergeben 400 Ω: 100 Ω + 300 Ω = 400 Ω und ${fr('12 V','0,03 A')} = 400 Ω. Deine Formel passt zur Messung! Die Musterlösung ist jetzt freigeschaltet, vergleiche sie mit deiner Herleitung.</div>`;
+let lastStep2=-1;
+document.getElementById('meas').onclick=()=>{ meas=!meas; document.getElementById('meas').classList.toggle('on',meas); document.getElementById('meas').textContent=meas?'Messwerte aus':'Messwerte zeigen'; drawCircuits2(); };
+
+function boardSeries(n){
+  const L=[];
+  if(RS[n].res){
+    L.push(dLine('',`<span class="final">${Rg} = ${R1} + ${R2}</span>`,'Ergebnis',true));
+    return `<div class="board">${L.join('')}</div>`;
+  }
+  let nr=0; const pre=[], vis=RS.map((st,i)=>!!st.line&&i<=n&&solved2(i)), chainOn=RS.some((st,i)=>vis[i]&&st.line.chain);
+  RS.forEach((st,i)=>{ if(!vis[i]) return; const cur=i===n, ln=st.line;
+    if(!ln.chain){ nr++; if(chainOn) pre.push([nr,ln.eq]); else L.push(dLine(nr,ln.eq,ln.tag,cur)); }
+    else L.push(cLine(ln.eq+(i===R_SOLVED-1&&solved2(R_SOLVED)&&n>=R_SOLVED?'<span class="op">| <i>I</i> kürzen</span>':''),ln.tag,cur,ln.first)); });
+  if(pre.length) L.unshift(preStrip(pre));
+  if(!L.length) L.push(`<div class="ln cur"><span class="nr">?</span><span class="eq">${Rg} = ?</span><span class="tag">gesucht</span></div>`);
+  return `<div class="board">${L.join('')}</div>`;
+}
+function qCard(i){
+  const st=RS[i], z=R2S[i], ok=solved2(i);
+  let s=`<div class="card"><div class="mcq"><div class="qq">${st.q}</div><div class="opts row">`;
+  st.o.forEach((o,j)=>{ const cls=z.ans===j?(o.ok?'right':'wrong'):(z.shown&&o.ok?'right':''); s+=`<button class="opt ${cls} ${o.txt?'txt':''}" data-j="${j}" ${ok?'disabled':''}><span class="eqi">${o.h}</span></button>`; });
+  s+='</div>';
+  if(z.ans!==null) s+=`<div class="fb ${st.o[z.ans].ok?'ok':'no'}">${st.o[z.ans].fb}${st.o[z.ans].ok||z.shown?'':' Versuch es noch einmal.'}</div>`;
+  if(z.shown&&!(z.ans!==null&&st.o[z.ans].ok)) s+=`<div class="fb info">Lösung: ${st.o[okIdx(st)].fb}</div>`;
+  s+=`</div>`;
+  if(!ok) s+=`<div style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn" id="q2tip">💡 Tipp</button>${z.tries>0?'<button class="btn" id="q2sol">Lösung zeigen</button>':''}</div>`;
+  if(z.tip&&!ok) s+=`<div class="comment">${st.tip}</div>`;
+  return s+'</div>';
+}
+function resultCard(){
+  return `<div class="card" style="margin-top:.6rem"><h3>Probe mit Messwerten</h3>
+   <p style="margin:.2rem 0 .4rem">Schalte im Schaltplan „Messwerte zeigen“ ein. Berechne ${Rg} einmal mit deiner Formel und einmal mit ${Rg} = ${fr(U,I)}.</p>
+   <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap"><span class="eqi">${Rg} =</span><input class="numin" id="numIn" inputmode="decimal" value="${numIn2}" placeholder="Wert"><span>Ω</span><button class="btn" id="numBtn">Prüfen</button></div><div id="numFb">${numFb()}</div></div>
+  <table class="cmp"><tr><th></th><th>Reihenschaltung</th><th>Parallelschaltung</th></tr>
+  <tr><td>Stromstärke</td><td class="eqi">${I1} = ${I2} = ${I}</td><td class="eqi">${Ig} = ${I1} + ${I2}</td></tr>
+  <tr><td>Spannung</td><td class="eqi">${U} = ${U1} + ${U2}</td><td class="eqi">${U1} = ${U2} = ${U}</td></tr>
+  <tr><td>Ersatzwiderstand</td><td class="eqi">${Rg} = ${R1} + ${R2}</td><td class="eqi">${Rg} = ${fr('1',fr('1',R1)+' + '+fr('1',R2))}</td></tr>
+  <tr><td>Vergleich</td><td>größer als jeder Einzelwiderstand</td><td>kleiner als jeder Einzelwiderstand</td></tr></table>`;
+}
+function numFb(){ if(numIn2==='') return ''; const v=parseFloat(String(numIn2).replace(',','.'));
+  if(Math.abs(v-400)<0.5) return `<div class="fb ok">Beide Wege ergeben 400 Ω: 100 Ω + 300 Ω = 400 Ω und ${fr('12 V','0,03 A')} = 400 Ω. Die Formel passt zur Messung!</div>`;
   if(Math.abs(v-75)<1) return `<div class="fb no">75 Ω wäre das Ergebnis der Parallelschaltung. Hier sind die Widerstände in Reihe.</div>`;
   if(Math.abs(v-0.0025)<0.001||Math.abs(v-0.4)<0.01) return `<div class="fb no">Fast: Prüf, ob du ${U} durch ${I} geteilt hast und nicht umgekehrt, und ob die Einheiten stimmen.</div>`;
   return `<div class="fb no">Das passt noch nicht. Hast du die Messwerte eingeschaltet? ${U} = 12 V, ${I} = 0,03 A.</div>`; }
 
-/* ---- Hilfen ---- */
-function unlocked(k){ if(!H.tried) return false; if(k===0) return true; if(k===4) return H.solved||H.worked[3]; return H.worked[k-1]; }
-function renderHints(){
-  const used=[...H.used].filter(k=>k<4).length;
-  document.getElementById('hstatus').innerHTML=H.tried?`<b>Hilfen</b> (jede neue Hilfe öffnet sich, wenn du die vorige bearbeitet hast) · genutzt: ${used} von 4`:`<b>Hilfen</b> öffnen sich nach deinem ersten Versuch bei „Ergebnis prüfen“.`;
-  document.getElementById('hints').innerHTML=HINTS.map((h,k)=>{ const u=unlocked(k);
-    return `<button class="hbtn ${H.open===k+1?'on':''} ${H.used.has(k)?'used':''}" data-k="${k}" ${u?'':'disabled'}>${u?'':'<span class="lock">🔒</span>'}${k<4?'Hilfe '+(k+1)+': ':''}${h}</button>`; }).join('');
-  document.querySelectorAll('.hbtn').forEach(b=>b.onclick=()=>{ const k=+b.dataset.k; H.open=H.open===k+1?0:k+1; H.used.add(k); if(k===0) H.worked[0]=true; renderAll2(); });
-  const body=document.getElementById('hintBody');
-  body.innerHTML=H.open?`<div class="card">${[hint1,hint2,hint3,hint4,hint5][H.open-1]()}</div>`:'';
-  if(H.open===3) bindDrag(); if(H.open===2) bindMC(); if(H.open===4) bindGaps();
+function render2(){
+  const st=RS[s2], sc=document.getElementById('scroll2'), keep=sc.dataset.s==String(s2), y=sc.scrollTop;
+  document.getElementById('phases2').innerHTML=PH2.map((p,i)=>`<span class="ph ${i===st.ph?'on':''}">${p}</span>`).join('');
+  document.getElementById('stTitle2').innerHTML=st.t;
+  const b=document.getElementById('board2');
+  b.innerHTML=boardSeries(s2);
+  if(s2>=R_SOLVED&&solved2(R_SOLVED)) setTimeout(()=>b.querySelectorAll('.cx').forEach(e=>e.classList.add('on')),350);
+  const com=st.c?`<div class="comment">${st.c}</div>`:'';
+  document.getElementById('q2').innerHTML=st.q?qCard(s2):st.res?com+resultCard():'';
+  document.getElementById('comment2').innerHTML=st.res?'':com;
+  const d=document.getElementById('dots2'); d.dataset.pos=`${s2+1} / ${RS.length}`;
+  d.innerHTML=RS.map((_,i)=>`<button class="dot ${i<s2?'done':''} ${i===s2?'on':''}" data-i="${i}" ${i>reach2?'disabled':''} aria-label="Schritt ${i+1}"></button>`).join('');
+  document.getElementById('prev2').disabled=s2===0;
+  const nx=document.getElementById('next2'); nx.disabled=s2===R_LAST||!solved2(s2);
+  nx.textContent=s2===0?'Los geht’s ▶':'Weiter ▶';
+  document.querySelectorAll('#q2 .opt').forEach(o=>o.onclick=()=>{ const z=R2S[s2]; z.ans=+o.dataset.j; z.tries++; if(solved2(s2)) z.tip=false; render2(); showFb(); });
+  const tp=document.getElementById('q2tip'); if(tp) tp.onclick=()=>{ R2S[s2].tip=!R2S[s2].tip; render2(); };
+  const so=document.getElementById('q2sol'); if(so) so.onclick=()=>{ R2S[s2].shown=true; render2(); showFb(); };
+  const nb=document.getElementById('numBtn'); if(nb){ const inp=document.getElementById('numIn');
+    nb.onclick=()=>{ numIn2=inp.value; render2(); }; inp.onkeydown=e=>{ if(e.key==='Enter') nb.click(); }; }
+  drawCircuits2();
+  if(keep) sc.scrollTop=y; else { sc.scrollTop=0; sc.dataset.s=s2; }
 }
-/* Hilfe 1 */
-function hint1(){ return `<h3>Hilfe 1: Denkanstoß</h3>
- <p>Die Herleitung in Teil 1 hatte immer denselben Aufbau. Stell dir dieselben Fragen für die Reihenschaltung:</p>
- <table class="cmp"><tr><th></th><th>Parallelschaltung (Teil 1)</th><th>Reihenschaltung</th></tr>
- <tr><td>Was ist überall gleich?</td><td>die Spannung</td><td>?</td></tr>
- <tr><td>Was teilt sich auf / addiert sich?</td><td>die Stromstärke</td><td>?</td></tr>
- <tr><td>Ohmsches Gesetz</td><td><span class="eqi"><i>I</i> = ${fr('<i>U</i>','<i>R</i>')}</span></td><td>diesmal nach <i>U</i> umstellen: <span class="eqi"><i>U</i> = ?</span></td></tr>
- <tr><td>Einsetzen und vereinfachen</td><td>durch <i>U</i> teilen</td><td>durch ? teilen</td></tr></table>
- <p class="note">Tipp: Schalte die Messwerte im Schaltplan ein und schau auf die Potenzialfarben. Zwischen ${R1} und ${R2} gibt es eine dritte Farbe!</p>`; }
-/* Hilfe 2 */
-const MC=[
- {q:'Wie verhält sich die Stromstärke in der Reihenschaltung?',hl:['sI'],o:[
-  {h:`${I} = ${I1} + ${I2}`,fb:'Das ist die Knotenregel. In der Reihenschaltung gibt es aber keinen Knoten, an dem sich der Strom aufteilen könnte.'},
-  {h:`${I1} = ${I2} = ${I}`,ok:true,fb:'Genau! Es gibt nur einen Weg. Durch jede Stelle des Stromkreises fließt in einer Sekunde gleich viel Ladung.'},
-  {h:`${I2} ist kleiner als ${I1}, weil ${R1} Strom verbraucht.`,fb:'Typische Fehlvorstellung: Strom wird nicht verbraucht. Die Ladung fließt vollständig weiter. Umgewandelt wird Energie.'}]},
- {q:'Wie verhält sich die Spannung?',hl:['sU','sU1','sU2','sHi','sMid','sLo'],o:[
-  {h:`${U1} = ${U2} = ${U}`,fb:'So ist es in der Parallelschaltung. Schau auf die Farben: Hier liegt kein Widerstand direkt zwischen Rot und Grün.'},
-  {h:`${U} = ${U1} · ${U2}`,fb:'Prüf die Einheit: V · V ist keine Spannung.'},
-  {h:`${U} = ${U1} + ${U2}`,ok:true,fb:'Genau! Der Potenzialunterschied der Quelle wird in zwei Stufen „abgebaut“: erst an R₁, dann an R₂. Die Farben zeigen die Zwischenstufe.'}]},
- {q:'Wie lautet das ohmsche Gesetz für R₁, aufgelöst nach der Spannung?',hl:['sR1','sU1'],o:[
-  {h:`${U1} = ${fr(I,R1)}`,fb:'Stell R = U / I noch einmal um: Multipliziere beide Seiten mit I.'},
-  {h:`${U1} = ${R1} · ${I}`,ok:true,fb:'Richtig! Genauso gilt U₂ = R₂ · I und für den Ersatzwiderstand U = R_ges · I. Jetzt kannst du alles in U = U₁ + U₂ einsetzen.'},
-  {h:`${U1} = ${fr(R1,I)}`,fb:'Stell R = U / I noch einmal um: Multipliziere beide Seiten mit I.'}]}
-];
-const mcAns=[null,null,null];
-function hint2(){ let s=`<h3>Hilfe 2: Grundideen</h3>`;
-  MC.forEach((m,i)=>{ s+=`<div class="mcq"><div class="qq">${i+1}. ${m.q}</div><div class="opts">`;
-    m.o.forEach((o,j)=>{ const cls=mcAns[i]===j?(o.ok?'right':'wrong'):''; s+=`<button class="opt ${cls}" data-i="${i}" data-j="${j}"><span class="eqi">${o.h}</span></button>`; });
-    s+='</div>'; if(mcAns[i]!==null){ const o=m.o[mcAns[i]]; s+=`<div class="fb ${o.ok?'ok':'no'}">${o.fb}</div>`; } s+='</div>'; });
-  return s; }
-function bindMC(){ document.querySelectorAll('#hintBody .opt').forEach(b=>b.onclick=()=>{ const i=+b.dataset.i,j=+b.dataset.j; mcAns[i]=j; H.worked[1]=true;
-  if(MC[i].o[j].ok){ lastHL2=MC[i].hl; } renderAll2(); }); }
-/* Hilfe 3: Ziehen */
-const CARDS=[
- {id:'A',h:`${I1} = ${I2} = ${I}`},
- {id:'B',h:`${U} = ${U1} + ${U2}`},
- {id:'C',h:`${U1} = ${R1} · ${I}&ensp;${U2} = ${R2} · ${I}&ensp;${U} = ${Rg} · ${I}`},
- {id:'D',h:`${Rg} · ${I} = ${R1} · ${I} + ${R2} · ${I}`},
- {id:'E',h:`${Rg} = ${R1} + ${R2}`},
- {id:'X1',h:`${I} = ${I1} + ${I2}`,why:'gilt am Knoten der Parallelschaltung'},
- {id:'X2',h:`${U1} = ${U2} = ${U}`,why:'gilt in der Parallelschaltung'},
- {id:'X3',h:`${fr('1',Rg)} = ${fr('1',R1)} + ${fr('1',R2)}`,why:'gehört zur Parallelschaltung'}
-];
-const SLOTLAB=['Was ist gleich? / Was addiert sich?','Was ist gleich? / Was addiert sich?','ohmsches Gesetz, nach U umgestellt','in die Spannungsgleichung eingesetzt','durch I geteilt'];
-const slots=[null,null,null,null,null]; let poolOrder=['D','X2','B','E','X1','C','X3','A']; let slotState=null; let selCard=null;
-function cardHTML(id){ const c=CARDS.find(c=>c.id===id); return `<span class="dc ${selCard===id?'sel':''}" data-c="${id}">${c.h}</span>`; }
-function hint3(){
-  let s=`<h3>Hilfe 3: Schritte ordnen</h3><p style="margin:.2rem 0 .4rem">Zieh die Gleichungen in die richtige Reihenfolge (oder tippe erst eine Karte und dann ein Feld an). <b>Drei Karten gehören nicht dazu.</b></p><div class="slots">`;
-  slots.forEach((c,i)=>{ const st=slotState?slotState[i]:''; s+=`<div class="slot"><span class="nr">${i+1}</span><div class="drop ${st}" data-s="${i}">${c?cardHTML(c):`<span class="ph2">${SLOTLAB[i]}</span>`}</div></div>`; });
-  s+=`</div><div class="pool" data-s="pool">${poolOrder.filter(id=>!slots.includes(id)).map(cardHTML).join('')}</div>
-  <div style="display:flex;gap:.5rem;margin-top:.5rem"><button class="btn primary" id="ordCheck">Prüfen</button><button class="btn" id="ordReset">Zurücksetzen</button></div><div id="ordFb">${ordFb||''}</div>`;
-  return s; }
-let ordFb='';
-function checkOrder(){
-  slotState=slots.map((c,i)=>{ if(!c) return 'wrong'; if(i<2) return (c==='A'||c==='B')?'right':'wrong'; return c===['C','D','E'][i-2]?'right':'wrong'; });
-  if(slots[0]&&slots[0]===slots[1]) slotState[1]='wrong';
-  const wrongX=slots.filter(c=>c&&c.startsWith('X')).map(id=>CARDS.find(c=>c.id===id));
-  const allOk=slotState.every(s=>s==='right');
-  H.worked[2]=true;
-  if(allOk) ordFb=`<div class="fb ok">Alles richtig! Ob du mit dem Strom oder mit der Spannung anfängst, ist egal. Im letzten Schritt kürzt sich ${I} heraus, weil es in jedem Summanden steht.</div>`;
-  else ordFb=`<div class="fb no">Noch nicht ganz. Rote Felder stimmen nicht.${wrongX.length?' '+wrongX.map(c=>`<span class="eqi">${c.h}</span> ${c.why}.`).join(' '):''}</div>`;
-  renderAll2();
-}
-function placeCard(id,target){
-  const from=slots.indexOf(id);
-  if(target==='pool'){ if(from>=0) slots[from]=null; }
-  else { const t=+target; const prev=slots[t]; if(from>=0) slots[from]=prev; slots[t]=id; }
-  slotState=null; ordFb=''; selCard=null; renderAll2();
-}
-function bindDrag(){
-  const body=document.getElementById('hintBody');
-  body.querySelector('#ordCheck').onclick=checkOrder;
-  body.querySelector('#ordReset').onclick=()=>{ slots.fill(null); slotState=null; ordFb=''; selCard=null; renderAll2(); };
-  body.querySelectorAll('.drop,.pool').forEach(d=>d.addEventListener('click',e=>{ if(e.target.closest('.dc')) return; if(selCard){ placeCard(selCard,d.dataset.s); } }));
-  body.querySelectorAll('.dc').forEach(el=>{
-    el.addEventListener('pointerdown',e=>{
-      e.preventDefault(); const id=el.dataset.c; const sx=e.clientX, sy=e.clientY; let ghost=null, over=null;
-      const r=el.getBoundingClientRect(); const ox=sx-r.left, oy=sy-r.top;
-      const move=ev=>{ if(!ghost&&Math.hypot(ev.clientX-sx,ev.clientY-sy)>6){ ghost=el.cloneNode(true); ghost.classList.add('ghost'); ghost.style.width=r.width+'px'; document.body.appendChild(ghost); el.classList.add('dragging'); }
-        if(ghost){ ghost.style.left=(ev.clientX-ox)+'px'; ghost.style.top=(ev.clientY-oy)+'px';
-          const t=document.elementFromPoint(ev.clientX,ev.clientY); const d=t&&t.closest('.drop,.pool');
-          if(over&&over!==d) over.classList.remove('over'); over=d; if(d) d.classList.add('over'); } };
-      const up=ev=>{ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up); window.removeEventListener('pointercancel',up);
-        if(ghost){ ghost.remove(); el.classList.remove('dragging'); if(over){ over.classList.remove('over'); placeCard(id,over.dataset.s); } }
-        else { // Antippen: auswählen bzw. Auswahl wieder lösen
-          if(selCard&&selCard!==id){ const tgt=el.closest('.drop'); if(tgt){ placeCard(selCard,tgt.dataset.s); return; } }
-          selCard=selCard===id?null:id; renderAll2(); } };
-      window.addEventListener('pointermove',move); window.addEventListener('pointerup',up); window.addEventListener('pointercancel',up);
-    });
-  });
-}
-/* Hilfe 4: Lückentext */
-const GAPS=[
- {o:['Stromstärke','Spannung'],a:0},
- {o:['die Summe','die Differenz','das Produkt'],a:0},
- {o:[I,U,R2],a:0},
- {o:[`${R2} · ${I}`,`${U2} · ${I}`,fr(R2,I)],a:0},
- {o:[I,U,R1],a:0},
- {o:[`${R1} + ${R2}`,fr('1',fr('1',R1)+' + '+fr('1',R2)),`${R1} · ${R2}`],a:0}
-];
-const gapAns=GAPS.map(()=>null); let gapChecked=false;
-function gap(i){ const v=gapAns[i]; const cls=gapChecked&&v!==null?(v===GAPS[i].a?'right':'wrong'):(gapChecked?'wrong':''); return `<button class="gap ${cls}" data-g="${i}">${v===null?'…':GAPS[i].o[v]}</button>`; }
-function hint4(){ return `<h3>Hilfe 4: Lückentext</h3><p style="margin:.2rem 0">Tippe auf eine Lücke und wähle aus.</p>
- <div class="gaptext">In der Reihenschaltung ist die ${gap(0)} überall gleich: <span class="eqi">${I1} = ${I2} = ${I}</span>.<br>
- Die Gesamtspannung ist ${GAPS[1]&&''}${gap(1)} der Teilspannungen: <span class="eqi">${U} = ${U1} + ${U2}</span>.<br>
- Nach dem ohmschen Gesetz gilt <span class="eqi">${U1} = ${R1} ·</span> ${gap(2)}, <span class="eqi">${U2} = ${R2} · ${I}</span> und <span class="eqi">${U} = ${Rg} · ${I}</span>.<br>
- Eingesetzt: <span class="eqi">${Rg} · ${I} = ${R1} · ${I} +</span> ${gap(3)}.<br>
- Wir teilen beide Seiten durch ${gap(4)} und erhalten: <span class="eqi">${Rg} =</span> ${gap(5)}.</div>
- <div style="margin-top:.5rem"><button class="btn primary" id="gapCheck">Prüfen</button></div>
- ${gapChecked?(gapAns.every((v,i)=>v===GAPS[i].a)?`<div class="fb ok">Alles richtig! Trag dein Ergebnis oben bei „Ergebnis prüfen“ ein.</div>`:`<div class="fb no">Rote Lücken stimmen noch nicht. Bei „Summe“ hilft ein Blick auf die Gleichung dahinter.</div>`):''}`; }
-function bindGaps(){
-  document.querySelectorAll('#hintBody .gap').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const i=+b.dataset.g; const m=document.getElementById('menu');
-    m.innerHTML=GAPS[i].o.map((o,j)=>`<button data-j="${j}">${o}</button>`).join(''); m.style.display='flex';
-    const r=b.getBoundingClientRect(); const mh=m.offsetHeight, mw=m.offsetWidth;
-    m.style.left=Math.max(4,Math.min(innerWidth-mw-4,r.left))+'px'; m.style.top=(r.bottom+mh+4<innerHeight?r.bottom+4:r.top-mh-4)+'px';
-    m.querySelectorAll('button').forEach(o=>o.onclick=()=>{ gapAns[i]=+o.dataset.j; gapChecked=false; m.style.display='none'; renderAll2(); }); });
-  document.getElementById('gapCheck').onclick=()=>{ gapChecked=true; H.worked[3]=true; renderAll2(); };
-}
-document.addEventListener('click',e=>{ const m=document.getElementById('menu'); if(!m.contains(e.target)) m.style.display='none'; });
-/* Musterlösung */
-function hint5(){
-  return `<h3>Musterlösung</h3><div class="board sol">
-  ${dLine(1,`${I1} = ${I2} = ${I}`,'nur ein Weg',false)}
-  ${dLine(2,`${U} = ${U1} + ${U2}`,'Spannung teilt sich auf',false)}
-  ${dLine(3,`${U1} = ${R1} · ${I}&emsp;${U2} = ${R2} · ${I}&emsp;${U} = ${Rg} · ${I}`,'ohmsches Gesetz',false)}
-  ${dLine(4,`${Rg} · ${cx(I,'s1')} = ${R1} · ${cx(I,'s2')} + ${R2} · ${cx(I,'s3')}<span class="op">| : <i>I</i></span>`,'3 in 2 eingesetzt',false)}
-  ${dLine(5,`<span class="final">${Rg} = ${R1} + ${R2}</span>`,'Ergebnis',true)}
-  </div>
-  <div class="comment"><p><b>In der Reihenschaltung addieren sich die Widerstände.</b> ${Rg} ist größer als jeder Einzelwiderstand: Der Strom muss durch beide hindurch.</p>
-  <p>Beispiel: 100 Ω + 300 Ω = 400 Ω. Bei 12 V fließen dann ${fr('12 V','400 Ω')} = 0,03 A.</p></div>
-  <table class="cmp"><tr><th></th><th>Reihenschaltung</th><th>Parallelschaltung</th></tr>
-  <tr><td>Stromstärke</td><td class="eqi">${I1} = ${I2} = ${I}</td><td class="eqi">${Ig} = ${I1} + ${I2}</td></tr>
-  <tr><td>Spannung</td><td class="eqi">${U} = ${U1} + ${U2}</td><td class="eqi">${U1} = ${U2} = ${U}</td></tr>
-  <tr><td>Ersatzwiderstand</td><td class="eqi">${Rg} = ${R1} + ${R2}</td><td class="eqi">${fr('1',Rg)} = ${fr('1',R1)} + ${fr('1',R2)}</td></tr>
-  <tr><td>Vergleich</td><td>größer als jeder Einzelwiderstand</td><td>kleiner als jeder Einzelwiderstand</td></tr></table>`;
-}
-function renderAll2(){
-  const sc=document.getElementById('scroll2'), y=sc.scrollTop;
-  renderCheck(); renderHints(); drawCircuits2(lastHL2);
-  if(H.open===5) setTimeout(()=>document.querySelectorAll('#hintBody .cx').forEach(e=>e.classList.add('on')),300);
-  sc.scrollTop=y;
-}
-function render2(){ renderAll2(); }
+function showFb(){ const f=[...document.querySelectorAll('#q2 .fb')].pop(); if(f) f.scrollIntoView({block:'nearest',behavior:'smooth'}); }
+document.getElementById('next2').onclick=()=>{ if(s2<R_LAST&&solved2(s2)){ s2++; reach2=Math.max(reach2,s2); render2(); } };
+document.getElementById('prev2').onclick=()=>{ if(s2>0){ s2--; render2(); } };
+document.getElementById('restart2').onclick=()=>{ s2=0; reach2=0; numIn2=''; R2S.forEach(z=>Object.assign(z,{ans:null,tries:0,tip:false,shown:false})); render2(); };
+document.getElementById('dots2').onclick=e=>{ const d=e.target.closest('.dot'); if(d&&!d.disabled){ s2=+d.dataset.i; render2(); } };
 
 /* =================================================================
    TEIL 3: Übungsaufgaben, gestaffelt
