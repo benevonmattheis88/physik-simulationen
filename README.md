@@ -9,6 +9,8 @@ Physik-Simulationen für den Schulunterricht, erstellt mit Claude. In HTML, pass
 Die Ordner sind erst nach Thema, dann nach Stufe (Unterstufe, Mittelstufe, Oberstufe) gegliedert. Darin liegen die Simulationen.
 
 ```
+index.html                    Startseite mit allen Simulationen
+impressum.html                Impressum und Datenschutzhinweis
 mechanik/
   oberstufe/
     Kreisbewegung.html
