@@ -137,6 +137,7 @@ body.big #title{font-size:17px}
   body.nopanel .scene{min-width:44px}
 }
 @media (max-width:1100px){#bottom{grid-template-columns:176px 108px minmax(0,1fr) 300px}.tool{font-size:9px}#selRead{min-width:100px}.seg button,.tbtn{padding:6px 8px;font-size:12.5px}}
+@media (orientation:portrait) and (max-width:900px){.seg button,.tbtn{padding:6px 6px;font-size:12px}} /* iPad hochkant: alle Knöpfe in einer Zeile */
 </style>
 </head>
 <body>
@@ -160,7 +161,7 @@ body.big #title{font-size:17px}
     <div id="topbar">
       <div id="title">Stromkreis</div>
       <div class="seg" id="segView"><button data-v="sym" class="on">Symbole</button><button data-v="icon">Bauteile</button></div>
-      <div class="seg" id="segSide"><button data-v="off" class="on">Schaltung</button><button data-v="water">+ Wasser</button><button data-v="height">+ Höhe</button><button data-v="energy">+ Energie</button><button data-v="meas">+ Messreihe</button></div>
+      <div class="seg" id="segSide"><button data-v="off" class="on">Schaltung</button><button data-v="water">+ Wasser</button><button data-v="height">+ Höhe</button><button data-v="energy">+ Energie</button><button data-v="kpk">+ KPK-Energie</button><button data-v="meas">+ Messreihe</button></div>
       <button class="tbtn" id="btnView">⚙ Ansicht</button>
       <button class="tbtn" id="btnBig" title="Größere Schrift für Fernseher und Beamer">A+</button>
       <button class="tbtn" id="btnPanel" title="Bedienfeld ein- oder ausblenden">▤</button>
@@ -251,7 +252,7 @@ body.big #title{font-size:17px}
     <li><b>Höhenmodell</b>: Höhe ≙ Potenzial. Das Netzgerät hebt die Ladung an, in den Bauteilen geht es bergab. Gezeigt wird die technische Stromrichtung.</li>
     <li><b>↻ Masche</b>: zeigt einen geschlossenen Weg. Die Summe der Anstiege ist gleich der Summe der Abfälle (Maschenregel).</li>
     <li><b>Energiefluss</b> (nach KPK): Pfeilbreite ∝ Energiestromstärke P. In der Schaltung fließt durch ein Kabel der Energiestrom P = φ · I, bezogen auf die Erdung.</li>
-    <li><b>Energieflussdiagramm</b> (+ Energie): Energie = grüner Pfeil, Träger = gelbe Linie, Energieumlader = rotes Kästchen. Erhaltene Träger (Elektrizität, Drehimpuls) laufen auf einer geschlossenen Bahn; Entropie und Licht entstehen im Umlader und verlassen ihn.</li>
+    <li><b>KPK-Energieflussdiagramm</b> (+ KPK-Energie): Energie = grüner Pfeil, Träger = gelbe Linie, Energieumlader = rotes Kästchen. Erhaltene Träger (Elektrizität, Drehimpuls) laufen auf einer geschlossenen Bahn; Entropie und Licht entstehen im Umlader und verlassen ihn.</li>
   </ul>
   </div>
   </div>
@@ -1351,15 +1352,80 @@ function drawWaterPanel(){
   lines.forEach((t,i)=>c.fillText(t,12,side._h-62+i*18));
 }
 
-/* ===================== Energieflussdiagramm (KPK) ===================== */
+/* ===================== Energieflussdiagramm (Energie, Pfeilfarbe nach Träger) ===================== */
+function drawEnergyPanel(){
+  const c=sctx, W=side._w, H=side._h; c.setTransform(DPR,0,0,DPR,0,0); FK=st.big?1.25:1; c.clearRect(0,0,W,H);
+  c.fillStyle='#1d2433'; c.font=fnt('700',14,'-apple-system,Arial'); c.textAlign='left'; c.textBaseline='top';
+  c.fillText('Energieflussdiagramm',12,10);
+  c.font=fnt('500',12,'-apple-system,Arial'); c.fillStyle='#5d6779'; c.fillText('Pfeilbreite ∝ Energiestromstärke P',12,28);
+  const src=S.edges.find(e=>e.type==='src');
+  const Pin=st.fuse?0:st.U*src.I; const Pi=st.fuse?0:src.I*src.I*Math.max(st.Ri,0);
+  const recv=[];
+  for(const e of S.edges){ if(e.type==='comp'&&!e.comp.open&&!e.comp.burned){ recv.push({e, name:compName(e.comp), P:Math.max(0,powerOf(e)), lamp:e.comp.kind==='L', motor:e.comp.kind==='Mo'}); } }
+  let Pw=0; for(const e of S.edges){ if(e.type==='wire'&&resOf(e)>0) Pw+=Math.max(0,powerOf(e)); }
+  if(Pw>0.0005) recv.push({name:['Kabel',''],P:Pw,cable:true});
+  const top=58, bot=H-28, n=Math.max(1,recv.length);
+  const maxW=Math.min(70,(bot-top)/n*0.55);
+  let k=12; if(Pin*k>maxW*n*0.9) k=maxW*n*0.9/Math.max(Pin,1e-9); // px pro W
+  const sx=W*0.30, bxw=Math.min(110,W*0.22), cy=(top+bot)/2;
+  // Eingang aus dem Netz
+  const wIn=Math.max(1.5,Pin*k);
+  arrowH(c,10,sx-bxw/2-2,cy,wIn,'rgba(234,88,12,.85)');
+  c.fillStyle='#7c2d12'; c.font=fnt('600',11,'Arial'); c.textAlign='left'; c.textBaseline='bottom';
+  c.fillText('Energie',10,Math.min(cy-wIn/2-16,cy-50)); c.fillText('Träger: Elektrizität',10,Math.min(cy-wIn/2-3,cy-37));
+  c.textBaseline='top'; c.fillText(fP(Pin),10,cy+wIn/2+4);
+  // Netzgerät
+  box(c,sx,cy,bxw,64,'Netzgerät',fP(Pin));
+  if(Pi>0.0005){ const w=Math.max(1.5,Pi*k); arrowV(c,sx,cy+32,cy+90,w,'rgba(220,38,38,.75)'); c.fillStyle='#7f1d1d'; c.font=fnt('600',11,'Arial'); c.textAlign='left'; c.textBaseline='top'; c.fillText('Entropie (Wärme) '+fP(Pi),sx+w/2+6,cy+60); }
+  // Verzweigung zu den Empfängern
+  const rx=W*0.62, rbw=Math.min(90,W*0.19);
+  let Pout=recv.reduce((a,r)=>a+r.P,0); const wTot=Math.max(1.5,Pout*k);
+  let yStack=cy-wTot/2;
+  recv.forEach((r,i)=>{
+    const ry=top+(bot-top)*(i+0.5)/n; const w=Math.max(r.P>0.0005?1.5:0.8,r.P*k);
+    const y0=yStack+w/2; yStack+=w;
+    band(c,sx+bxw/2,y0,rx-rbw/2-12,ry,w,'rgba(234,88,12,.85)');
+    box(c,rx,ry,rbw,52,r.name[0]==='Kabel'?'Kabel':null,fP(r.P),r.name);
+    // Ausgänge
+    const ex=rx+rbw/2+2, eL=Math.max(20,(W-ex-66)/0.6);
+    if(r.motor&&mechFrac(r.e)>0){ const m=mechFrac(r.e); const wm=Math.max(1.2,r.P*m*k), wh=Math.max(1.5,r.P*(1-m)*k);
+      arrowH(c,ex,ex+eL*0.6,ry-wh/2-4,wm,'rgba(37,99,235,.85)'); arrowH(c,ex,ex+eL*0.6,ry+wm/2+4,wh,'rgba(220,38,38,.75)');
+      c.font=fnt('600',10.5,'Arial'); c.textAlign='left'; c.textBaseline='middle'; c.fillStyle='#1e3a8a'; c.fillText('Drehimpuls',ex+eL*0.62,ry-wh/2-4); c.fillStyle='#7f1d1d'; c.fillText('Entropie',ex+eL*0.62,ry+wm/2+4);
+    } else if(r.lamp){ const eta=lightFrac(r.e); const wl=Math.max(r.P*eta>0.0005?1.2:0,r.P*eta*k), wh=Math.max(1.5,r.P*(1-eta)*k);
+      arrowH(c,ex,ex+eL*0.6,ry-wh/2-4,Math.max(wl,1.2),'rgba(234,179,8,.95)'); arrowH(c,ex,ex+eL*0.6,ry+wl/2+4,wh,'rgba(220,38,38,.75)');
+      c.font=fnt('600',10.5,'Arial'); c.textAlign='left'; c.textBaseline='middle'; c.fillStyle='#854d0e'; c.fillText('Licht',ex+eL*0.62,ry-wh/2-4); c.fillStyle='#7f1d1d'; c.fillText('Entropie',ex+eL*0.62,ry+wl/2+4);
+    } else { const wh=Math.max(1.5,r.P*k); arrowH(c,ex,ex+eL*0.6,ry,wh,'rgba(220,38,38,.75)'); c.font=fnt('600',10.5,'Arial'); c.textAlign='left'; c.textBaseline='middle'; c.fillStyle='#7f1d1d'; c.fillText('Entropie',ex+eL*0.62,ry); }
+  });
+  // Maßstab
+  c.fillStyle='rgba(234,88,12,.85)'; const w1=Math.max(1,k*1); c.fillRect(12,H-18-w1/2,26,w1); c.fillStyle='#5d6779'; c.font=fnt('500',11,'Arial'); c.textAlign='left'; c.textBaseline='middle'; c.fillText('≙ 1 W',42,H-18);
+  c.fillText('Wärme wird im KPK mit dem Träger Entropie dargestellt.',90,H-18);
+}
+function box(c,x,y,w,h,title,sub,name){
+  c.fillStyle='#fff'; c.strokeStyle='#1d2433'; c.lineWidth=2; roundRect(c,x-w/2,y-h/2,w,h,8); c.fill(); c.stroke();
+  c.fillStyle='#1d2433';
+  if(name&&!title){ subText(c,name[0],name[1],x,y-(sub?9:0),17,'center'); if(sub){ c.font=fnt('500',12,'Arial'); c.fillStyle='#5d6779'; c.textAlign='center'; c.textBaseline='middle'; c.fillText(sub,x,y+13);} }
+  else { c.font=fnt('700',13,'Arial'); c.textAlign='center'; c.textBaseline='middle'; c.fillText(title,x,y-(sub?8:0)); if(sub){ c.font=fnt('500',12,'Arial'); c.fillStyle='#5d6779'; c.fillText(sub,x,y+10);} }
+}
+function arrowH(c,x0,x1,y,w,col){ if(w<=0) return; const hl=Math.min(14,6+w*0.4); c.fillStyle=col; c.fillRect(x0,y-w/2,Math.max(0,x1-x0-hl),w);
+  c.beginPath(); c.moveTo(x1,y); c.lineTo(x1-hl,y-w/2-5); c.lineTo(x1-hl,y+w/2+5); c.closePath(); c.fill(); flowStripes(c,x0,y,x1-hl,y,w); }
+function arrowV(c,x,y0,y1,w,col){ const hl=Math.min(14,6+w*0.4); c.fillStyle=col; c.fillRect(x-w/2,y0,w,y1-y0-hl); c.beginPath(); c.moveTo(x,y1); c.lineTo(x-w/2-5,y1-hl); c.lineTo(x+w/2+5,y1-hl); c.closePath(); c.fill(); }
+function band(c,x0,y0,x1,y1,w,col){
+  c.strokeStyle=col; c.lineWidth=w; c.lineCap='butt'; const mx=(x0+x1)/2;
+  c.beginPath(); c.moveTo(x0,y0); c.bezierCurveTo(mx,y0,mx,y1,x1,y1); c.stroke();
+  const hl=Math.min(14,6+w*0.4); c.fillStyle=col; c.beginPath(); c.moveTo(x1+hl,y1); c.lineTo(x1,y1-w/2-5); c.lineTo(x1,y1+w/2+5); c.closePath(); c.fill();
+  if(w>3){ c.save(); c.strokeStyle='rgba(255,255,255,.55)'; c.lineWidth=1.5; c.setLineDash([6,10]); c.lineDashOffset=-st.time*30; c.beginPath(); c.moveTo(x0,y0); c.bezierCurveTo(mx,y0,mx,y1,x1,y1); c.stroke(); c.restore(); }
+}
+function flowStripes(c,x0,y0,x1,y1,w){ if(w<=3) return; c.save(); c.strokeStyle='rgba(255,255,255,.55)'; c.lineWidth=1.5; c.setLineDash([6,10]); c.lineDashOffset=-st.time*30; c.beginPath(); c.moveTo(x0,y0); c.lineTo(x1,y1); c.stroke(); c.restore(); }
+
+/* ===================== KPK-Energieflussdiagramm ===================== */
 /* Energiepfeile grün (Breite ∝ P), Träger gelb und animiert, Energieumlader rot.
    Erhaltene Träger (Elektrizität, Drehimpuls) laufen auf einer geschlossenen Bahn,
    erzeugte Träger (Entropie, Licht) verlassen den Umlader als einfacher Pfeil. */
 const KPK={E:'rgba(22,163,74,.88)', Etxt:'#166534', T:'#facc15', Tdash:'#a16207', Ttxt:'#854d0e', U:'#fecaca', Urand:'#dc2626'};
-function drawEnergyPanel(){
+function drawKpkPanel(){
   const c=sctx, W=side._w, H=side._h; c.setTransform(DPR,0,0,DPR,0,0); FK=st.big?(W<520?1.12:1.25):1; c.clearRect(0,0,W,H); // schmale Spalte: Schrift etwas weniger vergrößern
   c.fillStyle='#1d2433'; c.font=fnt('700',14,'-apple-system,Arial'); c.textAlign='left'; c.textBaseline='top';
-  c.fillText('Energieflussdiagramm (KPK)',12,10);
+  c.fillText('KPK-Energieflussdiagramm',12,10);
   c.font=fnt('500',12,'-apple-system,Arial'); c.fillStyle='#5d6779'; c.fillText('Pfeilbreite ∝ Energiestromstärke P',12,28);
   const src=S.edges.find(e=>e.type==='src');
   const Pin=st.fuse?0:st.U*src.I; const Pi=st.fuse?0:src.I*src.I*Math.max(st.Ri,0);
@@ -1445,7 +1511,6 @@ function umlader(c,x,y,w,h,title,sub,name,ty){
 function kpkArrowH(c,x0,x1,y,w){ if(w<=0) return; const hl=Math.min(14,6+w*0.4); c.fillStyle=KPK.E; c.fillRect(x0,y-w/2,Math.max(0,x1-x0-hl),w);
   c.beginPath(); c.moveTo(x1,y); c.lineTo(x1-hl,y-w/2-5); c.lineTo(x1-hl,y+w/2+5); c.closePath(); c.fill(); flowStripes(c,x0,y,x1-hl,y,w); }
 function kpkArrowV(c,x,y0,y1,w){ const hl=Math.min(14,6+w*0.4); c.fillStyle=KPK.E; c.fillRect(x-w/2,y0,w,y1-y0-hl); c.beginPath(); c.moveTo(x,y1); c.lineTo(x-w/2-5,y1-hl); c.lineTo(x+w/2+5,y1-hl); c.closePath(); c.fill(); flowStripes(c,x,y0,x,y1-hl,w); }
-function flowStripes(c,x0,y0,x1,y1,w){ if(w<=3) return; c.save(); c.strokeStyle='rgba(255,255,255,.55)'; c.lineWidth=1.5; c.setLineDash([6,10]); c.lineDashOffset=-st.time*30; c.beginPath(); c.moveTo(x0,y0); c.lineTo(x1,y1); c.stroke(); c.restore(); }
 /* Trägerlinie zeichnen: gelbe Bahn, darauf wandernde Striche in Flussrichtung; mk = Pfeilspitzen [x,y,dx,dy] */
 function carrierStroke(c,trace,mk,moving){
   c.save(); c.lineCap='round'; c.lineJoin='round';
@@ -1878,7 +1943,7 @@ function frame(now){
   for(const e of S.edges){ if(e.type==='comp') e.comp.ang+=dt*st.tempo*(e.comp.kind==='Mo'?motorOmega(e)*0.03*(e.comp.rev?-1:1):e.I*6); if(e.type==='src') e._ang=(e._ang||0)+dt*e.I*6*st.tempo; }
   for(const m of S.meters){ if(m.type==='W') m.E+=powerOf(m.edge)*dt; if(m.type==='A') m._ang=(m._ang||0)+dt*m.edge.I*8*st.tempo; }
   drawCircuit(ctx,VT,'circuit'); drawLegend(ctx);
-  if(st.side==='water') drawWaterPanel(); else if(st.side==='energy') drawEnergyPanel(); else if(st.side==='height') drawHeightPanel(); else if(st.side==='meas') drawMeasPanel();
+  if(st.side==='water') drawWaterPanel(); else if(st.side==='energy') drawEnergyPanel(); else if(st.side==='kpk') drawKpkPanel(); else if(st.side==='height') drawHeightPanel(); else if(st.side==='meas') drawMeasPanel();
   if(st.sel&&st.sel.kind==='meter'&&st.sel.m.type==='W'&&((now/250)|0)!==frame._t){ frame._t=(now/250)|0; renderReadout(); }
   requestAnimationFrame(frame);
 }
