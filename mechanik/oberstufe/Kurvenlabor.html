@@ -5,42 +5,80 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Kurvenlabor</title>
 <style>
-  :root { --bg:#f4f6f9; --panel:#ffffff; --ink:#1d2733; --muted:#5b6675; --line:#d5dbe3; --blue:#1F4E79; }
+  :root { --bg:#f4f6f9; --panel:#ffffff; --ink:#1d2733; --muted:#5b6675; --line:#d5dbe3; --blue:#1F4E79; --fs:1; }
   * { box-sizing:border-box; }
   html, body { margin:0; height:100%; background:var(--bg); color:var(--ink);
                font-family:-apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow:hidden; }
-  #app { display:flex; height:100vh; width:100vw; }
-  #stage { flex:1 1 auto; position:relative; min-width:0; }
+  #app { display:flex; height:100vh; height:100dvh; width:100vw; }
+  #stage { flex:1 1 auto; position:relative; min-width:0; min-height:0; }
   canvas { display:block; width:100%; height:100%; touch-action:none; }
-  #panel { flex:0 0 360px; background:var(--panel); border-left:1px solid var(--line); padding:8px 12px;
-           display:flex; flex-direction:column; gap:6px; overflow-y:auto; }
-  h1 { font-size:17px; margin:0; color:var(--blue); }
+  #panel { flex:0 0 calc(360px * var(--fs)); max-width:52vw; background:var(--panel); border-left:1px solid var(--line);
+           padding:8px 12px; display:flex; flex-direction:column; gap:.45em; overflow-y:auto; font-size:calc(14px * var(--fs)); }
+  #app.nopanel #panel { display:none; }
+  h1 { font-size:1.2em; margin:0; color:var(--blue); }
   .tabs { display:flex; gap:5px; }
-  .tabs button { flex:1; padding:7px 4px; }
-  button { font:inherit; font-size:14px; padding:7px 8px; border-radius:8px; border:1px solid var(--line);
-           background:#eef2f7; color:var(--ink); cursor:pointer; touch-action:manipulation; }
+  .tabs button { flex:1; padding:.5em .3em; }
+  button { font:inherit; font-size:1em; padding:.5em .6em; border-radius:8px; border:1px solid var(--line);
+           background:#eef2f7; color:var(--ink); cursor:pointer; touch-action:manipulation; min-height:40px; }
   button.on { background:var(--blue); color:#fff; border-color:var(--blue); }
-  .row { display:flex; align-items:center; gap:8px; font-size:14px; }
-  .row label { flex:0 0 92px; }
-  .row input[type=range] { flex:1; height:26px; }
-  .row output { flex:0 0 92px; text-align:right; font-variant-numeric:tabular-nums; }
-  .seg { display:flex; gap:5px; } .seg button { flex:1; padding:6px 4px; font-size:13px; }
+  .row { display:flex; align-items:center; gap:8px; }
+  .row label { flex:0 0 6.6em; }
+  .row input[type=range] { flex:1; min-width:0; height:30px; }
+  .row output { flex:0 0 6.6em; text-align:right; font-variant-numeric:tabular-nums; }
+  .seg { display:flex; gap:5px; } .seg button { flex:1; padding:.4em .2em; font-size:.93em; }
   .btns { display:flex; gap:6px; } .btns button { flex:1; }
-  table { border-collapse:collapse; width:100%; font-size:13.5px; font-variant-numeric:tabular-nums; }
+  table { border-collapse:collapse; width:100%; font-size:.96em; font-variant-numeric:tabular-nums; }
   td { border-bottom:1px solid var(--line); padding:3px 4px; }
   td:last-child { text-align:right; }
   .bar { height:16px; background:#e8ecf1; border-radius:4px; position:relative; overflow:hidden; }
   .bar > div { position:absolute; left:0; top:0; bottom:0; border-radius:4px; }
-  .small { font-size:12px; color:var(--muted); }
-  .chk { font-size:14px; display:flex; align-items:center; gap:6px; } .chk input { width:18px; height:18px; }
-  .pane { display:none; flex-direction:column; gap:6px; } .pane.on { display:flex; }
-  @media (max-height: 800px) { h1 { display:none; } button { padding:5px 8px; } td { padding:2px 4px; } .row input[type=range] { height:22px; } }
-  @media (max-width: 900px) { #panel { flex-basis:315px; } .row label { flex-basis:80px; } .row output { flex-basis:84px; } }
+  .small { font-size:.86em; color:var(--muted); }
+  .chk { display:flex; align-items:center; gap:6px; min-height:34px; } .chk input { width:20px; height:20px; }
+  .pane { display:none; gap:.45em; } .pane.on { display:flex; flex-direction:column; }
+  .ctl, .info { display:flex; flex-direction:column; gap:.45em; }
+  /* Werkzeugleiste unten rechts auf der Simulation */
+  #tools { position:absolute; right:10px; bottom:10px; display:flex; gap:6px; z-index:5; }
+  #tools button.on { background:var(--blue); color:#fff; }
+  #tools button { min-width:46px; min-height:44px; font-size:17px; font-weight:600; background:rgba(255,255,255,.88);
+                  box-shadow:0 2px 6px rgba(0,0,0,.18); padding:4px 10px; }
+  #rot { display:none; position:fixed; inset:0; z-index:20; background:#1F4E79; color:#fff; flex-direction:column;
+         align-items:center; justify-content:center; gap:18px; text-align:center; padding:20px; font-size:18px; }
+  #rot .ph { width:56px; height:92px; border:4px solid #fff; border-radius:12px; animation:dreh 2s ease-in-out infinite; }
+  @keyframes dreh { 0%,30% { transform:rotate(-90deg); } 70%,100% { transform:rotate(0deg); } }
+  #rot button { background:#fff; color:#1F4E79; font-size:16px; padding:10px 18px; }
+  @media (max-height: 800px) { h1 { display:none; } td { padding:2px 4px; } }
+  /* iPad hochkant: Simulation oben, Bedienfeld unten zweispaltig */
+  @media (min-width: 641px) and (max-width: 900px) and (orientation: portrait) {
+    #app { flex-direction:column; }
+    #panel { flex:0 0 auto; max-width:none; max-height:47vh; border-left:0; border-top:1px solid var(--line); }
+    h1 { display:none; }
+    .pane.on { display:grid; grid-template-columns:1fr 1fr; column-gap:18px; align-items:start; }
+  }
+  /* Handy hochkant: Simulation oben, Bedienfeld darunter, Seite scrollt */
+  @media (max-width: 640px) {
+    html, body { overflow:auto; height:auto; }
+    #app { flex-direction:column; height:auto; }
+    #stage { flex:0 0 auto; height:58vh; min-height:300px; }
+    #app.nopanel #stage { height:100vh; height:100dvh; }
+    #panel { flex:0 0 auto; max-width:none; border-left:0; border-top:1px solid var(--line); overflow:visible; }
+    .row label { flex-basis:5.8em; } .row output { flex-basis:6em; }
+    #tools button { min-width:42px; min-height:40px; font-size:15px; padding:3px 8px; }
+  }
+  /* Handy quer: Drehhinweis */
+  @media (max-height: 500px) and (orientation: landscape) and (hover: none) {
+    html:not(.quer) #rot { display:flex; }
+  }
 </style>
 </head>
 <body>
+<div id="rot"><div class="ph"></div><div>Bitte das Handy hochkant halten.</div><button id="rotgo">Trotzdem quer weiter</button></div>
 <div id="app">
-  <div id="stage"><canvas id="cv"></canvas></div>
+  <div id="stage"><canvas id="cv"></canvas>
+    <div id="tools">
+      <button id="fsm" title="Schrift kleiner">A−</button><button id="fsp" title="Schrift größer">A+</button>
+      <button id="full" title="Vollbild">⛶</button><button id="tog" title="Bedienfeld aus-/einblenden">☰</button>
+    </div>
+  </div>
   <div id="panel">
     <h1>Kurvenlabor</h1>
     <div class="tabs">
@@ -49,39 +87,39 @@
       <button data-tab="loop">Looping</button>
     </div>
 
-    <div class="pane on" id="p-kurve">
+    <div class="pane on" id="p-kurve"><div class="ctl">
       <div class="row"><label>Radius r</label><input id="k_r" type="range" min="15" max="100" step="1" value="50"><output id="k_ro"></output></div>
       <div class="row"><label>Tempo v</label><input id="k_v" type="range" min="10" max="130" step="1" value="54"><output id="k_vo"></output></div>
       <div class="row"><label>Masse m</label><input id="k_m" type="range" min="800" max="3000" step="50" value="1200"><output id="k_mo"></output></div>
       <div class="seg" id="k_mu">
         <button data-mu="0.8" class="on">trocken μ = 0,8</button><button data-mu="0.4">nass μ = 0,4</button><button data-mu="0.1">Eis μ = 0,1</button>
       </div>
-      <div class="btns"><button id="k_go" class="on">Losfahren</button><button id="k_reset">Zurück</button></div>
-      <table id="k_tab"></table>
+      <div class="btns"><button id="k_go" class="on">Losfahren</button><button id="k_reset">Zurück</button></div></div>
+      <div class="info"><table id="k_tab"></table>
       <div class="small">Zum Vergleich: Kreisverkehr r ≈ 15–25 m, enge Landstraßenkurve r ≈ 50–100 m. Pkw-Masse 800–3000 kg.</div>
       <div class="small">nötige Zentripetalkraft</div><div class="bar"><div id="k_bar1" style="background:#C0392B"></div></div>
       <div class="small">höchstens mögliche Haftreibung</div><div class="bar"><div id="k_bar2" style="background:#2E7D32"></div></div>
-    </div>
+    </div></div>
 
-    <div class="pane" id="p-kette">
+    <div class="pane" id="p-kette"><div class="ctl">
       <div class="row"><label>ω</label><input id="c_w" type="range" min="0" max="2" step="0.01" value="1.07"><output id="c_wo"></output></div>
       <div class="row"><label>Abstand d</label><input id="c_d" type="range" min="1" max="8" step="0.5" value="4"><output id="c_do"></output></div>
       <div class="row"><label>Kette l</label><input id="c_l" type="range" min="2" max="8" step="0.5" value="5"><output id="c_lo"></output></div>
       <div class="row"><label>Masse m</label><input id="c_m" type="range" min="10" max="150" step="5" value="70"><output id="c_mo"></output></div>
-      <label class="chk"><input id="c_par" type="checkbox" checked>Kräfteplan (Parallelogramm)</label>
-      <table id="c_tab"></table>
+      <label class="chk"><input id="c_par" type="checkbox" checked>Kräfteplan (Parallelogramm)</label></div>
+      <div class="info"><table id="c_tab"></table>
       <div class="small">Seitenansicht in dem Moment, in dem der Sitz rechts von der Achse ist. Oben rechts: Draufsicht.</div>
-    </div>
+    </div></div>
 
-    <div class="pane" id="p-loop">
+    <div class="pane" id="p-loop"><div class="ctl">
       <div class="row"><label>Starthöhe h</label><input id="l_h" type="range" min="0.5" max="40" step="0.1" value="5"><output id="l_ho"></output></div>
       <div class="row"><label>Radius r</label><input id="l_r" type="range" min="0.5" max="12" step="0.1" value="2"><output id="l_ro"></output></div>
       <div class="row"><label>Masse m</label><input id="l_m" type="range" min="20" max="1000" step="10" value="60"><output id="l_mo"></output></div>
       <div class="btns"><button id="l_go" class="on">Start</button><button id="l_reset">Zurück</button></div>
-      <label class="chk"><input id="l_slow" type="checkbox">Zeitlupe (¼)</label>
-      <table id="l_tab"></table>
+      <label class="chk"><input id="l_slow" type="checkbox">Zeitlupe (¼)</label></div>
+      <div class="info"><table id="l_tab"></table>
       <div class="small">Reibungsfrei, Wagen als Massenpunkt. Die Schiene kann nur drücken, nicht ziehen.</div>
-    </div>
+    </div></div>
   </div>
 </div>
 <script>
@@ -110,6 +148,9 @@
   }
   const fmt = (x, d) => (isFinite(x) ? x.toFixed(d).replace(".", ",") : "–");
   let tab = "kurve";
+  let FS = 1;                       // Schriftfaktor (A− / A+), gilt für Bedienfeld und Beschriftung im Bild
+  const FS_STEPS = [0.85, 1, 1.15, 1.3, 1.5, 1.75];
+  try { const f = parseFloat(localStorage.getItem("kurvenlabor_fs")); if (FS_STEPS.includes(f)) FS = f; } catch (e) {}
 
   function resize() {
     const dpr = window.devicePixelRatio || 1, r = cv.getBoundingClientRect();
@@ -117,6 +158,17 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
   window.addEventListener("resize", resize);
+  if (window.ResizeObserver) new ResizeObserver(resize).observe($("stage"));
+
+  // Hilfen für den plastischen Look
+  function lin(x0, y0, x1, y1, stops) { const gr = ctx.createLinearGradient(x0, y0, x1, y1); stops.forEach((c, i) => gr.addColorStop(i / (stops.length - 1), c)); return gr; }
+  function ball(x, y, r, col, dark) {   // Kugel mit Glanzlicht und Schatten
+    ctx.save(); ctx.shadowColor = "rgba(0,0,0,.35)"; ctx.shadowBlur = r * 0.8; ctx.shadowOffsetX = r * 0.25; ctx.shadowOffsetY = r * 0.35;
+    const gr = ctx.createRadialGradient(x - r * 0.35, y - r * 0.4, r * 0.1, x, y, r);
+    gr.addColorStop(0, "#fff"); gr.addColorStop(0.25, col); gr.addColorStop(1, dark);
+    ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(x, y, r, 0, 2 * Math.PI); ctx.fill(); ctx.restore();
+  }
+  function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
 
   function arrow(x0, y0, x1, y1, col, lw) {
     const dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy);
@@ -129,7 +181,16 @@
     ctx.lineTo(x1 - ux * h + uy * h * 0.45, y1 - uy * h - ux * h * 0.45); ctx.closePath(); ctx.fill();
   }
   function text(t, x, y, col, size, align, bold) {
-    ctx.fillStyle = col; drawSub(ctx, t, x, y, size || 15, (bold ? "600 " : "") + "-apple-system, Segoe UI, Arial", align || "left");
+    ctx.fillStyle = col; drawSub(ctx, t, x, y, (size || 15) * FS, (bold ? "600 " : "") + "-apple-system, Segoe UI, Arial", align || "left");
+  }
+  function msg(t, y, col, size) {   // Meldung oben, zentriert, bei Bedarf umbrochen; gibt y unter der Meldung zurück
+    const W = cv.clientWidth, fs = size * FS, words = t.split(" "), lines = [];
+    ctx.font = "600 " + fs + "px -apple-system, Segoe UI, Arial";
+    let line = "";
+    for (const w of words) { const tt = line ? line + " " + w : w; if (ctx.measureText(tt).width > W - 24 && line) { lines.push(line); line = w; } else line = tt; }
+    lines.push(line);
+    lines.forEach((l, i) => text(l, W / 2, y + i * fs * 1.25, col, size, "center", true));
+    return y + lines.length * fs * 1.25;
   }
   const subHTML = t => subParts(t).map(q => q[1] ? "<sub>" + q[0] + "</sub>" : q[0]).join("");
   const rows = arr => arr.map(r => `<tr><td>${subHTML(r[0])}</td><td>${r[1]}</td></tr>`).join("");
@@ -164,20 +225,27 @@
     if (Math.hypot(K.x, K.y) > p.r + 30 || Math.hypot(K.x, K.y) > 125) { K.state = "off"; }
   }
   function kDraw() {
-    const p = kP(), W = cv.clientWidth, H = cv.clientHeight, cx = W / 2, cy = H / 2;
+    const p = kP(), W = cv.clientWidth, H = cv.clientHeight, Hs = H - 56, cx = W / 2, cy = Hs / 2;
     // fester Maßstab: 110 m vom Mittelpunkt bis zum Rand, Fahrbahn 7 m breit, Auto 4,5 m × 1,8 m
-    const sc = Math.min(W, H) * 0.46 / 110, lane = 7 * sc;
-    const carL = Math.max(4.5 * sc, 16), carW = Math.max(1.8 * sc, 7);
-    ctx.fillStyle = "#cfe3c4"; ctx.fillRect(0, 0, W, H);
-    ctx.strokeStyle = C.road; ctx.lineWidth = lane; ctx.beginPath(); ctx.arc(cx, cy, p.r * sc, 0, 2 * Math.PI); ctx.stroke();
-    ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.setLineDash([12, 12]); ctx.beginPath(); ctx.arc(cx, cy, p.r * sc, 0, 2 * Math.PI); ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle = "#333"; ctx.beginPath(); ctx.arc(cx, cy, 4, 0, 2 * Math.PI); ctx.fill();
+    const sc = Math.min(W, Hs) * 0.46 / 110, lane = 7 * sc;
+    const carL = Math.max(4.5 * sc, 24), carW = Math.max(1.8 * sc, 10);
+    const gras = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.hypot(W, H) / 2);
+    gras.addColorStop(0, "#c4e0b2"); gras.addColorStop(1, "#8fbf7a"); ctx.fillStyle = gras; ctx.fillRect(0, 0, W, H);
+    const surf = K.mu > 0.6 ? ["#4b525a", "#6a727b"] : K.mu > 0.2 ? ["#3a4048", "#56606b"] : ["#b9cfe0", "#e4f0f8"];
+    ctx.save(); ctx.shadowColor = "rgba(0,0,0,.35)"; ctx.shadowBlur = 8; ctx.shadowOffsetY = 3;
+    ctx.strokeStyle = "#d8d2c4"; ctx.lineWidth = lane + 6; ctx.beginPath(); ctx.arc(cx, cy, p.r * sc, 0, 2 * Math.PI); ctx.stroke(); ctx.restore();
+    const asph = ctx.createRadialGradient(cx, cy, Math.max(0, p.r * sc - lane / 2), cx, cy, p.r * sc + lane / 2);
+    asph.addColorStop(0, surf[0]); asph.addColorStop(0.5, surf[1]); asph.addColorStop(1, surf[0]);
+    ctx.strokeStyle = asph; ctx.lineWidth = lane; ctx.beginPath(); ctx.arc(cx, cy, p.r * sc, 0, 2 * Math.PI); ctx.stroke();
+    if (K.mu > 0.2 && K.mu < 0.6) { ctx.strokeStyle = "rgba(200,225,255,.25)"; ctx.lineWidth = lane * 0.5; ctx.beginPath(); ctx.arc(cx, cy, p.r * sc, 0, 2 * Math.PI); ctx.stroke(); }
+    ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5;
+    [-1, 1].forEach(sg => { ctx.beginPath(); ctx.arc(cx, cy, Math.max(1, p.r * sc + sg * lane * 0.42), 0, 2 * Math.PI); ctx.stroke(); });
+    ctx.lineWidth = 2; ctx.setLineDash([12, 12]); ctx.beginPath(); ctx.arc(cx, cy, p.r * sc, 0, 2 * Math.PI); ctx.stroke(); ctx.setLineDash([]);
+    ball(cx, cy, 5, "#666", "#222");
     text("Kurvenmittelpunkt", cx, cy + 20, "#333", 13, "center");
     const X = cx + K.x * sc, Y = cy - K.y * sc, ang = Math.atan2(-K.vy, K.vx);
     ctx.save(); ctx.translate(X, Y); ctx.rotate(ang);
-    ctx.fillStyle = C.orange; ctx.strokeStyle = "#222"; ctx.lineWidth = 1.5;
-    ctx.fillRect(-carL / 2, -carW / 2, carL, carW); ctx.strokeRect(-carL / 2, -carW / 2, carL, carW);
-    ctx.fillStyle = "#9ec9f0"; ctx.fillRect(carL * 0.1, -carW * 0.38, carL * 0.22, carW * 0.76); ctx.restore();
+    drawCar(carL, carW); ctx.restore();
     const v = Math.hypot(K.vx, K.vy) || p.v, F = p.m * v * v / Math.hypot(K.x, K.y), Fmax = K.mu * p.m * g;
     const k = 70 / Math.max(F, Fmax);
     const d = Math.hypot(K.x, K.y), ux = -K.x / d, uy = K.y / d;
@@ -188,12 +256,25 @@
     const vk = 3.5;
     arrow(X, Y, X + K.vx * vk, Y - K.vy * vk, C.red, 2.5);
     text("v", X + K.vx * vk + 6, Y - K.vy * vk, C.red, 14);
-    if (K.msg) text(K.msg, W / 2, 28, C.red, 16, "center", true);
-    if (K.state === "off") text("Von der Fahrbahn abgekommen. „Zurück“ drücken.", W / 2, 52, C.red, 15, "center");
+    let my = 28 * FS;
+    if (K.msg) my = msg(K.msg, my, C.red, 16);
+    if (K.state === "off") msg("Von der Fahrbahn abgekommen. „Zurück“ drücken.", my, C.red, 15);
     // Maßstabsbalken 20 m
-    ctx.strokeStyle = "#222"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(14, H - 30); ctx.lineTo(14 + 20 * sc, H - 30); ctx.stroke();
-    text("20 m", 14 + 10 * sc, H - 38, "#222", 13, "center");
-    text("Draufsicht · Fahrbahn 7 m breit" + (4.5 * sc < 16 ? " · Auto zur besseren Sichtbarkeit vergrößert" : ""), 12, H - 10, "#41505f", 13);
+    ctx.strokeStyle = "#222"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(14, H - 46); ctx.lineTo(14 + 20 * sc, H - 46); ctx.stroke();
+    text("20 m", 14 + 20 * sc + 8, H - 41, "#222", 13);
+    if (W < 500) { text("Draufsicht · Fahrbahn 7 m breit", 12, H - 66 - 18 * FS, "#41505f", 13); if (4.5 * sc < 24) text("Auto vergrößert gezeichnet", 12, H - 66, "#41505f", 13); }
+    else { text("Draufsicht · Fahrbahn 7 m breit", 12, H - 24, "#41505f", 13); if (4.5 * sc < 24) text("Auto vergrößert gezeichnet", 12, H - 8, "#41505f", 13); }
+  }
+  function drawCar(l, w) {          // Auto von oben, Fahrtrichtung +x
+    ctx.save(); ctx.shadowColor = "rgba(0,0,0,.45)"; ctx.shadowBlur = w * 0.6; ctx.shadowOffsetX = w * 0.15; ctx.shadowOffsetY = w * 0.3;
+    ctx.fillStyle = "#222";
+    [[-0.32, -1], [0.3, -1], [-0.32, 1], [0.3, 1]].forEach(q => { rrect(q[0] * l - l * 0.09, q[1] * w * 0.5 - w * 0.09, l * 0.18, w * 0.18, w * 0.05); ctx.fill(); });
+    rrect(-l / 2, -w / 2, l, w, w * 0.32); ctx.fillStyle = lin(0, -w / 2, 0, w / 2, ["#b8541a", "#ff9d4d", "#f07a20", "#a9470f"]); ctx.fill(); ctx.restore();
+    rrect(-l * 0.2, -w * 0.38, l * 0.42, w * 0.76, w * 0.18); ctx.fillStyle = lin(0, -w / 2, 0, w / 2, ["#c25f22", "#ffb16b", "#d86a1c"]); ctx.fill();
+    ctx.fillStyle = lin(l * 0.2, 0, l * 0.32, 0, ["#2c4a66", "#9ec9f0"]); rrect(l * 0.2, -w * 0.36, l * 0.13, w * 0.72, w * 0.08); ctx.fill();
+    ctx.fillStyle = "#2c4a66"; rrect(-l * 0.32, -w * 0.34, l * 0.1, w * 0.68, w * 0.06); ctx.fill();
+    ctx.fillStyle = "#fff7c2"; [-1, 1].forEach(sg => { ctx.beginPath(); ctx.arc(l * 0.47, sg * w * 0.3, w * 0.09, 0, 2 * Math.PI); ctx.fill(); });
+    ctx.fillStyle = "rgba(255,255,255,.35)"; rrect(-l * 0.45, -w * 0.42, l * 0.85, w * 0.12, w * 0.06); ctx.fill();
   }
   function kPanel() {
     const p = kP(), F = p.m * p.v * p.v / p.r, Fmax = K.mu * p.m * g, vmax = Math.sqrt(K.mu * g * p.r);
@@ -221,33 +302,49 @@
     cPhase += p.w * dt;
     const sc = Math.min(W * 0.75 / (p.d + p.l + 1.5), H * 0.7 / (p.l + 4));
     const ax = W * 0.18, top = H * 0.16;
-    ctx.fillStyle = "#eaf1f8"; ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = "#c9d6c0"; ctx.fillRect(0, H * 0.9, W, H * 0.1);
-    ctx.fillStyle = "#9aa4b1"; ctx.fillRect(ax - 7, top - 20, 14, H * 0.9 - top + 20);
-    ctx.strokeStyle = "#222"; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(ax, top); ctx.lineTo(ax + p.d * sc, top); ctx.stroke();
+    ctx.fillStyle = lin(0, 0, 0, H * 0.9, ["#cfe3f6", "#f3f8fc"]); ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = lin(0, H * 0.9, 0, H, ["#9cc285", "#6f9a5c"]); ctx.fillRect(0, H * 0.9, W, H * 0.1);
+    // Mast mit Sockel und Dach
+    ctx.fillStyle = "rgba(0,0,0,.18)"; ctx.beginPath(); ctx.ellipse(ax + 8, H * 0.9 + 6, 48, 8, 0, 0, 2 * Math.PI); ctx.fill();
+    ctx.fillStyle = lin(ax - 40, 0, ax + 40, 0, ["#6b5a48", "#b39b80", "#7a6652"]); rrect(ax - 40, H * 0.9 - 22, 80, 26, 6); ctx.fill();
+    ctx.fillStyle = lin(ax - 9, 0, ax + 9, 0, ["#6c7784", "#e3e8ee", "#8f9aa7", "#5a6470"]); ctx.fillRect(ax - 9, top - 22, 18, H * 0.9 - 22 - top + 22);
+    const roofW = Math.min(70, p.d * sc * 0.5 + 30);
+    ctx.save(); ctx.shadowColor = "rgba(0,0,0,.3)"; ctx.shadowBlur = 6; ctx.shadowOffsetY = 3;
+    ctx.beginPath(); ctx.moveTo(ax, top - 62); ctx.lineTo(ax + roofW, top - 22); ctx.lineTo(ax - roofW, top - 22); ctx.closePath();
+    ctx.fillStyle = lin(ax - roofW, 0, ax + roofW, 0, ["#9c2a1f", "#e8574a", "#b33426"]); ctx.fill(); ctx.restore();
+    ctx.fillStyle = "#fff"; for (let i = -2; i <= 2; i++) { ctx.beginPath(); ctx.moveTo(ax, top - 62); ctx.lineTo(ax + roofW * (i + 0.3) / 2.6, top - 22); ctx.lineTo(ax + roofW * (i + 0.7) / 2.6, top - 22); ctx.closePath(); ctx.fill(); }
+    ctx.fillStyle = lin(0, top - 24, 0, top - 14, ["#f2d36b", "#b8902a"]); ctx.fillRect(ax - roofW, top - 24, 2 * roofW, 8);
+    ctx.fillStyle = lin(0, top - 4, 0, top + 4, ["#e3e8ee", "#5a6470"]); rrect(ax - 4, top - 4, p.d * sc + 8, 8, 3); ctx.fill();
+    ball(ax, top, 7, "#aab4c0", "#4a5360");
     const px = ax + p.d * sc, py = top, sx = px + p.l * Math.sin(a) * sc, sy = py + p.l * Math.cos(a) * sc;
-    ctx.strokeStyle = "#444"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(sx, sy); ctx.stroke();
+    ctx.strokeStyle = "#3d3d3d"; ctx.lineWidth = 2.5; ctx.setLineDash([4, 2]); ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(sx, sy); ctx.stroke(); ctx.setLineDash([]);
+    ball(px, py, 4, "#ccc", "#555");
     ctx.setLineDash([4, 4]); ctx.strokeStyle = C.grey; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, py + p.l * sc * 0.75); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(ax, sy); ctx.lineTo(sx, sy); ctx.stroke(); ctx.setLineDash([]);
     text("R = " + fmt(p.d + p.l * Math.sin(a), 2) + " m", (ax + sx) / 2, sy + 18, "#41505f", 13, "center");
     if (a > 0.02) { ctx.strokeStyle = "#222"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(px, py, 34, Math.PI / 2 - a, Math.PI / 2); ctx.stroke(); text("α", px + 10, py + 50, "#222", 15); }
-    ctx.fillStyle = C.orange; ctx.strokeStyle = "#222"; ctx.beginPath(); ctx.arc(sx, sy, 10, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
-    // Kräfte (Pfeillänge: F_G = 90 px)
-    const FG = p.m * g, k = 90 / FG, FZ = FG * Math.tan(a), FS = FG / Math.cos(a);
+    // Sitz (um α geneigt) mit Fahrgast als Massenpunkt
+    ctx.save(); ctx.translate(sx, sy); ctx.rotate(-a);
+    ctx.fillStyle = lin(-14, 0, 14, 0, ["#1b4f7a", "#4f93c9", "#1b4f7a"]); rrect(-14, 4, 28, 7, 3); ctx.fill(); rrect(-14, -14, 6, 24, 3); ctx.fill();
+    ctx.restore();
+    ball(sx, sy, 10, C.orange, "#8a4210");
+    // Kräfte (Pfeillänge: F_G = 90 px, bei großem Winkel alle Pfeile gemeinsam kürzer)
+    const FG = p.m * g, k = Math.min(90, 240 * Math.cos(a)) / FG, FZ = FG * Math.tan(a), FS = FG / Math.cos(a);
     arrow(sx, sy, sx, sy + FG * k, C.blue, 3); text("F_G", sx + 8, sy + FG * k, C.blue, 14);
     arrow(sx, sy, sx - FS * k * Math.sin(a), sy - FS * k * Math.cos(a), C.green, 3); text("F_Seil", sx - FS * k * Math.sin(a) + 8, sy - FS * k * Math.cos(a), C.green, 14);
-    if (FZ * k > 3) { arrow(sx, sy, sx - FZ * k, sy, C.red, 3.5); text("F_Z (Resultierende)", sx - FZ * k, sy - 10, C.red, 14); }
+    if (FZ * k > 3) { arrow(sx, sy, sx - FZ * k, sy, C.red, 3.5); text("F_Z (Resultierende)", sx - FZ * k - 4, sy - 10, C.red, 14, "right"); }
     if (p.par && FZ * k > 3) {
       ctx.setLineDash([5, 4]); ctx.strokeStyle = C.grey; ctx.lineWidth = 1.2;
       ctx.beginPath(); ctx.moveTo(sx, sy + FG * k); ctx.lineTo(sx - FS * k * Math.sin(a), sy - FS * k * Math.cos(a) + FG * k); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(sx - FS * k * Math.sin(a), sy - FS * k * Math.cos(a)); ctx.lineTo(sx - FZ * k, sy); ctx.stroke(); ctx.setLineDash([]);
     }
     // Draufsicht
-    const ox = W - 80, oy = 80, rr = 55, R = p.d + p.l * Math.sin(a), rs = rr * R / (p.d + p.l);
-    ctx.fillStyle = "#fff"; ctx.strokeStyle = "#c4cfdc"; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(ox, oy, rr + 10, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
+    const ox = W - 80, oy = 80 * Math.min(FS, 1.2), rr = 55, R = p.d + p.l * Math.sin(a), rs = rr * R / (p.d + p.l);
+    ctx.save(); ctx.shadowColor = "rgba(0,0,0,.2)"; ctx.shadowBlur = 8; ctx.shadowOffsetY = 2;
+    ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(ox, oy, rr + 10, 0, 2 * Math.PI); ctx.fill(); ctx.restore();
     ctx.strokeStyle = C.grey; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.arc(ox, oy, rs, 0, 2 * Math.PI); ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle = "#333"; ctx.beginPath(); ctx.arc(ox, oy, 3, 0, 2 * Math.PI); ctx.fill();
-    ctx.fillStyle = C.orange; ctx.beginPath(); ctx.arc(ox + rs * Math.cos(cPhase), oy - rs * Math.sin(cPhase), 6, 0, 2 * Math.PI); ctx.fill();
+    ball(ox + rs * Math.cos(cPhase), oy - rs * Math.sin(cPhase), 6, C.orange, "#8a4210");
     text("Draufsicht", ox, oy + rr + 26, "#41505f", 12, "center");
     return { a, FZ, FS, FG, R: p.d + p.l * Math.sin(a) };
   }
@@ -284,7 +381,7 @@
     const u = (s - c[i - 1]) / (c[i] - c[i - 1] || 1), a = L.pts[i - 1], b = L.pts[i];
     return { x: a[0] + u * (b[0] - a[0]), y: a[1] + u * (b[1] - a[1]), tx: (b[0] - a[0]) / (c[i] - c[i - 1] || 1), ty: (b[1] - a[1]) / (c[i] - c[i - 1] || 1), i };
   }
-  function lReset() { lBuild(); L.state = "idle"; L.s = 0; L.dir = 1; L.msg = ""; L.t = 0; L.minN = Infinity; const q = lAt(0); L.x = q.x; L.y = q.y; }
+  function lReset() { lBuild(); L.state = "idle"; L.s = 0; L.dir = 1; L.msg = ""; L.t = 0; L.minN = Infinity; L.flew = false; const q = lAt(0); L.x = q.x; L.y = q.y; }
   $("l_go").onclick = () => { lReset(); L.state = "run"; L.s = 1e-4; };
   $("l_reset").onclick = lReset;
   ["l_h", "l_r", "l_m"].forEach(id => $(id).addEventListener("input", lReset));
@@ -304,7 +401,7 @@
           const N = p.m * (v * v / p.r + g * Math.cos(th));
           if (th > 0.05 && th < 2 * Math.PI - 0.05) L.minN = Math.min(L.minN, N);
           if (N < 0) {
-            L.state = "fly"; L.x = q.x; L.y = q.y; L.vx = q.tx * v * L.dir; L.vy = q.ty * v * L.dir;
+            L.state = "fly"; L.flew = true; L.x = q.x; L.y = q.y; L.vx = q.tx * v * L.dir; L.vy = q.ty * v * L.dir;
             L.msg = "Die Schiene müsste ziehen: Der Wagen löst sich bei " + fmt(th * 180 / Math.PI, 0) + "° und fällt."; break;
           }
         }
@@ -325,24 +422,42 @@
     if (!L.pts) lReset();
     const xs = L.pts.map(q => q[0]), xmin = Math.min(...xs) - 0.5, xmax = Math.max(...xs) + 0.5;
     const ymax = Math.max(p.h, 2 * p.r) * 1.15 + 0.5;
-    const sc = Math.min((W - 40) / (xmax - xmin), (H - 90) / ymax);
-    const ox = 20 - xmin * sc + ((W - 40) - (xmax - xmin) * sc) / 2, oy = H - 50;
+    const sc = Math.min((W - 40) / (xmax - xmin), (H - 104) / ymax);
+    const ox = 20 - xmin * sc + ((W - 40) - (xmax - xmin) * sc) / 2, oy = H - 64;
     const X = x => ox + x * sc, Y = y => oy - y * sc;
-    ctx.fillStyle = "#e7f1fb"; ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = "#c9d6c0"; ctx.fillRect(0, oy, W, H - oy);
+    ctx.fillStyle = lin(0, 0, 0, oy, ["#cfe3f6", "#f3f8fc"]); ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = lin(0, oy, 0, H, ["#9cc285", "#6f9a5c"]); ctx.fillRect(0, oy, W, H - oy);
     // Raster 1 m
     ctx.strokeStyle = "#d3e0ee"; ctx.lineWidth = 1;
     const step = ymax > 20 ? 5 : (ymax > 8 ? 2 : 1);
     for (let y = step; y < ymax; y += step) { ctx.beginPath(); ctx.moveTo(0, Y(y)); ctx.lineTo(W, Y(y)); ctx.stroke(); text(fmt(y, 0) + " m", 6, Y(y) - 3, "#7a8796", 11); }
-    ctx.strokeStyle = "#444"; ctx.lineWidth = 4; ctx.beginPath();
-    L.pts.forEach((q, i) => i ? ctx.lineTo(X(q[0]), Y(q[1])) : ctx.moveTo(X(q[0]), Y(q[1]))); ctx.stroke();
+    // Stützen unter der Rampe und am Looping
+    ctx.fillStyle = lin(0, 0, 6, 0, ["#7d8792", "#c9d0d8", "#6b7580"]);
+    for (let i = 6; i < L.loopStart; i += 12) { const q = L.pts[i]; if (q[1] > 0.05) { ctx.save(); ctx.translate(X(q[0]) - 3, 0); ctx.fillRect(0, Y(q[1]), 6, oy - Y(q[1])); ctx.restore(); } }
+    [Math.PI / 2, 3 * Math.PI / 2].forEach(th => { const x = X(p.r * Math.sin(th)), y = Y(p.r); ctx.save(); ctx.translate(x - 3, 0); ctx.fillRect(0, y, 6, oy - y); ctx.restore(); });
+    const path = () => { ctx.beginPath(); L.pts.forEach((q, i) => i ? ctx.lineTo(X(q[0]), Y(q[1])) : ctx.moveTo(X(q[0]), Y(q[1]))); };
+    ctx.save(); ctx.shadowColor = "rgba(0,0,0,.35)"; ctx.shadowBlur = 6; ctx.shadowOffsetY = 3;
+    ctx.strokeStyle = "#2b3440"; ctx.lineWidth = 8; ctx.lineJoin = "round"; path(); ctx.stroke(); ctx.restore();
+    ctx.strokeStyle = "#8f9cab"; ctx.lineWidth = 4; path(); ctx.stroke();
+    ctx.strokeStyle = "rgba(255,255,255,.7)"; ctx.lineWidth = 1.2; path(); ctx.stroke();
     // Markierungen
     ctx.setLineDash([5, 5]); ctx.strokeStyle = C.red; ctx.lineWidth = 1.2;
     ctx.beginPath(); ctx.moveTo(0, Y(2.5 * p.r)); ctx.lineTo(W, Y(2.5 * p.r)); ctx.stroke(); ctx.setLineDash([]);
     text("h_min = 2,5 · r = " + fmt(2.5 * p.r, 2) + " m", W - 10, Y(2.5 * p.r) - 5, C.red, 13, "right");
-    ctx.fillStyle = C.orange; ctx.strokeStyle = "#222"; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(X(L.x), Y(L.y), Math.max(7, 0.12 * sc), 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
-    if (L.msg) text(L.msg, W / 2, 26, L.msg.startsWith("Looping") ? C.green : C.red, 16, "center", true);
+    // Wagen: steht auf der Schiene (Innenseite), im freien Fall in Flugrichtung gedreht
+    const cl = Math.max(9, Math.min(0.35 * sc, 26)), ch = cl * 0.75;
+    let tx = 1, ty = 0;
+    if (L.flew) { if (L.state === "fly") { const v = Math.hypot(L.vx, L.vy) || 1; tx = L.vx / v; ty = L.vy / v; } }
+    else { const q = lAt(L.s); tx = q.tx; ty = q.ty; }
+    ctx.save(); ctx.translate(X(L.x), Y(L.y)); ctx.rotate(Math.atan2(-ty, tx));
+    if (L.state === "fly") ctx.translate(0, ch * 0.75);
+    ctx.shadowColor = "rgba(0,0,0,.35)"; ctx.shadowBlur = 5; ctx.shadowOffsetY = 2;
+    rrect(-cl, -ch * 1.25, 2 * cl, ch, ch * 0.3); ctx.fillStyle = lin(0, -ch * 1.25, 0, -ch * 0.25, ["#ffb36b", "#f07a20", "#a9470f"]); ctx.fill();
+    ctx.shadowColor = "transparent";
+    ctx.fillStyle = "rgba(255,255,255,.45)"; rrect(-cl * 0.85, -ch * 1.18, cl * 1.7, ch * 0.22, ch * 0.1); ctx.fill();
+    [-0.55, 0.55].forEach(u => ball(u * cl, -ch * 0.22, ch * 0.24, "#555", "#111"));
+    ctx.restore();
+    if (L.msg) msg(L.msg, 26 * FS, L.msg.startsWith("Looping") ? C.green : C.red, 16);
     text("Seitenansicht", 12, H - 16, "#41505f", 13);
   }
   function lPanel() {
@@ -367,6 +482,26 @@
     document.querySelectorAll(".pane").forEach(pn => pn.classList.toggle("on", pn.id === "p-" + tab));
     if (tab === "loop") lReset(); if (tab === "kurve") kReset();
   });
+  // Schrift, Vollbild, Bedienfeld, Drehhinweis
+  function setFS(f) {
+    FS = f; document.documentElement.style.setProperty("--fs", f);
+    $("fsm").disabled = f === FS_STEPS[0]; $("fsp").disabled = f === FS_STEPS[FS_STEPS.length - 1];
+    try { localStorage.setItem("kurvenlabor_fs", f); } catch (e) {}
+    resize();
+  }
+  $("fsm").onclick = () => setFS(FS_STEPS[Math.max(0, FS_STEPS.indexOf(FS) - 1)]);
+  $("fsp").onclick = () => setFS(FS_STEPS[Math.min(FS_STEPS.length - 1, FS_STEPS.indexOf(FS) + 1)]);
+  const de = document.documentElement;
+  const fsOn = () => document.fullscreenElement || document.webkitFullscreenElement;
+  if (!(de.requestFullscreen || de.webkitRequestFullscreen)) $("full").style.display = "none";
+  $("full").onclick = () => {
+    if (fsOn()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    else (de.requestFullscreen || de.webkitRequestFullscreen).call(de);
+  };
+  $("tog").onclick = () => { $("app").classList.toggle("nopanel"); $("tog").classList.toggle("on", $("app").classList.contains("nopanel")); resize(); };
+  $("rotgo").onclick = () => de.classList.add("quer");
+  setFS(FS);
+
   resize(); kReset(); lReset();
   let last = performance.now();
   function loop(t) {
