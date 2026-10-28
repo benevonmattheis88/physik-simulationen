@@ -186,7 +186,7 @@ body.big #title{font-size:17px}
     </div>
     <div id="bottom">
       <div class="blk">
-        <div class="bh"><span>Netzgerät</span><span id="srcState" class="small"></span></div>
+        <div class="bh"><span>Netzgerät</span><span id="srcState" class="small"></span><button class="chip" id="btnPol" style="min-height:28px;padding:2px 8px;font-size:12px" aria-label="Netzgerät umpolen">⇄ umpolen</button></div>
         <div class="row"><span class="big" id="uVal">6,0 V</span><span class="small" id="uInfo"></span></div>
         <input type="range" id="uSlider" min="0" max="120" value="60" aria-label="Spannung">
         <div class="row small"><span style="white-space:nowrap">R<sub>i</sub> = <b id="riVal">0,0 Ω</b></span><input type="range" id="riSlider" min="0" max="20" value="0" style="height:24px" aria-label="Innenwiderstand"></div>
@@ -396,6 +396,12 @@ function rebuildAdj(){
   for(const e of S.edges){ S.adj[e.a].push(e); S.adj[e.b].push(e); }
   for(const e of S.edges){ e.cr=0; e.crw=0; }
 }
+/* Netzgerät umpolen: Plus- und Minuspol tauschen. Lag die Erdung am Minuspol, wandert sie mit,
+   damit alle Potenziale im festen Bereich 0 V … 12 V der Farbskala bleiben. */
+function flipSource(){ const e=S.edges.find(x=>x.type==='src'); if(!e) return; const oldMinus=e.a;
+  [e.a,e.b]=[e.b,e.a]; e.path=mkPath([...e.path.pts].reverse()); const L=e.path.len; e.ps=e.ps.map(v=>L-v); e.pw=e.pw.map(v=>L-v);
+  if(S.ground===oldMinus) S.ground=e.a;
+  rebuildAdj(); solve(); renderSel(); }
 function nodeDegree(i){ return S.adj[i].length; }
 
 /* Kabel an Stelle s teilen; gibt den Knotenindex zurück */
@@ -1820,7 +1826,7 @@ function renderSel(){
     else if(c.kind==='Di'){ ctl+=`<div class="chips"><button class="chip" data-a="rev">⇄ umdrehen</button></div>`; }
     else if(c.kind==='Mo'){ ctl+=`<div class="chips"><button class="chip" data-a="rev">⇄ umpolen</button><button class="chip ${c.block?'on':''}" data-a="block">festhalten</button></div>`; }
   } else if(s.kind==='edge'&&s.e.type==='src'){
-    h='Netzgerät'; ctl='<div class="small">Spannung und Innenwiderstand stellst du links ein. Der lange Strich im Schaltsymbol ist der Pluspol.</div>';
+    h='Netzgerät'; ctl='<div class="small">Spannung und Innenwiderstand stellst du links ein. Der lange Strich im Schaltsymbol ist der Pluspol.</div><div class="chips"><button class="chip" data-a="pol">⇄ umpolen</button></div>';
   } else if(s.kind==='edge'&&s.e.type==='wire'){
     const R=S.cables[s.e.cable];
     h='Kabel'; ctl=`<div class="row"><b style="min-width:62px">${nf(R,2)} Ω</b><input type="range" id="wSl" min="0" max="40" value="${Math.round(R*20)}"></div><div class="chips"><button class="chip" data-a="insA">Amperemeter hier einbauen</button><button class="chip" data-a="gnd">Erdung hierher</button></div>`;
@@ -1850,6 +1856,7 @@ function setKind(e,k){ const c=e.comp; c.kind=k; c.burned=false; c.Rl=null; c.T=
   solve(); renderSel(); }
 function selAction(a){ const s=st.sel;
   if(a==='open'){ s.e.comp.open=!s.e.comp.open; s.e.comp.burned=false; s.e.comp.T=20; solve(); renderSel(); }
+  else if(a==='pol'){ flipSource(); }
   else if(a==='rev'){ const c=s.e.comp; c.rev=!c.rev; c.run=0; c.vd=0.5; solve(); renderSel(); }
   else if(a==='block'){ const c=s.e.comp; c.block=!c.block; c.run=0; solve(); renderSel(); }
   else if(a==='cool'){ const c=s.e.comp; c.cool=!c.cool; c.burned=false; solve(); renderSel(); }
@@ -1897,6 +1904,7 @@ $('btnView').onclick=ev=>{ ev.stopPropagation(); $('viewPop').classList.toggle('
 document.addEventListener('pointerdown',ev=>{ const p=$('viewPop'); if(p.classList.contains('open')&&!p.contains(ev.target)&&ev.target.id!=='btnView'){ p.classList.remove('open'); $('btnView').classList.remove('on'); } });
 document.querySelectorAll('.sw').forEach(b=>b.addEventListener('click',()=>{ const k=b.dataset.k; st[k]=!st[k]; b.classList.toggle('on',st[k]); }));
 $('tempo').addEventListener('input',()=>{ const v=+$('tempo').value; st.tempo=+Math.pow(10,(v-40)/40).toPrecision(2); $('tempoVal').textContent='× '+nf(st.tempo,st.tempo<1?2:st.tempo<10?1:0); });
+$('btnPol').onclick=flipSource;
 $('uSlider').addEventListener('input',()=>{ st.U=+$('uSlider').value/10; solve(); });
 $('riSlider').addEventListener('input',()=>{ st.Ri=+$('riSlider').value/10; solve(); });
 $('cabSlider').addEventListener('input',()=>{ st.cableR=+$('cabSlider').value/20; for(const k in S.cables) S.cables[k]=st.cableR; solve(); if(st.sel&&st.sel.kind==='edge'&&st.sel.e.type==='wire') renderSel(); });
