@@ -132,8 +132,8 @@
     <div id="info">
       <div class="checks">
         <label><input id="cbArrow" type="checkbox" checked>Kraftpfeile</label>
-        <label class="lab"><input id="cbNoise" type="checkbox">Messrauschen</label>
-        <label class="space"><input id="cbMag" type="checkbox" checked>Körper 5× vergrößert</label>
+        <label class="lab"><input id="cbNoise" type="checkbox" checked>Messrauschen</label>
+        <label class="space"><input id="cbMag" type="checkbox">Körper 5× vergrößert</label>
       </div>
       <div class="row arrowrow"><label>Pfeilmaßstab</label><select id="arrowScale"></select></div>
       <div class="btns">
@@ -350,7 +350,8 @@
       txt("≙ " + (lab ? de(sc.v, 0) + " nN" : (sc.v < 1 ? de(sc.v, 1) : sc.v) + " · 10" + sup(20) + " N"), tx + ul + 8, yb, fz * 0.85, red, "left", true);
     }
     if (S.tooLong && $("cbArrow").checked) txt("Kraftpfeil zu lang für diesen Pfeilmaßstab: anderen wählen", bx, yb - fz * 1.5, fz * 0.85, red, "left", true);
-    if (!lab && $("cbMag").checked) txt("Körper 5-fach vergrößert gezeichnet, Abstände nicht", bx, yb - fz * (S.tooLong && $("cbArrow").checked ? 2.9 : 1.5), fz * 0.8, sub, "left");
+    if (!lab) txt($("cbMag").checked ? "Körper 5-fach vergrößert gezeichnet, Abstände nicht" : "Körper und Abstände im selben Maßstab",
+                  bx, yb - fz * (S.tooLong && $("cbArrow").checked ? 2.9 : 1.5), fz * 0.8, sub, "left");
 
     drawMeter(W, fz, F, lab, d3);
   }
@@ -668,7 +669,7 @@
     const c = C(); for (const k in c.par) P()[k] = c.par[k].def;
     S.scale[S.scene] = c.defScale; fillScales();
     $("cbArrow").checked = true; document.querySelector(".arrowrow").classList.remove("hidden");
-    $("cbNoise").checked = false; $("cbMag").checked = true; noiseTimer();
+    $("cbNoise").checked = true; $("cbMag").checked = false; noiseTimer();
     syncInputs(); draw();
   };
 
