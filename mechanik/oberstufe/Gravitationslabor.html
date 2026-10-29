@@ -41,6 +41,13 @@
   .btns { display:flex; gap:6px; }
   .btns button { flex:1; }
   #expl { font-size:.95rem; background:#f1f6fc; border:1px solid #d3e2f3; border-radius:8px; padding:.4rem .55rem; line-height:1.35; }
+  #notes table { border-collapse:collapse; width:100%; font-size:.95rem; font-variant-numeric:tabular-nums; }
+  #notes td, #notes th { border-bottom:1px solid var(--line); padding:.2rem .3rem; text-align:right; white-space:nowrap; }
+  #notes th { color:var(--muted); font-weight:600; font-size:.85rem; vertical-align:bottom; white-space:normal; }
+  #notes td:first-child, #notes th:first-child { text-align:left; color:var(--muted); }
+  #notes .empty { font-size:.9rem; color:var(--muted); }
+  #noteBtn { background:var(--green); color:#fff; border-color:var(--green); font-weight:600; }
+  details.small summary { cursor:pointer; min-height:1.9rem; display:flex; align-items:center; }
   .small { font-size:.86rem; color:var(--muted); line-height:1.35; }
   .hidden { display:none !important; }
 
@@ -134,7 +141,13 @@
         <button id="reset">Zurücksetzen</button>
       </div>
       <div id="expl"></div>
-      <div class="small" id="simpl"></div>
+      <div class="btns">
+        <button id="noteBtn">Messwert notieren</button>
+        <button id="noteUndo" title="Letzte Zeile löschen">Letzten löschen</button>
+        <button id="noteClear" title="Alle Messwerte löschen">Alle löschen</button>
+      </div>
+      <div id="notes"></div>
+      <details class="small"><summary>Hinweise und Vereinfachungen</summary><div id="simpl"></div></details>
     </div>
   </div>
 </div>
@@ -480,11 +493,14 @@
     if (lab) {
       const n = shown * 1e9, a = Math.abs(n);
       big = de(n, a >= 100 ? 0 : a >= 10 ? 1 : a >= 1 ? 2 : a >= 0.1 ? 3 : 4); unit = "nN";
+      S.reading = big;
       const e = Math.floor(Math.log10(Math.abs(shown) || 1e-30));
       line2 = "= " + de(shown / Math.pow(10, e), 2) + " · 10" + sup(e) + " N";
     } else {
       const e = Math.floor(Math.log10(shown)), m = shown / Math.pow(10, e);
       big = de(m, 2) + "·10"; ex = String(e); unit = "N";
+      const f = shown / 1e20, ef = Math.floor(Math.log10(f));       // in 10^20 N, 3 gültige Ziffern
+      S.reading = de(f, Math.max(0, 2 - ef));
       line2 = "";
     }
     const bf = fz * 2.3, mono = "600 " + Math.round(bf) + "px Menlo, Consolas, 'Courier New', monospace";
@@ -569,7 +585,7 @@
 
   const EXPL = {
     lab: "<b>Forschungsauftrag:</b> Wovon hängt die Anziehungskraft F zwischen den beiden Bleikugeln ab? " +
-         "Verändere immer nur <b>eine</b> Größe (m<sub>1</sub>, m<sub>2</sub> oder r), lies die Kraft am Messgerät ab und notiere deine Messwerte in einer Tabelle.",
+         "Verändere immer nur <b>eine</b> Größe (m<sub>1</sub>, m<sub>2</sub> oder r), lies die Kraft am Messgerät ab und notiere sie mit „Messwert notieren“.",
     space: "<b>Forschungsauftrag:</b> Gilt bei Himmelskörpern derselbe Zusammenhang wie im Labor? " +
            "Miss wieder, indem du immer nur eine Größe veränderst. Vergleiche die Größenordnungen mit dem Labor."
   };
@@ -580,13 +596,35 @@
     space: "Du kannst den rechten Körper auch mit dem Finger verschieben. Vereinfachungen: Die Körper werden festgehalten gedacht (in Wirklichkeit würden sie sich bewegen). " +
            "Größe aus der Masse mit typischer Dichte (Planet 5,5 g/cm³, Mond 3,3 g/cm³). Erde und Mond gerundet: m<sub>Erde</sub> ≈ 5,97 · 10²⁴ kg, m<sub>Mond</sub> ≈ 7,35 · 10²² kg, mittlerer Abstand ≈ 384 400 km."
   };
+  // Messwerte notieren: nur eine Liste der abgelesenen Werte, keine Auswertung
+  const NOTES = { lab:[], space:[] };
+  const HEAD = {
+    lab: "<th>Nr.</th><th>m<sub>1</sub> in kg</th><th>m<sub>2</sub> in kg</th><th>r in cm</th><th>F in nN</th>",
+    space: "<th>Nr.</th><th>m<sub>1</sub> in 10<sup>24</sup> kg</th><th>m<sub>2</sub> in 10<sup>22</sup> kg</th><th>r in 1000 km</th><th>F in 10<sup>20</sup> N</th>"
+  };
+  function showNotes() {
+    const n = NOTES[S.scene];
+    $("notes").innerHTML = n.length
+      ? "<table><tr>" + HEAD[S.scene] + "</tr>" + n.map((q, i) => "<tr><td>" + (i + 1) + "</td><td>" + q.join("</td><td>") + "</td></tr>").join("") + "</table>"
+      : "<div class='empty'>Noch keine Messwerte notiert.</div>";
+    $("noteUndo").disabled = $("noteClear").disabled = !n.length;
+  }
+  $("noteBtn").onclick = () => {
+    const p = P();
+    NOTES[S.scene].push([String(p.m1), String(p.m2), S.scene === "lab" ? String(p.r) : String(p.r / 1000), S.reading]);
+    showNotes();
+    const t = $("notes").querySelector("tr:last-child"); if (t && t.scrollIntoView) t.scrollIntoView({ block:"nearest" });
+  };
+  $("noteUndo").onclick = () => { NOTES[S.scene].pop(); showNotes(); };
+  $("noteClear").onclick = () => { if (confirm("Alle notierten Messwerte löschen?")) { NOTES[S.scene].length = 0; showNotes(); } };
+
   function setScene(s) {
     S.scene = s;
     $("tabLab").classList.toggle("on", s === "lab"); $("tabSpace").classList.toggle("on", s === "space");
     document.querySelectorAll(".lab").forEach(e => e.classList.toggle("hidden", s !== "lab"));
     document.querySelectorAll(".space").forEach(e => e.classList.toggle("hidden", s !== "space"));
     $("expl").innerHTML = EXPL[s]; $("simpl").innerHTML = SIMPL[s];
-    fillScales(); syncInputs(); noiseTimer(); draw();
+    fillScales(); syncInputs(); noiseTimer(); draw(); showNotes();
   }
   function setFs(v) {
     S.fs = Math.max(0.8, Math.min(1.6, Math.round(v * 10) / 10));
