@@ -34,7 +34,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .warn{pointer-events:auto;background:var(--warn-bg);color:var(--warn);border:1px solid #f4b4ae;border-radius:10px;padding:5px 10px;font-size:12.5px;font-weight:600;display:flex;gap:8px;align-items:center;box-shadow:0 2px 6px rgba(0,0,0,.08)}
 .warn button{border:1px solid var(--warn);background:#fff;color:var(--warn);border-radius:7px;padding:3px 8px;font-size:12.5px}
 .info{background:#eef4ff;color:#1e40af;border-color:#bfd2fb}
-#bottom{display:grid;grid-template-columns:206px 140px minmax(0,1fr) 320px;gap:0;background:var(--panel);border-top:1px solid var(--line);height:130px}
+#bottom{display:grid;grid-template-columns:250px 140px minmax(0,1fr) 370px;gap:0;background:var(--panel);border-top:1px solid var(--line);height:130px}
 .blk{padding:7px 10px;border-right:1px solid var(--line);min-width:0;overflow:hidden}
 .blk:last-child{border-right:0}
 .bh{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:700;margin-bottom:3px;display:flex;justify-content:space-between;align-items:center}
@@ -108,6 +108,8 @@ body.nopanel #miniU{display:flex}
 #miniU input{width:200px}
 body.big{font-size:16px}
 .tbtn:disabled{opacity:.4}
+.ustep{flex:0 0 auto;width:40px;height:40px;border:1px solid var(--line);border-radius:10px;background:#f6f8fb;font-size:22px;font-weight:700;line-height:1;padding:0;touch-action:manipulation}
+.ustep:active{background:var(--accent);color:#fff}
 body.big .seg button,body.big .tbtn{font-size:15px}
 body.big .big{font-size:24px}
 body.big #title{font-size:17px}
@@ -141,7 +143,7 @@ body.big #title{font-size:17px}
   body.nopanel #app{display:block}
   body.nopanel .scene{min-width:44px}
 }
-@media (max-width:1100px){#bottom{grid-template-columns:176px 108px minmax(0,1fr) 320px}.tool{font-size:8.5px;letter-spacing:-.2px;padding:2px 0}#tools{gap:3px}#selRead{min-width:100px}.seg button,.tbtn{padding:6px 8px;font-size:12.5px}}
+@media (max-width:1100px){#bottom{grid-template-columns:210px 96px minmax(0,1fr) 320px}.tool{font-size:8.5px;letter-spacing:-.2px;padding:2px 0}#tools{gap:3px}#selRead{min-width:0;font-size:12px}#selBody{gap:8px}.seg button,.tbtn{padding:6px 8px;font-size:12.5px}}
 @media (orientation:portrait) and (max-width:900px){.seg button,.tbtn{padding:6px 5px;font-size:11.5px}#topbar{gap:5px}} /* iPad hochkant: alle Knöpfe in einer Zeile */
 @media (orientation:portrait) and (min-width:641px) and (max-width:900px){#segSide{display:inline-flex}#btnSide{display:none}} /* iPad hochkant wie bisher */
 @media (orientation:portrait) and (max-width:640px){ /* Handy hochkant: obere Leiste bricht um statt seitlich auszulaufen */
@@ -205,7 +207,7 @@ body.big #title{font-size:17px}
       <div class="blk">
         <div class="bh"><span>Netzgerät</span><span id="srcState" class="small"></span><button class="chip" id="btnPol" style="min-height:28px;padding:2px 8px;font-size:12px" aria-label="Netzgerät umpolen">⇄ umpolen</button></div>
         <div class="row"><span class="big" id="uVal">6,0 V</span><span class="small" id="uInfo"></span></div>
-        <input type="range" id="uSlider" min="0" max="120" value="60" aria-label="Spannung">
+        <div class="row" style="gap:6px;flex-wrap:nowrap"><button class="ustep" id="uMinus" aria-label="Spannung 0,1 V kleiner">−</button><input type="range" id="uSlider" min="0" max="120" value="60" aria-label="Spannung" style="flex:1 1 auto;min-width:0"><button class="ustep" id="uPlus" aria-label="Spannung 0,1 V größer">+</button></div>
         <div class="row small"><span style="white-space:nowrap">R<sub>i</sub> = <b id="riVal">0,0 Ω</b></span><input type="range" id="riSlider" min="0" max="20" value="0" style="height:24px" aria-label="Innenwiderstand"></div>
       </div>
       <div class="blk">
@@ -270,7 +272,7 @@ body.big #title{font-size:17px}
     <li><b>Höhenmodell</b>: Höhe ≙ Potenzial. Das Netzgerät hebt die Ladung an, in den Bauteilen geht es bergab. Gezeigt wird die technische Stromrichtung.</li>
     <li><b>↻ Masche</b>: zeigt einen geschlossenen Weg. Die Summe der Anstiege ist gleich der Summe der Abfälle (Maschenregel).</li>
     <li><b>Energiefluss</b> (nach KPK): Pfeilbreite ∝ Energiestromstärke P. In der Schaltung fließt durch ein Kabel der Energiestrom P = φ · I, bezogen auf die Erdung.</li>
-    <li><b>Tastatur</b>: Pfeiltaste rechts/links stellt die Spannung um 0,5 V höher/tiefer (mit Umschalttaste 0,1 V).</li>
+    <li><b>Tastatur</b>: Pfeiltaste rechts/links (oder die Knöpfe − und + am Netzgerät) stellt die Spannung um 0,1 V höher/tiefer.</li>
     <li><b>Messreihe</b>: „⤓ Tabelle“ speichert die Messwerte als CSV-Datei, die Excel und Numbers als Tabelle öffnen.</li>
     <li><b>KPK-Energieflussdiagramm</b> (+ KPK-Energie): Energie = grüner Pfeil, Träger = gelbe Linie, Energieumlader = rotes Kästchen. Erhaltene Träger (Elektrizität, Drehimpuls) laufen auf einer geschlossenen Bahn; Entropie und Licht entstehen im Umlader und verlassen ihn.</li>
   </ul>
@@ -1549,7 +1551,7 @@ function drawKpkPanel(){
   });
   // 4) Legende
   const ly=H-34; c.font=fnt('500',11,'Arial'); c.textAlign='left'; c.textBaseline='middle';
-  const Pl=k>=20?0.1:1, lt='≙ '+fP(Pl)+' Energie'; // Maßstab der Pfeilbreite
+  const Pl=k>=20?0.1:1, lt='≙ '+fP(Pl)+' Energiestromstärke'; // Maßstab der Pfeilbreite
   const w1=Math.max(1,k*Pl); c.fillStyle=KPK.E; c.fillRect(12,ly-w1/2,26,w1); c.fillStyle='#5d6779'; c.fillText(lt,42,ly);
   let lx=42+c.measureText(lt).width+14;
   c.strokeStyle=KPK.T; c.lineWidth=4; c.beginPath(); c.moveTo(lx,ly); c.lineTo(lx+22,ly); c.stroke(); c.fillStyle='#5d6779'; c.fillText('Träger',lx+28,ly);
@@ -1884,7 +1886,7 @@ function renderSel(){
   } else if(s.kind==='edge'&&s.e.type==='wire'){
     const R=S.cables[s.e.cable];
     const kA=S.cableA[s.e.cable]||1;
-    h='Kabel'; ctl=`<div class="row"><span class="small">R = <b>${nf(R*cableFrac(s.e.cable),2)} Ω</b></span></div><div class="row" style="gap:4px;flex-wrap:nowrap"><span class="small" style="white-space:nowrap" title="Querschnitt A in mm²">A/mm²</span><div class="seg" style="flex:0 0 auto">${AQ.map((a,i)=>`<button class="${kA===i+1?'on':''}" data-a="qA" data-k="${i+1}" style="min-height:28px;padding:3px 5px">${nf(a,1)}</button>`).join('')}</div></div>`; wide=`<div class="chips"><button class="chip" data-a="insA">Amperemeter einbauen</button><button class="chip" data-a="gnd">Erdung hierher</button></div>`;
+    h='Kabel'; ctl=`<div class="row"><span class="small">R = <b>${nf(R*cableFrac(s.e.cable),2)} Ω</b></span></div><div class="row" style="gap:4px;flex-wrap:nowrap"><span class="small" style="white-space:nowrap" title="Querschnitt A in mm²">A/mm²</span><div class="seg" style="flex:0 0 auto">${AQ.map((a,i)=>`<button class="${kA===i+1?'on':''}" data-a="qA" data-k="${i+1}" style="min-height:28px;padding:3px 4px">${nf(a,1)}</button>`).join('')}</div></div>`; wide=`<div class="chips"><button class="chip" data-a="insA" title="Amperemeter hier einbauen">+ Amperemeter</button><button class="chip" data-a="gnd" title="Erdung hierher legen">Erdung hier</button></div>`;
   } else if(s.kind==='node'){
     h='Verzweigung · Knotenregel'; ctl='<div class="small">Was zufließt, fließt auch wieder ab. Kein Ladungsträger geht verloren.</div>';
   } else if(s.kind==='meter'){ const m=s.m;
@@ -1993,12 +1995,13 @@ function exportCsv(){
   a.download=`Messreihe_${nm.replace(/[^A-Za-z0-9_-]/g,'')}.csv`; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},1000);
 }
 $('mCsv').onclick=exportCsv;
-/* Pfeiltasten links/rechts: Spannung um 0,5 V (mit Umschalttaste 0,1 V) */
+/* Pfeiltasten links/rechts und Knöpfe −/+: Spannung in Schritten von 0,1 V */
+function stepU(d){ st.U=Math.max(0,Math.min(12,Math.round((st.U+d)*10)/10)); $('uSlider').value=Math.round(st.U*10); solve(); }
+$('uMinus').onclick=()=>stepU(-0.1); $('uPlus').onclick=()=>stepU(0.1);
 document.addEventListener('keydown',ev=>{
   if(ev.key!=='ArrowLeft'&&ev.key!=='ArrowRight') return;
   const t=ev.target; if(t&&(t.tagName==='INPUT'||t.tagName==='SELECT'||t.tagName==='TEXTAREA')) return;
-  ev.preventDefault(); const d=(ev.key==='ArrowRight'?1:-1)*(ev.shiftKey?0.1:0.5);
-  st.U=Math.max(0,Math.min(12,Math.round((st.U+d)*10)/10)); $('uSlider').value=Math.round(st.U*10); solve(); });
+  ev.preventDefault(); stepU(ev.key==='ArrowRight'?0.1:-0.1); });
 segBind('measMode',v=>{ st.measMode=v; });
 $('btnClear').onclick=()=>{ while(S.meters.length) removeMeter(S.meters[0]); };
 const FS=[0.9,1,1.15,1.3,1.5]; // Schriftstufen (Faktor)
