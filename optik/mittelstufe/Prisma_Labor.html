@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Prisma-Labor: Lichtbrechung und Spektrum</title>
+<style>
+  :root { --bg:#f4f6f9; --panel:#ffffff; --ink:#1d2733; --muted:#5b6675; --line:#d5dbe3;
+          --blue:#1F4E79; --red:#C0392B; --green:#2E7D32; }
+  * { box-sizing:border-box; }
+  html { font-size:14px; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--ink);
+               font-family:-apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow:hidden;
+               -webkit-text-size-adjust:100%; }
+  #app { display:flex; height:100vh; height:100dvh; width:100vw; }
+  #stage { flex:1 1 auto; position:relative; min-width:0; min-height:0; display:flex; flex-direction:column; background:#161a20; }
+  #main { flex:1 1 auto; position:relative; min-height:0; }
+  #cv { position:absolute; inset:0; display:block; width:100%; height:100%; touch-action:none; }
+  #scrwrap { flex:0 0 7.5rem; position:relative; border-top:2px solid #0c0e12; }
+  #scr { position:absolute; inset:0; display:block; width:100%; height:100%; }
+  body.noscr #scrwrap { display:none; }
+  #panel { flex:0 0 25rem; max-width:50vw; background:var(--panel); border-left:1px solid var(--line);
+           padding:.6rem .85rem; display:flex; flex-direction:column; gap:.4rem; overflow-y:auto; }
+  body.nopanel #panel { display:none; }
+  #ctrl, #info { display:flex; flex-direction:column; gap:.35rem; min-width:0; }
+  h1 { font-size:1.2rem; margin:0; color:var(--blue); }
+  .tabs { display:flex; gap:6px; }
+  .tabs button { flex:1; }
+  button { font:inherit; font-size:1rem; padding:.5rem .6rem; border-radius:8px; border:1px solid var(--line);
+           background:#eef2f7; color:var(--ink); cursor:pointer; touch-action:manipulation; min-height:2.6rem; }
+  button.on { background:var(--blue); color:#fff; border-color:var(--blue); }
+  .row { display:flex; align-items:center; gap:8px; font-size:1rem; }
+  .row label { flex:0 0 7.4rem; }
+  .row input[type=range] { flex:1; min-width:0; height:1.9rem; }
+  .row output { flex:0 0 4.6rem; text-align:right; font-variant-numeric:tabular-nums; }
+  #lam { background:linear-gradient(90deg,#7a00c8,#2a3bff 18%,#00b4ff 32%,#00e070 45%,#c8ff00 58%,#ffd000 66%,#ff7000 80%,#ff0000);
+         border-radius:6px; -webkit-appearance:none; appearance:none; height:1.3rem !important; }
+  #lam::-webkit-slider-thumb { -webkit-appearance:none; width:1.6rem; height:1.6rem; border-radius:50%; background:#fff; border:2px solid #333; box-shadow:0 1px 3px rgba(0,0,0,.4); }
+  #lam::-moz-range-thumb { width:1.5rem; height:1.5rem; border-radius:50%; background:#fff; border:2px solid #333; }
+  select { font:inherit; font-size:1rem; padding:.3rem; flex:1; min-width:0; }
+  .checks { display:flex; flex-wrap:wrap; gap:.3rem .9rem; font-size:1rem; }
+  .checks label { display:flex; align-items:center; gap:5px; min-height:1.9rem; }
+  .checks input { width:1.3rem; height:1.3rem; }
+  table { border-collapse:collapse; width:100%; font-size:.93rem; font-variant-numeric:tabular-nums; }
+  td, th { border-bottom:1px solid var(--line); padding:.2rem .3rem; text-align:right; }
+  td:first-child, th:first-child { text-align:left; }
+  th { color:var(--muted); font-weight:600; }
+  .btns { display:flex; gap:6px; }
+  .btns button { flex:1; }
+  #expl { font-size:.95rem; background:#f1f6fc; border:1px solid #d3e2f3; border-radius:8px; padding:.4rem .55rem; line-height:1.35; }
+  #expl.warn { background:#fff4e5; border-color:#f0c88a; }
+  .small { font-size:.86rem; color:var(--muted); }
+  .hidden { display:none !important; }
+
+  /* Werkzeugleiste auf der Simulation */
+  #tools { position:absolute; top:8px; right:8px; display:flex; gap:6px; z-index:5; }
+  #tools button { min-width:44px; height:44px; min-height:44px; padding:0 10px; font-size:16px; font-weight:600;
+                  background:rgba(255,255,255,.88); border:1px solid #c3ccd8; border-radius:10px;
+                  box-shadow:0 2px 6px rgba(0,0,0,.25); display:flex; align-items:center; justify-content:center; }
+  #tools button svg { width:22px; height:22px; stroke:var(--ink); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  #tools button:active { background:#dde5ef; }
+
+  @media (max-height: 800px) {
+    h1 { display:none; }
+    button { padding:.35rem .6rem; min-height:2.4rem; }
+    td, th { padding:.12rem .3rem; }
+    .row input[type=range] { height:1.6rem; }
+    .checks label { min-height:1.6rem; }
+    #scrwrap { flex-basis:6.5rem; }
+  }
+  @media (max-width: 900px) and (orientation: landscape) { #panel { flex-basis:22rem; } .row label { flex-basis:6.6rem; } }
+
+  /* iPad hochkant: Simulation oben, Bedienfeld zweispaltig darunter */
+  @media (min-width: 641px) and (max-width: 900px) and (orientation: portrait) {
+    #app { flex-direction:column; }
+    #panel { flex:0 0 auto; max-width:none; max-height:44vh; width:100%; border-left:0; border-top:1px solid var(--line);
+             display:grid; grid-template-columns:1fr 1fr; gap:.4rem 1.1rem; align-items:start; }
+    h1 { display:none; }
+  }
+
+  /* Handy hochkant: Simulation oben, Bedienfeld darunter, Seite darf scrollen */
+  @media (max-width: 640px) {
+    html, body { height:auto; overflow:auto; }
+    #app { flex-direction:column; height:auto; min-height:100vh; }
+    #stage { flex:none; height:min(125vw, 68vh); }
+    body.nopanel #stage { height:100vh; height:100dvh; }
+    #scrwrap { flex-basis:5.5rem; }
+    #panel { flex:none; width:100%; max-width:none; border-left:0; border-top:1px solid var(--line); overflow:visible; }
+    h1 { display:block; }
+    #tools button { min-width:40px; height:40px; min-height:40px; padding:0 8px; }
+  }
+
+  /* Drehhinweis, wenn das Handy quer gehalten wird */
+  #rotate { display:none; position:fixed; inset:0; z-index:50; background:rgba(29,39,51,.94); color:#fff;
+            align-items:center; justify-content:center; text-align:center; padding:20px; }
+  #rotate .box { max-width:420px; display:flex; flex-direction:column; align-items:center; gap:14px; font-size:18px; }
+  #rotate svg { width:80px; height:80px; stroke:#fff; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+  #rotate button { font-size:17px; background:#fff; color:var(--ink); padding:10px 18px; }
+  @media (orientation: landscape) and (max-height: 500px) {
+    body:not(.quer) #rotate { display:flex; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <div id="main">
+      <canvas id="cv"></canvas>
+      <div id="tools">
+        <button id="fsMinus" title="Schrift kleiner">A−</button>
+        <button id="fsPlus" title="Schrift größer">A+</button>
+        <button id="view" title="Darstellung umschalten">Symbol</button>
+        <button id="full" title="Vollbild"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+        <button id="panelBtn" title="Bedienfeld aus-/einblenden"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg></button>
+      </div>
+    </div>
+    <div id="scrwrap"><canvas id="scr"></canvas></div>
+  </div>
+  <div id="panel">
+    <div id="ctrl">
+      <h1>Prisma-Labor</h1>
+      <div class="tabs">
+        <button id="tabWhite" class="on">Weißes Licht</button>
+        <button id="tabMono">Einfarbiges Licht</button>
+      </div>
+      <div class="row mono"><label>Farbe (λ)</label><input id="lam" type="range" min="400" max="700" step="1" value="650"><output id="lamo"></output></div>
+      <div class="row"><label>Material</label>
+        <select id="mat">
+          <option value="bk7">Kronglas (BK7)</option>
+          <option value="sf11">Flintglas (SF11)</option>
+          <option value="pmma">Plexiglas (PMMA)</option>
+          <option value="water">Wasser (Hohlprisma)</option>
+          <option value="dia">Diamant</option>
+          <option value="model">Modell: n ohne Farbabhängigkeit</option>
+        </select></div>
+      <div class="row nmodel"><label>Brechzahl n</label><input id="nm" type="range" min="1" max="2.5" step="0.01" value="1.5"><output id="nmo"></output></div>
+      <div class="row"><label>Einfallswinkel α<sub>1</sub></label><input id="alpha" type="range" min="0" max="89" step="0.5" value="45"><output id="alphao"></output></div>
+      <div class="row"><label>Prismenwinkel γ</label><input id="gamma" type="range" min="20" max="90" step="1" value="60"><output id="gammao"></output></div>
+      <div class="row"><label>Kantenlänge</label><input id="size" type="range" min="4" max="10" step="0.5" value="8"><output id="sizeo"></output></div>
+      <div class="row"><label>Schirmabstand</label><input id="xs" type="range" min="5" max="20" step="1" value="12"><output id="xso"></output></div>
+      <div class="checks">
+        <label><input id="cbAng" type="checkbox" checked>Lote und Winkel</label>
+        <label><input id="cbDev" type="checkbox">Ablenkwinkel δ</label>
+        <label><input id="cbRefl" type="checkbox">Teilreflexion</label>
+        <label><input id="cbScr" type="checkbox" checked>Schirm</label>
+        <label><input id="cbStrip" type="checkbox" checked>Schirmbild</label>
+      </div>
+      <div class="btns">
+        <button id="minDev" title="Strahl läuft symmetrisch durch das Prisma">Kleinste Ablenkung</button>
+        <button id="tirBtn" title="Einfallswinkel so klein, dass Totalreflexion auftritt">Totalreflexion zeigen</button>
+        <button id="reset">Zurücksetzen</button>
+      </div>
+    </div>
+    <div id="info">
+      <div id="expl"></div>
+      <table id="vals"></table>
+      <div class="small">Tipp: Die Lampe lässt sich auch direkt mit dem Finger um das Prisma ziehen. Der Schirm stellt sich automatisch senkrecht zum Licht, der Schirmabstand zählt ab dem Austrittspunkt.<br>
+        Vereinfachungen: Lichtstrahl als sehr schmales Bündel aus einem Spalt, Luft mit n = 1, Brechzahlen bei 20 °C nach Herstellerformeln (Sellmeier),
+        Hohlprisma ohne Glaswände, Helligkeiten und Bildschirmfarben nur ungefähr. Blick von oben auf den Tisch, Maßstab fest.</div>
+    </div>
+  </div>
+</div>
+<div id="rotate">
+  <div class="box">
+    <svg viewBox="0 0 64 64"><rect x="20" y="6" width="24" height="42" rx="4"/><path d="M29 42h6"/><path d="M50 30a20 20 0 0 1-12 22M38 52l1-6M38 52l-6-1"/></svg>
+    <div>Bitte das Handy hochkant halten.</div>
+    <button id="rotGo">Trotzdem quer weiter</button>
+  </div>
+</div>
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const cv = $("cv"), ctx = cv.getContext("2d");
+  const sc = $("scr"), sctx = sc.getContext("2d");
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  };
+  const DEF = { alpha:45, gamma:60, size:8, xs:12, lam:650, nm:1.5, mat:"bk7" };
+  const S = { light:"white", view:"3d", fs:1, drag:false, k:1, ox:0, oy:0 };
+  const SCR_HALF = 10;                // halbe Breite des Schirms in cm
+  let POSE = null;                    // Lage des Schirms: Mitte c, Blickrichtung d, Querrichtung t
+  const LAMP_D = 9;                   // Abstand Spalt – Prisma in cm
+  const WHITE = []; for (let l = 400; l <= 700; l += 10) WHITE.push(l);
+  const fmt = (x, d) => (isFinite(x) ? x.toFixed(d).replace(".", ",") : "–");
+  const deg = r => r * 180 / Math.PI, rad = d => d * Math.PI / 180;
+
+  // ---------- Brechzahlen ----------
+  const MAT = {
+    bk7:  { name:"Kronglas", sell:[1.03961212, 0.231792344, 1.01046945, 0.00600069867, 0.0200179144, 103.560653], tint:"170,215,240" },
+    sf11: { name:"Flintglas", sell:[1.73759695, 0.313747346, 1.89878101, 0.013188707, 0.0623068142, 155.23629], tint:"235,228,185" },
+    pmma: { name:"Plexiglas", sell:[0.99654, 0.18964, 0.00411, 0.00787, 0.02191, 3.85727], tint:"200,232,236" },
+    water:{ name:"Wasser", f:l => 1.3242 + 3060 / (l * l), tint:"110,175,245", hollow:true },
+    dia:  { name:"Diamant", f:l => { const x = (l / 1000) ** 2; return Math.sqrt(1 + 0.3306 * x / (x - 0.030625) + 4.3356 * x / (x - 0.011236)); }, tint:"235,242,255" },
+    model:{ name:"Modellmaterial", tint:"190,220,240" }
+  };
+  function nOf(l) {
+    const p = P(), m = MAT[p.mat];
+    if (p.mat === "model") return p.nm;
+    if (m.f) return m.f(l);
+    const [B1, B2, B3, C1, C2, C3] = m.sell, x = (l / 1000) ** 2;
+    return Math.sqrt(1 + B1 * x / (x - C1) + B2 * x / (x - C2) + B3 * x / (x - C3));
+  }
+
+  // ---------- Farben ----------
+  function wl2rgb(l) {
+    let r, g, b;
+    if (l < 440) { r = (440 - l) / 60; g = 0; b = 1; }
+    else if (l < 490) { r = 0; g = (l - 440) / 50; b = 1; }
+    else if (l < 510) { r = 0; g = 1; b = (510 - l) / 20; }
+    else if (l < 580) { r = (l - 510) / 70; g = 1; b = 0; }
+    else if (l < 645) { r = 1; g = (645 - l) / 65; b = 0; }
+    else { r = 1; g = 0; b = 0; }
+    const f = l < 420 ? 0.35 + 0.65 * (l - 380) / 40 : l > 680 ? 0.35 + 0.65 * (780 - l) / 100 : 1;
+    return [r, g, b].map(c => Math.pow(c * f, 0.8));
+  }
+  // Farben für weißes Licht so gewichtet, dass die Summe aller Strahlen weiß ergibt
+  const WCOL = (() => {
+    const cs = WHITE.map(wl2rgb), sum = [0, 0, 0];
+    cs.forEach(c => { sum[0] += c[0]; sum[1] += c[1]; sum[2] += c[2]; });
+    return cs.map(c => {
+      const q = [c[0] / sum[0], c[1] / sum[1], c[2] / sum[2]], m = Math.max(...q);
+      return { rgb:q.map(v => Math.round(v / m * 255)).join(","), a:m };
+    });
+  })();
+  function monoCol(l) { const c = wl2rgb(l), m = Math.max(...c); return c.map(v => Math.round(v / m * 255)).join(","); }
+
+  // ---------- Parameter und Geometrie ----------
+  function P() {
+    return { alpha:+$("alpha").value, gamma:+$("gamma").value, size:+$("size").value, xs:+$("xs").value,
+             lam:+$("lam").value, nm:+$("nm").value, mat:$("mat").value,
+             ang:$("cbAng").checked, dev:$("cbDev").checked, refl:$("cbRefl").checked,
+             scr:$("cbScr").checked, strip:$("cbStrip").checked };
+  }
+  function geo(p) {
+    const g = rad(p.gamma), b = p.size * Math.sin(g / 2), h = p.size * Math.cos(g / 2);
+    const L = { x:-b, y:-h / 2 }, A = { x:0, y:h / 2 }, R = { x:b, y:-h / 2 };
+    const V = [L, A, R], edges = [];
+    for (let i = 0; i < 3; i++) {
+      const a = V[i], c = V[(i + 1) % 3], ex = c.x - a.x, ey = c.y - a.y, len = Math.hypot(ex, ey);
+      edges.push({ a, e:{ x:ex, y:ey }, n:{ x:-ey / len, y:ex / len } });   // Normale nach außen
+    }
+    const P1 = { x:(L.x + A.x) / 2, y:(L.y + A.y) / 2 };
+    const th = Math.PI - g / 2 + rad(p.alpha);
+    const src = { x:P1.x + LAMP_D * Math.cos(th), y:P1.y + LAMP_D * Math.sin(th) };
+    return { V, edges, P1, src, dir:{ x:-Math.cos(th), y:-Math.sin(th) }, b, h, th };
+  }
+
+  // ---------- Strahlverfolgung (Snellius, Fresnel, Totalreflexion) ----------
+  const dot = (a, b) => a.x * b.x + a.y * b.y, cross = (a, b) => a.x * b.y - a.y * b.x;
+  const add = (a, b) => ({ x:a.x + b.x, y:a.y + b.y }), mul = (a, k) => ({ x:a.x * k, y:a.y * k });
+  function nearest(G, p, d) {
+    let best = null;
+    G.edges.forEach((E, i) => {
+      const den = cross(d, E.e); if (Math.abs(den) < 1e-12) return;
+      const w = { x:E.a.x - p.x, y:E.a.y - p.y }, t = cross(w, E.e) / den, u = cross(w, d) / den;
+      if (t > 1e-6 && u >= 0 && u <= 1 && (!best || t < best.t)) best = { t, i, n:E.n, q:add(p, mul(d, t)) };
+    });
+    return best;
+  }
+  function trace(G, p, n, p0, d, inside, I, depth, res) {
+    for (let k = 0; k < 12 && I > 0.003; k++) {
+      const hit = nearest(G, p0, d);
+      if (!hit) {
+        let end = add(p0, mul(d, 300));
+        if (!inside && p.scr && POSE && dot(d, POSE.d) > 1e-6) {
+          const den = cross(d, POSE.t), w = { x:POSE.c.x - p0.x, y:POSE.c.y - p0.y };
+          if (Math.abs(den) > 1e-9) {
+            const t = cross(w, POSE.t) / den, v = cross(w, d) / den;
+            if (t > 1e-6 && Math.abs(v) <= SCR_HALF) { end = add(p0, mul(d, t)); res.hits.push({ v:-v, pt:end, I }); }
+          }
+        }
+        res.segs.push({ a:p0, b:end, I }); return;
+      }
+      const q = hit.q, Np = inside ? mul(hit.n, -1) : hit.n, n1 = inside ? n : 1, n2 = inside ? 1 : n;
+      const ci = -dot(d, Np), eta = n1 / n2, s2 = eta * eta * (1 - ci * ci);
+      const rdir = add(d, mul(Np, 2 * ci));
+      res.segs.push({ a:p0, b:q, I });
+      if (s2 > 1) {
+        if (depth === 0) res.ev.push({ q, Np, din:d, dout:rdir, tir:true, edge:hit.i, ai:Math.acos(ci) });
+        p0 = q; d = rdir; continue;
+      }
+      const ct = Math.sqrt(1 - s2), t = add(mul(d, eta), mul(Np, eta * ci - ct));
+      const rs = (n1 * ci - n2 * ct) / (n1 * ci + n2 * ct), rp = (n2 * ci - n1 * ct) / (n2 * ci + n1 * ct);
+      const R = (rs * rs + rp * rp) / 2;
+      if (depth === 0) res.ev.push({ q, Np, din:d, dout:t, tir:false, edge:hit.i, ai:Math.acos(ci), ao:Math.asin(Math.sqrt(s2)), enter:!inside });
+      if (p.refl && depth < 2 && R * I > 0.003) {
+        const sub = { segs:[], hits:[], ev:[] };
+        trace(G, p, n, q, rdir, inside, I * R, depth + 1, sub);
+        sub.segs.forEach(s => res.segs.push(s));
+      }
+      I *= 1 - R; p0 = q; d = t; inside = !inside;
+    }
+  }
+  function run(G, p, lam) {
+    const res = { segs:[], hits:[], ev:[], lam, n:nOf(lam) };
+    trace(G, p, res.n, G.src, G.dir, false, 1, 0, res);
+    const e = res.ev;
+    res.normal = e.length >= 2 && e[0].edge === 0 && e[0].enter && e[1].edge === 1 && !e[1].tir;
+    res.tir = e.length >= 2 && e[1].tir;
+    if (res.normal) res.delta = deg(e[0].ai) + deg(e[1].ao) - p.gamma;
+    return res;
+  }
+  function compute() {
+    const p = P(), G = geo(p);
+    // Der Schirm steht senkrecht zum mittleren Strahl (grün, 550 nm bzw. die gewählte Farbe) im eingestellten Abstand
+    // hinter der zweiten Prismenfläche. Tritt dieser Strahl dort nicht aus, bleibt der Schirm stehen.
+    const old = POSE; POSE = null;
+    const pre = run(G, p, S.light === "white" ? 550 : p.lam);
+    if (pre.normal) {
+      const e = pre.ev[1], d = e.dout;
+      POSE = { c:add(e.q, mul(d, p.xs)), d, t:{ x:-d.y, y:d.x } };
+    } else POSE = old || { c:{ x:p.xs, y:-6 }, d:{ x:0.9, y:-0.43 }, t:{ x:0.43, y:0.9 } };
+    const rays = S.light === "white" ? WHITE.map(l => run(G, p, l)) : [run(G, p, p.lam)];
+    const ref = S.light === "white" ? run(G, p, 550) : rays[0];
+    return { p, G, rays, ref };
+  }
+
+  // ---------- Zeichnen ----------
+  function resize() {
+    const dpr = window.devicePixelRatio || 1;
+    for (const c of [cv, sc]) {
+      const r = c.getBoundingClientRect();
+      c.width = Math.max(1, Math.round(r.width * dpr)); c.height = Math.max(1, Math.round(r.height * dpr));
+      c.getContext("2d").setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    draw();
+  }
+  const X = w => S.ox + w.x * S.k, Y = w => S.oy - w.y * S.k;
+  function txt(c, s, x, y, size, col, align, bold) {   // Text mit echten Indizes: "α_1"
+    const parts = []; s.split(/(_[0-9A-Za-zä]+)/).forEach(q => { if (q) parts.push(q[0] === "_" ? [q.slice(1), true] : [q, false]); });
+    const font = q => (bold ? "600 " : "") + (q[1] ? Math.round(size * 0.7) : size) + "px -apple-system, 'Segoe UI', Roboto, Arial, sans-serif";
+    let w = 0; for (const q of parts) { c.font = font(q); w += c.measureText(q[0]).width; }
+    let cx = align === "center" ? x - w / 2 : align === "right" ? x - w : x;
+    c.fillStyle = col; c.textAlign = "left"; c.textBaseline = "middle";
+    for (const q of parts) { c.font = font(q); c.fillText(q[0], cx, q[1] ? y + size * 0.28 : y); cx += c.measureText(q[0]).width; }
+  }
+  function path(c, pts) { c.beginPath(); pts.forEach((q, i) => i ? c.lineTo(X(q), Y(q)) : c.moveTo(X(q), Y(q))); c.closePath(); }
+
+  function table3D(W, H) {
+    const bg = ctx.createRadialGradient(W * 0.45, H * 0.45, 20, W * 0.5, H * 0.5, Math.max(W, H) * 0.75);
+    bg.addColorStop(0, "#2a313b"); bg.addColorStop(1, "#14181e");
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+    // Lochrasterplatte (optischer Tisch), Lochabstand 2,5 cm
+    const step = 2.5 * S.k; if (step < 9) return;
+    const x0 = S.ox % step, y0 = S.oy % step, r = Math.max(1.2, 0.18 * S.k);
+    for (let x = x0; x < W; x += step) for (let y = y0; y < H; y += step) {
+      ctx.fillStyle = "rgba(0,0,0,.55)"; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,.07)"; ctx.beginPath(); ctx.arc(x + r * 0.35, y + r * 0.35, r, 0, 7); ctx.fill();
+    }
+  }
+
+  function prism3D(G, p) {
+    const m = MAT[p.mat], V = G.V;
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,.6)"; ctx.shadowBlur = 0.9 * S.k; ctx.shadowOffsetX = 0.35 * S.k; ctx.shadowOffsetY = 0.45 * S.k;
+    path(ctx, V); ctx.fillStyle = "rgba(" + m.tint + ",.16)"; ctx.fill();
+    ctx.restore();
+    const gr = ctx.createLinearGradient(X(V[0]), Y(V[1]), X(V[2]), Y(V[0]));
+    gr.addColorStop(0, "rgba(" + m.tint + ",.30)"); gr.addColorStop(0.5, "rgba(" + m.tint + ",.10)"); gr.addColorStop(1, "rgba(" + m.tint + ",.26)");
+    path(ctx, V); ctx.fillStyle = gr; ctx.fill();
+    // Fase innen
+    const cx = (V[0].x + V[1].x + V[2].x) / 3, cy = (V[0].y + V[1].y + V[2].y) / 3;
+    const inset = (f) => V.map(v => ({ x:cx + (v.x - cx) * f, y:cy + (v.y - cy) * f }));
+    path(ctx, inset(m.hollow ? 0.94 : 0.9)); ctx.strokeStyle = "rgba(255,255,255,.18)"; ctx.lineWidth = m.hollow ? 2 : 1; ctx.stroke();
+    // Glanzstreifen
+    const a = V[0], b = V[1], hs = [0.18, 0.32];
+    const pts = [[0.25, hs[0]], [0.8, hs[0] * 0.6], [0.8, hs[1] * 0.6], [0.25, hs[1]]].map(([u, s]) => {
+      const bx = a.x + (b.x - a.x) * u, by = a.y + (b.y - a.y) * u;
+      return { x:bx + (cx - bx) * s, y:by + (cy - by) * s };
+    });
+    path(ctx, pts); ctx.fillStyle = "rgba(255,255,255,.10)"; ctx.fill();
+    // Kanten
+    path(ctx, V); ctx.strokeStyle = "rgba(225,242,255,.85)"; ctx.lineWidth = m.hollow ? 3 : 1.6; ctx.stroke();
+    if (p.mat === "dia") V.forEach(v => { ctx.fillStyle = "rgba(255,255,255,.8)"; ctx.beginPath(); ctx.arc(X(v), Y(v), 2.5, 0, 7); ctx.fill(); });
+  }
+
+  function lamp3D(G, mono, col) {
+    const ang = Math.atan2(-G.dir.y, G.dir.x), k = S.k;
+    ctx.save(); ctx.translate(X(G.src), Y(G.src)); ctx.rotate(ang);
+    const Lb = 6 * k, Wb = 3.4 * k;
+    ctx.shadowColor = "rgba(0,0,0,.6)"; ctx.shadowBlur = 0.8 * k; ctx.shadowOffsetX = 0.3 * k; ctx.shadowOffsetY = 0.4 * k;
+    // Kabel
+    ctx.strokeStyle = "#111"; ctx.lineWidth = 0.35 * k;
+    ctx.beginPath(); ctx.moveTo(-Lb - 0.4 * k, 0); ctx.bezierCurveTo(-Lb - 3 * k, 0.5 * k, -Lb - 3 * k, 3 * k, -Lb - 6 * k, 3.5 * k); ctx.stroke();
+    const g = ctx.createLinearGradient(0, -Wb / 2, 0, Wb / 2);
+    g.addColorStop(0, "#5d6672"); g.addColorStop(0.25, "#c9d0d8"); g.addColorStop(0.5, "#8a939e"); g.addColorStop(1, "#3c434c");
+    ctx.fillStyle = g; rr(-Lb - 0.6 * k, -Wb / 2, Lb, Wb, 0.4 * k); ctx.fill();
+    ctx.shadowColor = "transparent";
+    // Kühlrippen
+    ctx.strokeStyle = "rgba(0,0,0,.35)"; ctx.lineWidth = 1;
+    for (let i = 1; i < 6; i++) { const x = -Lb - 0.6 * k + i * 0.7 * k; ctx.beginPath(); ctx.moveTo(x, -Wb / 2 + 0.3 * k); ctx.lineTo(x, Wb / 2 - 0.3 * k); ctx.stroke(); }
+    // Frontplatte mit Spalt
+    const fg = ctx.createLinearGradient(0, -Wb / 2, 0, Wb / 2);
+    fg.addColorStop(0, "#2b2f35"); fg.addColorStop(0.4, "#5b626b"); fg.addColorStop(1, "#1d2025");
+    ctx.fillStyle = fg; rr(-0.6 * k, -Wb / 2 - 0.2 * k, 0.6 * k, Wb + 0.4 * k, 0.15 * k); ctx.fill();
+    ctx.fillStyle = mono ? "rgb(" + col + ")" : "#fffbe8"; ctx.fillRect(-0.62 * k, -0.08 * k, 0.64 * k, 0.16 * k);
+    if (mono) { ctx.fillStyle = "rgba(" + col + ",.55)"; rr(-0.2 * k, -1.3 * k, 0.3 * k, 2.6 * k, 0.1 * k); ctx.fill(); }
+    ctx.restore();
+  }
+  function rr(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+
+  function screen3D(p, three) {
+    ctx.save(); ctx.translate(X(POSE.c), Y(POSE.c)); ctx.rotate(Math.atan2(-POSE.d.y, POSE.d.x));
+    const x = 0, y0 = -SCR_HALF * S.k, y1 = SCR_HALF * S.k, w = 0.6 * S.k;
+    if (three) {
+      ctx.save(); ctx.shadowColor = "rgba(0,0,0,.6)"; ctx.shadowBlur = 0.8 * S.k; ctx.shadowOffsetX = 0.3 * S.k; ctx.shadowOffsetY = 0.4 * S.k;
+      const g = ctx.createLinearGradient(x, 0, x + w, 0); g.addColorStop(0, "#f4f4ef"); g.addColorStop(0.5, "#cfd0ca"); g.addColorStop(1, "#8d8f8a");
+      ctx.fillStyle = g; ctx.fillRect(x, y0, w, y1 - y0); ctx.restore();
+      // Standfüße
+      ctx.fillStyle = "#3b4048"; for (const yy of [y0 + 0.15 * (y1 - y0), y1 - 0.15 * (y1 - y0)]) { rr(x - 0.8 * S.k, yy - 0.6 * S.k, 2.2 * S.k, 1.2 * S.k, 0.3 * S.k); ctx.fill(); }
+      ctx.fillStyle = g; ctx.fillRect(x, y0, w, y1 - y0);
+    } else {
+      ctx.fillStyle = "#333"; ctx.fillRect(x, y0, Math.max(3, w * 0.6), y1 - y0);
+    }
+    ctx.restore();
+  }
+
+  function arcAng(q, v1, v2, rpx, label, col, size) {
+    const a1 = Math.atan2(-v1.y, v1.x), a2 = Math.atan2(-v2.y, v2.x);
+    let da = a2 - a1; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI;
+    ctx.strokeStyle = col; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(X(q), Y(q), rpx, a1, a1 + da, da < 0); ctx.stroke();
+    const am = a1 + da / 2, lr = rpx + size * 0.95;
+    txt(ctx, label, X(q) + lr * Math.cos(am), Y(q) + lr * Math.sin(am), size, col, "center", true);
+  }
+  function dashed(a, b, col, lw) {
+    ctx.strokeStyle = col; ctx.lineWidth = lw || 1.4; ctx.setLineDash([6, 5]);
+    ctx.beginPath(); ctx.moveTo(X(a), Y(a)); ctx.lineTo(X(b), Y(b)); ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  function drawRays(rays, three, xs) {
+    const white = S.light === "white";
+    ctx.save();
+    if (three) ctx.globalCompositeOperation = "lighter";
+    ctx.lineCap = "round";
+    const passes = three ? [[Math.max(5, 0.45 * S.k), 0.22], [2.2, 1]] : [[2, 1]];
+    for (const [lw, f] of passes) {
+      ctx.lineWidth = lw;
+      rays.forEach((r, i) => {
+        let rgb, a;
+        if (white && three) { rgb = WCOL[i].rgb; a = WCOL[i].a * 2.0; }
+        else if (white) { rgb = monoCol(r.lam); a = 0.75; }
+        else { rgb = monoCol(r.lam); a = 1; }
+        for (const s of r.segs) {
+          ctx.strokeStyle = "rgba(" + rgb + "," + Math.min(1, a * f * s.I) + ")";
+          ctx.beginPath(); ctx.moveTo(X(s.a), Y(s.a)); ctx.lineTo(X(s.b), Y(s.b)); ctx.stroke();
+        }
+      });
+    }
+    if (white && !three) {   // einfallendes weißes Licht in der Symbolansicht grau
+      const s = rays[0].segs[0]; ctx.strokeStyle = "#666"; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(X(s.a), Y(s.a)); ctx.lineTo(X(s.b), Y(s.b)); ctx.stroke();
+    }
+    // Lichtflecke auf dem Schirm
+    if (three) rays.forEach((r, i) => r.hits.forEach(h => {
+      const rgb = white ? WCOL[i].rgb : monoCol(r.lam), a = (white ? WCOL[i].a * 2.4 : 1) * h.I;
+      const x = X(h.pt), y = Y(h.pt);
+      const g = ctx.createRadialGradient(x, y, 0, x, y, 0.5 * S.k);
+      g.addColorStop(0, "rgba(" + rgb + "," + Math.min(1, a) + ")"); g.addColorStop(1, "rgba(" + rgb + ",0)");
+      ctx.fillStyle = g; ctx.fillRect(x - 0.5 * S.k, y - 0.5 * S.k, S.k, S.k);
+    }));
+    ctx.restore();
+  }
+
+  function draw() {
+    const W = cv.clientWidth, H = cv.clientHeight, three = S.view === "3d";
+    if (!W || !H) return;
+    // fester Maßstab: Ausschnitt x −18 … 22 cm, y −12 … 11 cm passt immer ins Bild
+    S.k = Math.min(W / 40, H / 23);
+    S.ox = W / 2 - 2 * S.k; S.oy = H / 2 - 0.5 * S.k;
+    const C = compute(), { p, G, rays, ref } = C, fz = 15 * S.fs;
+    const ink = three ? "#e8eef5" : "#1d2733", acc = three ? "#ffe27a" : "#1F4E79", acc2 = three ? "#9fd8ff" : "#7B3FA0";
+    ctx.clearRect(0, 0, W, H);
+    if (three) table3D(W, H); else { ctx.fillStyle = "#fbfcfe"; ctx.fillRect(0, 0, W, H); }
+
+    if (p.scr) screen3D(p, three);
+    if (three) prism3D(G, p);
+    else { path(ctx, G.V); ctx.fillStyle = "#dcedf9"; ctx.fill(); ctx.strokeStyle = "#1F4E79"; ctx.lineWidth = MAT[p.mat].hollow ? 3 : 2; ctx.stroke(); }
+
+    drawRays(rays, three, p.xs);
+
+    if (three) lamp3D(G, S.light === "mono", monoCol(p.lam));
+    else {
+      ctx.save(); ctx.translate(X(G.src), Y(G.src)); ctx.rotate(Math.atan2(-G.dir.y, G.dir.x));
+      ctx.fillStyle = "#fff"; ctx.strokeStyle = "#1d2733"; ctx.lineWidth = 2;
+      ctx.fillRect(-4 * S.k, -1.2 * S.k, 4 * S.k, 2.4 * S.k); ctx.strokeRect(-4 * S.k, -1.2 * S.k, 4 * S.k, 2.4 * S.k);
+      ctx.beginPath(); ctx.moveTo(0, -1.6 * S.k); ctx.lineTo(0, -0.15 * S.k); ctx.moveTo(0, 0.15 * S.k); ctx.lineTo(0, 1.6 * S.k); ctx.lineWidth = 3; ctx.stroke();
+      ctx.restore();
+    }
+
+    // Beschriftungen
+    const lampTxt = S.light === "mono" ? "Lampe mit Farbfilter" : "Lampe mit Spalt";
+    const lp = add(G.src, mul(G.dir, -3));
+    ctx.font = fz + "px -apple-system, 'Segoe UI', Roboto, Arial, sans-serif";
+    const lw2 = ctx.measureText(lampTxt).width / 2 + 6;
+    txt(ctx, lampTxt, Math.max(lw2, Math.min(W - lw2, X(lp))), Y(lp) + 2.6 * S.k, fz, ink, "center");
+    txt(ctx, "Prisma (" + MAT[p.mat].name + ")", X({ x:0, y:0 }), Y({ x:0, y:-G.h / 2 }) + 1.1 * S.k + fz * 0.4, fz, ink, "center");
+    if (p.scr) { const e = add(add(POSE.c, mul(POSE.t, SCR_HALF + 1.2)), mul(POSE.d, 0.3)); txt(ctx, "Schirm", X(e), Y(e), fz, ink, "center"); }
+
+    // Lote und Winkel
+    const mono = S.light === "mono";
+    if (p.ang) {
+      const lotLen = 3;
+      const evs = (mono ? rays[0] : ref).ev.slice(0, 2);
+      evs.forEach(e => dashed(add(e.q, mul(e.Np, lotLen)), add(e.q, mul(e.Np, -lotLen)), three ? "rgba(255,255,255,.75)" : "#555"));
+      if (evs[0]) txt(ctx, "Lot", X(add(evs[0].q, mul(evs[0].Np, lotLen))) - 4, Y(add(evs[0].q, mul(evs[0].Np, lotLen))) - fz * 0.6, fz * 0.9, ink, "center");
+      if (mono) {
+        const rp = Math.max(18, 1.1 * S.k);
+        evs.forEach((e, j) => {
+          arcAng(e.q, e.Np, mul(e.din, -1), rp, j === 0 ? "α_1" : "β_2", acc, fz);
+          if (e.tir) {
+            arcAng(e.q, e.Np, e.dout, rp * 1.3, "", acc, fz);
+            txt(ctx, "Totalreflexion", X(e.q) + 1.5 * S.k, Y(e.q) - 2.6 * S.k, fz, three ? "#ff9a8a" : "#C0392B", "left", true);
+          } else arcAng(e.q, mul(e.Np, -1), e.dout, rp * 1.25, j === 0 ? "β_1" : "α_2", acc2, fz);
+        });
+      }
+      // brechender Winkel an der Spitze
+      const A = G.V[1];
+      const vL = { x:G.V[0].x - A.x, y:G.V[0].y - A.y }, vR = { x:G.V[2].x - A.x, y:G.V[2].y - A.y };
+      const nl = Math.hypot(vL.x, vL.y), nr = Math.hypot(vR.x, vR.y);
+      arcAng(A, { x:vL.x / nl, y:vL.y / nl }, { x:vR.x / nr, y:vR.y / nr }, Math.max(18, 1.3 * S.k), "γ", ink, fz);
+    }
+    // Ablenkwinkel
+    const rd = mono ? rays[0] : ref;
+    if (p.dev && rd.normal) {
+      const e0 = rd.ev[0], e1 = rd.ev[1], den = cross(e0.din, e1.dout);
+      if (Math.abs(den) > 1e-4) {
+        const w = { x:e1.q.x - e0.q.x, y:e1.q.y - e0.q.y }, t = cross(w, e1.dout) / den;
+        const Xp = add(e0.q, mul(e0.din, t));
+        const col = three ? "#ffb36b" : "#E67E22";
+        dashed(e0.q, add(Xp, mul(e0.din, 6)), col, 1.6);
+        dashed(e1.q, Xp, col, 1.6);
+        arcAng(Xp, e0.din, e1.dout, Math.max(30, 4 * S.k), "δ", col, fz);
+      }
+    }
+
+    // Maßstabsbalken
+    const bx = 14, by = H - 18, bl = 5 * S.k;
+    ctx.strokeStyle = ink; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(bx, by - 5); ctx.lineTo(bx, by); ctx.lineTo(bx + bl, by); ctx.lineTo(bx + bl, by - 5); ctx.stroke();
+    txt(ctx, "5 cm", bx + bl / 2, by - 11, fz * 0.9, ink, "center");
+    txt(ctx, "Blick von oben", W - 12, H - 16, fz * 0.85, three ? "rgba(232,238,245,.6)" : "#5b6675", "right");
+
+    drawStrip(C);
+    info(C);
+  }
+
+  // ---------- Blick auf den Schirm ----------
+  function drawStrip(C) {
+    const W = sc.clientWidth, H = sc.clientHeight, { p, rays, ref } = C, fz = 13 * S.fs;
+    if (!W || !H) return;
+    const k = 60;                                   // fester Maßstab: 60 px pro cm
+    sctx.clearRect(0, 0, W, H);
+    const bg = sctx.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, "#2a2d33"); bg.addColorStop(1, "#1e2126");
+    sctx.fillStyle = bg; sctx.fillRect(0, 0, W, H);
+    const yc = 0;
+    const u = y => W / 2 + (y - yc) * k;            // Lage auf dem Schirm, von der Lampe aus gesehen
+    const top = H * 0.2, bot = H - 22;
+    // Lineal
+    sctx.strokeStyle = "rgba(255,255,255,.35)"; sctx.lineWidth = 1;
+    const ymin = yc - W / 2 / k, ymax = yc + W / 2 / k;
+    for (let mm = Math.ceil(ymin * 2); mm <= ymax * 2; mm++) {
+      const x = u(mm / 2), full = mm % 2 === 0;
+      sctx.beginPath(); sctx.moveTo(x, bot + 2); sctx.lineTo(x, bot + (full ? 10 : 6)); sctx.stroke();
+      if (full) txt(sctx, String(mm / 2), x, bot + 16, fz * 0.75, "rgba(255,255,255,.5)", "center");
+    }
+    if (!p.scr) { txt(sctx, "Schirm ist ausgeblendet.", W / 2, H / 2, fz, "#ccc", "center"); return; }
+    let any = false;
+    sctx.save(); sctx.globalCompositeOperation = "lighter";
+    rays.forEach((r, i) => r.hits.forEach(h => {
+      any = true;
+      const white = S.light === "white", rgb = white ? WCOL[i].rgb : monoCol(r.lam);
+      const a = Math.min(1, (white ? WCOL[i].a * 3 : 1) * h.I), x = u(h.v), hw = 0.06 * k;
+      const g = sctx.createLinearGradient(x - hw * 2, 0, x + hw * 2, 0);
+      g.addColorStop(0, "rgba(" + rgb + ",0)"); g.addColorStop(0.5, "rgba(" + rgb + "," + a + ")"); g.addColorStop(1, "rgba(" + rgb + ",0)");
+      sctx.fillStyle = g; sctx.fillRect(x - hw * 2, top, hw * 4, bot - top - 6);
+    }));
+    sctx.restore();
+    if (!any) txt(sctx, "Kein Licht trifft den Schirm.", W / 2, (top + bot) / 2, fz, "#ccc", "center");
+    txt(sctx, W < 560 ? "Schirm (vergrößert, cm)" : "Blick auf den Schirm (vergrößert, Lineal in cm ab Schirmmitte)", 10, 12, fz * 0.9, "rgba(255,255,255,.75)", "left");
+    // Maßstab 1 cm
+    sctx.strokeStyle = "rgba(255,255,255,.8)"; sctx.lineWidth = 2;
+    const bx = W - 12 - k; sctx.beginPath(); sctx.moveTo(bx, 18); sctx.lineTo(bx + k, 18); sctx.stroke();
+    txt(sctx, "1 cm", bx + k / 2, 8, fz * 0.8, "rgba(255,255,255,.8)", "center");
+  }
+
+  // ---------- Tabelle und Erklärung ----------
+  function A(x) { return fmt(x, 1) + "°"; }
+  function info(C) {
+    const { p, rays } = C, mono = S.light === "mono", ex = $("expl");
+    let h = "", warn = false, t = "";
+    if (mono) {
+      const r = rays[0], e = r.ev, bg = deg(Math.asin(1 / r.n));
+      h += "<tr><th>Größe</th><th>Wert</th></tr>";
+      h += "<tr><td>Wellenlänge λ</td><td>" + p.lam + " nm</td></tr>";
+      h += "<tr><td>Brechzahl n</td><td>" + fmt(r.n, 4) + "</td></tr>";
+      h += "<tr><td>α<sub>1</sub> (Einfall) / β<sub>1</sub> (im Glas)</td><td>" + A(deg(e[0].ai)) + " / " + A(deg(e[0].ao)) + "</td></tr>";
+      if (e[1]) h += "<tr><td>β<sub>2</sub> (im Glas) / α<sub>2</sub> (Austritt)</td><td>" + A(deg(e[1].ai)) + " / " + (e[1].tir ? "–" : A(deg(e[1].ao))) + "</td></tr>";
+      h += "<tr><td>Grenzwinkel β<sub>G</sub></td><td>" + A(bg) + "</td></tr>";
+      h += "<tr><td>Ablenkwinkel δ</td><td>" + (r.normal ? A(r.delta) : "–") + "</td></tr>";
+      if (r.tir) { warn = true; t = "<b>Totalreflexion:</b> Im Glas trifft das Licht mit β<sub>2</sub> = " + A(deg(e[1].ai)) + " auf die zweite Fläche. Das ist mehr als der Grenzwinkel β<sub>G</sub> = " + A(bg) + ". Das Licht kann nicht austreten und wird vollständig reflektiert."; }
+      else t = "Einfarbiges Licht wird an beiden Flächen zum Lot hin bzw. vom Lot weg gebrochen, aber <b>nicht in Farben zerlegt</b>. Snellius: sin α<sub>1</sub> = n · sin β<sub>1</sub>.";
+    } else {
+      const r7 = rays[rays.length - 1], r4 = rays[0];
+      const ntir = rays.filter(r => r.tir).length;
+      h += "<tr><th></th><th>rot (700 nm)</th><th>violett (400 nm)</th></tr>";
+      h += "<tr><td>Brechzahl n</td><td>" + fmt(r7.n, 4) + "</td><td>" + fmt(r4.n, 4) + "</td></tr>";
+      h += "<tr><td>Ablenkwinkel δ</td><td>" + (r7.normal ? A(r7.delta) : "–") + "</td><td>" + (r4.normal ? A(r4.delta) : "–") + "</td></tr>";
+      h += "<tr><td>Grenzwinkel β<sub>G</sub></td><td>" + A(deg(Math.asin(1 / r7.n))) + "</td><td>" + A(deg(Math.asin(1 / r4.n))) + "</td></tr>";
+      if (r7.normal && r4.normal) h += "<tr><td>Spektrum: δ<sub>violett</sub> − δ<sub>rot</sub></td><td colspan=2>" + A(r4.delta - r7.delta) + "</td></tr>";
+      if (p.mat === "model") t = "Bei diesem Modellmaterial ist n für alle Farben gleich. Alle Farben werden gleich stark gebrochen: <b>Es entsteht kein Spektrum.</b>";
+      else t = "Weißes Licht besteht aus vielen Farben. Im " + MAT[p.mat].name + " ist die Brechzahl für violettes Licht größer als für rotes. Violettes Licht wird deshalb stärker abgelenkt: Das Licht wird in ein <b>Spektrum</b> zerlegt (Dispersion).";
+      if (ntir === rays.length) { warn = true; t = "<b>Totalreflexion für alle Farben:</b> An der zweiten Fläche ist der Winkel im Glas größer als der Grenzwinkel. Kein Licht tritt dort aus."; }
+      else if (ntir > 0) { warn = true; t += " <b>Achtung:</b> Für " + (rays[0].tir ? "die violetten und blauen" : "einen Teil der") + " Farben gibt es an der zweiten Fläche schon Totalreflexion, sie fehlen auf dem Schirm."; }
+    }
+    // Bei zu großem Prismenwinkel kommt bei keinem Einfallswinkel Licht durch die zweite Fläche: γ ≥ 2·β_G
+    const gmax = 2 * deg(Math.asin(1 / nOf(mono ? p.lam : 700)));
+    if (p.gamma >= gmax) { warn = true; t += " Bei γ = " + p.gamma + "° tritt bei <b>keinem</b> Einfallswinkel Licht aus der zweiten Fläche aus. Stelle γ kleiner als " + fmt(Math.floor(gmax * 10) / 10, 1) + "° ein."; }
+    $("vals").innerHTML = h;
+    ex.innerHTML = t; ex.classList.toggle("warn", warn);
+  }
+
+  // ---------- Bedienung ----------
+  function outs() {
+    const p = P();
+    $("lamo").textContent = p.lam + " nm";
+    $("nmo").textContent = fmt(p.nm, 2);
+    $("alphao").textContent = fmt(p.alpha, 1) + "°";
+    $("gammao").textContent = p.gamma + "°";
+    $("sizeo").textContent = fmt(p.size, 1) + " cm";
+    $("xso").textContent = p.xs + " cm";
+    document.querySelectorAll(".nmodel").forEach(e => e.classList.toggle("hidden", p.mat !== "model"));
+    document.querySelectorAll(".mono").forEach(e => e.classList.toggle("hidden", S.light !== "mono"));
+    document.body.classList.toggle("noscr", !p.strip);
+  }
+  function setLight(l) {
+    S.light = l; $("tabWhite").classList.toggle("on", l === "white"); $("tabMono").classList.toggle("on", l === "mono");
+    outs(); resize();
+  }
+  function setFs(v) {
+    S.fs = Math.max(0.8, Math.min(1.6, Math.round(v * 10) / 10));
+    document.documentElement.style.fontSize = (14 * S.fs) + "px";
+    store.set("prisma_fs", S.fs); resize();
+  }
+  function setView(v) {
+    S.view = v; $("view").textContent = v === "3d" ? "Symbol" : "3D";
+    $("view").title = v === "3d" ? "Zur Symbolansicht wechseln" : "Zur 3D-Ansicht wechseln";
+    store.set("prisma_view", v); draw();
+  }
+  function setAlpha(a) { $("alpha").value = Math.max(0, Math.min(89, Math.round(a * 2) / 2)); outs(); draw(); }
+  function refLam() { return S.light === "mono" ? +$("lam").value : 589; }
+
+  $("fsMinus").onclick = () => setFs(S.fs - 0.1);
+  $("fsPlus").onclick = () => setFs(S.fs + 0.1);
+  $("view").onclick = () => setView(S.view === "3d" ? "sym" : "3d");
+  $("panelBtn").onclick = () => { document.body.classList.toggle("nopanel"); resize(); };
+  const de = document.documentElement, reqFS = de.requestFullscreen || de.webkitRequestFullscreen;
+  if (!reqFS) $("full").classList.add("hidden");
+  $("full").onclick = () => {
+    const cur = document.fullscreenElement || document.webkitFullscreenElement;
+    if (cur) (document.exitFullscreen || document.webkitExitFullscreen).call(document); else reqFS.call(de);
+  };
+  $("rotGo").onclick = () => document.body.classList.add("quer");
+  $("tabWhite").onclick = () => setLight("white");
+  $("tabMono").onclick = () => setLight("mono");
+  $("minDev").onclick = () => {
+    const n = nOf(refLam()), s = n * Math.sin(rad(+$("gamma").value) / 2);
+    if (s < 1) setAlpha(deg(Math.asin(s)));
+    else { $("expl").innerHTML = "Bei diesem Prismenwinkel gibt es keinen symmetrischen Durchgang: Das Licht wird an der zweiten Fläche immer totalreflektiert."; $("expl").classList.add("warn"); }
+  };
+  $("tirBtn").onclick = () => {
+    // Grenz-Einfallswinkel: darunter Totalreflexion an der zweiten Fläche
+    const g = rad(+$("gamma").value);
+    const lim = l => { const n = nOf(l), b1 = g - Math.asin(1 / n); return b1 <= 0 ? -1 : n * Math.sin(b1) < 1 ? deg(Math.asin(n * Math.sin(b1))) : 90; };
+    let a;
+    if (S.light === "mono") a = lim(refLam()) - 3;
+    else {                       // weißes Licht: zwischen den Grenzen für Rot und Violett, damit nur ein Teil der Farben fehlt
+      const ar = lim(700), av = lim(400);
+      a = av - ar > 1 ? (ar + av) / 2 : av - 3;
+    }
+    setAlpha(Math.max(0, a));
+  };
+  $("reset").onclick = () => {
+    $("alpha").value = DEF.alpha; $("gamma").value = DEF.gamma; $("size").value = DEF.size; $("xs").value = DEF.xs;
+    $("lam").value = DEF.lam; $("nm").value = DEF.nm; $("mat").value = DEF.mat;
+    $("cbAng").checked = true; $("cbDev").checked = false; $("cbRefl").checked = false; $("cbScr").checked = true; $("cbStrip").checked = true;
+    setLight("white");
+  };
+  document.querySelectorAll("input, select").forEach(e => e.addEventListener("input", () => { const s = document.body.classList.contains("noscr"); outs(); if (s !== document.body.classList.contains("noscr")) resize(); else draw(); }));
+  $("mat").addEventListener("change", () => { outs(); draw(); });
+
+  // Lampe mit dem Finger ziehen
+  function world(ev) { const r = cv.getBoundingClientRect(); return { x:(ev.clientX - r.left - S.ox) / S.k, y:(S.oy - (ev.clientY - r.top)) / S.k }; }
+  cv.addEventListener("pointerdown", ev => {
+    const p = P(), G = geo(p), w = world(ev), c = add(G.src, mul(G.dir, -3));
+    if (Math.hypot(w.x - c.x, w.y - c.y) < 4.5) { S.drag = true; cv.setPointerCapture(ev.pointerId); ev.preventDefault(); }
+  });
+  cv.addEventListener("pointermove", ev => {
+    if (!S.drag) return;
+    const p = P(), G = geo(p), w = world(ev);
+    let a = deg(Math.atan2(w.y - G.P1.y, w.x - G.P1.x)) - (180 - p.gamma / 2);
+    while (a > 180) a -= 360; while (a < -180) a += 360;
+    setAlpha(a);
+  });
+  const up = () => { S.drag = false; };
+  cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
+
+  window.addEventListener("resize", resize);
+  if (window.ResizeObserver) { const ro = new ResizeObserver(resize); ro.observe(cv); ro.observe(sc); }
+  setView(store.get("prisma_view") === "sym" ? "sym" : "3d");
+  setFs(+store.get("prisma_fs") || 1);
+  setLight("white");
+})();
+</script>
+</body>
+</html>
