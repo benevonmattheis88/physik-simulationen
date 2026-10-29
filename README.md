@@ -29,6 +29,9 @@ kernphysik/
   mittelstufe/
     Kernlabor.html
     Kernlabor_einzeln/        jeder Reiter des Kernlabors als eigene Seite
+optik/
+  mittelstufe/
+    Prisma_Labor.html
 ```
 
 ## Nutzung
