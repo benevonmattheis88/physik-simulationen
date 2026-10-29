@@ -18,6 +18,7 @@ CNAME                         eigene Adresse (simulationen.familiemueller.space)
 datenschutz.html              Datenschutzhinweis
 mechanik/
   oberstufe/
+    Gravitationslabor.html
     Kreisbewegung.html
     Kurvenlabor.html
     Stosslabor.html
