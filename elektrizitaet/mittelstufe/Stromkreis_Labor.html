@@ -1965,5 +1965,47 @@ window.__VT=()=>VT;
 window.__setKind=setKind; window.__lab={st,get S(){return S;},solve,countParticles,insertSeries,insertParallel,loadScene,hitWire,stepParticles,
   kirchhoff(){ let mx=0; for(let i=0;i<S.nodes.length;i++){ if(!S.adj[i].length) continue; let s=0; for(const e of S.adj[i]) s+=(e.b===i)?e.I:-e.I; mx=Math.max(mx,Math.abs(s)); } return mx; }};
 </script>
+<!-- KI-Hinweis: einheitlich in allen Simulationen, immer sichtbar unten rechts -->
+<style>
+#ki-hinweis{position:fixed;right:0;bottom:0;z-index:2147483000;pointer-events:none;
+  font:10px/16px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  color:#5b6270;background:rgba(243,244,246,.92);border-top:1px solid rgba(0,0,0,.08);border-left:1px solid rgba(0,0,0,.08);
+  border-top-left-radius:6px;padding:0 max(7px,env(safe-area-inset-right)) env(safe-area-inset-bottom) 8px;white-space:nowrap}
+.ki-platz::after{content:"";display:block;height:20px;flex:none}
+@media print{#ki-hinweis{position:static;text-align:right;border:0;background:none}}
+</style>
+<div id="ki-hinweis" role="note">Mit KI erstellt · Physik nicht geprüft · Ergebnisse kritisch prüfen</div>
+<script>
+/* Scrollbereiche, die bis unter den Hinweis reichen, bekommen unten 20 px Luft,
+   damit ihr letzter Inhalt nicht dauerhaft vom Hinweis verdeckt wird. */
+(function(){
+  var hin=document.getElementById('ki-hinweis');
+  function platz(){
+    var alt=document.querySelectorAll('.ki-platz');
+    for(var i=0;i<alt.length;i++)alt[i].classList.remove('ki-platz');
+    var vw=innerWidth,vh=innerHeight,hb=hin.getBoundingClientRect();
+    var els=document.body.querySelectorAll('*');
+    function passt(el){
+      var cs=getComputedStyle(el);
+      if(cs.display==='block'||cs.display==='flow-root')return true;
+      return cs.display==='flex'&&/column/.test(cs.flexDirection);
+    }
+    for(var j=0;j<els.length;j++){
+      var el=els[j];if(el===hin||el.closest('svg'))continue;
+      var oy=getComputedStyle(el).overflowY;
+      if(oy!=='auto'&&oy!=='scroll')continue;
+      var r=el.getBoundingClientRect();
+      if(r.height<40||r.bottom<vh-hb.height-4||r.right<hb.left+20||r.left>vw)continue;
+      if(passt(el))el.classList.add('ki-platz');
+    }
+    var se=document.scrollingElement||document.documentElement;
+    if(se.scrollHeight>vh+2&&passt(document.body))document.body.classList.add('ki-platz');
+  }
+  var t;function spaeter(){clearTimeout(t);t=setTimeout(platz,150);}
+  addEventListener('resize',spaeter);addEventListener('load',spaeter);
+  document.addEventListener('click',spaeter,true);
+  platz();
+})();
+</script>
 </body>
 </html>
