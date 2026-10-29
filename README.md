@@ -28,6 +28,9 @@ elektrizitaet/
   mittelstufe/
     Stromkreis_Labor.html
     Ersatzwiderstand_herleiten.html
+energie/
+  mittelstufe/
+    Energiefluss_Baukasten.html
 kernphysik/
   mittelstufe/
     Kernlabor.html
