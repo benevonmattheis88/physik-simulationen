@@ -34,7 +34,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .warn{pointer-events:auto;background:var(--warn-bg);color:var(--warn);border:1px solid #f4b4ae;border-radius:10px;padding:5px 10px;font-size:12.5px;font-weight:600;display:flex;gap:8px;align-items:center;box-shadow:0 2px 6px rgba(0,0,0,.08)}
 .warn button{border:1px solid var(--warn);background:#fff;color:var(--warn);border-radius:7px;padding:3px 8px;font-size:12.5px}
 .info{background:#eef4ff;color:#1e40af;border-color:#bfd2fb}
-#bottom{display:grid;grid-template-columns:206px 140px minmax(0,1fr) 320px;gap:0;background:var(--panel);border-top:1px solid var(--line);height:130px}
+#bottom{display:grid;grid-template-columns:250px 140px minmax(0,1fr) 370px;gap:0;background:var(--panel);border-top:1px solid var(--line);height:130px}
 .blk{padding:7px 10px;border-right:1px solid var(--line);min-width:0;overflow:hidden}
 .blk:last-child{border-right:0}
 .bh{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:700;margin-bottom:3px;display:flex;justify-content:space-between;align-items:center}
@@ -55,7 +55,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .chip{border:1px solid var(--line);background:#f6f8fb;border-radius:8px;padding:4px 8px;font-size:12.5px;min-height:30px}
 .chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .chip.red{border-color:var(--warn);color:var(--warn);background:#fff}
-#tools{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px}
+#tools{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
 .tool{overflow:hidden;white-space:nowrap;border:1px solid var(--line);background:#f6f8fb;border-radius:9px;min-height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10.5px;gap:1px;padding:2px}
 .tool b{font-size:17px;line-height:1}
 .tool.on{background:var(--accent);color:#fff;border-color:var(--accent)}
@@ -78,6 +78,11 @@ body.nopanel #meshBox{top:62px;right:auto;left:10px}
 #toolHint{font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.25}
 #viewPop{position:absolute;right:8px;top:4px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.15);padding:10px 12px;z-index:20;display:none;width:300px}
 #viewPop.open{display:block}
+#segSide{display:none} /* iPad quer und Handy: Zusatzansichten im Menü, damit der Titel ganz lesbar bleibt */
+#sidePop{position:absolute;top:4px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.15);padding:6px;z-index:21;display:none;flex-direction:column;gap:4px;min-width:190px}
+#sidePop.open{display:flex}
+#sidePop button{border:1px solid var(--line);background:#f6f8fb;border-radius:9px;min-height:42px;font-size:15px;text-align:left;padding:6px 12px}
+#sidePop button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 #viewPop .vrow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid #eef1f5}
 #viewPop .vrow:last-child{border-bottom:0}
 .sw{width:50px;height:30px;border-radius:15px;background:#cfd6e1;position:relative;border:0;flex:0 0 auto}
@@ -102,10 +107,12 @@ body.nopanel #btnHelp::before{content:"?";font-size:18px}
 body.nopanel #miniU{display:flex}
 #miniU input{width:200px}
 body.big{font-size:16px}
+.tbtn:disabled{opacity:.4}
+.ustep{flex:0 0 auto;width:40px;height:40px;border:1px solid var(--line);border-radius:10px;background:#f6f8fb;font-size:22px;font-weight:700;line-height:1;padding:0;touch-action:manipulation}
+.ustep:active{background:var(--accent);color:#fff}
 body.big .seg button,body.big .tbtn{font-size:15px}
 body.big .big{font-size:24px}
 body.big #title{font-size:17px}
-#portrait{position:fixed;inset:0;background:#1f2a3d;color:#fff;display:none;align-items:center;justify-content:center;text-align:center;font-size:20px;z-index:100;padding:30px}
 /* Hochformat (Smartphone, iPad hochkant): alles untereinander, die Seite scrollt */
 @media (orientation:portrait) and (max-width:900px){
   html,body{height:auto;overflow-x:hidden;overflow-y:auto}
@@ -129,15 +136,25 @@ body.big #title{font-size:17px}
   #bottom .blk{border-bottom:1px solid var(--line)}
   #bottom .blk:nth-child(3),#bottom .blk:nth-child(4){grid-column:1 / span 2;border-right:0}
   #bottom .blk:nth-child(3){min-height:116px}
-  #tools{grid-template-columns:repeat(6,minmax(0,1fr))}
+  #tools{grid-template-columns:repeat(7,minmax(0,1fr))}
   body .tool{font-size:10px}
   #viewPop{right:6px;width:min(300px,calc(100vw - 12px))}
   #help .cols{grid-template-columns:1fr}
   body.nopanel #app{display:block}
   body.nopanel .scene{min-width:44px}
 }
-@media (max-width:1100px){#bottom{grid-template-columns:176px 108px minmax(0,1fr) 300px}.tool{font-size:9px}#selRead{min-width:100px}.seg button,.tbtn{padding:6px 8px;font-size:12.5px}}
-@media (orientation:portrait) and (max-width:900px){.seg button,.tbtn{padding:6px 6px;font-size:12px}} /* iPad hochkant: alle Knöpfe in einer Zeile */
+@media (max-width:1100px){#bottom{grid-template-columns:210px 96px minmax(0,1fr) 320px}.tool{font-size:8.5px;letter-spacing:-.2px;padding:2px 0}#tools{gap:3px}#selRead{min-width:0;font-size:12px}#selBody{gap:8px}.seg button,.tbtn{padding:6px 8px;font-size:12.5px}}
+@media (orientation:portrait) and (max-width:900px){.seg button,.tbtn{padding:6px 5px;font-size:11.5px}#topbar{gap:5px}} /* iPad hochkant: alle Knöpfe in einer Zeile */
+@media (orientation:portrait) and (min-width:641px) and (max-width:900px){#segSide{display:inline-flex}#btnSide{display:none}} /* iPad hochkant wie bisher */
+@media (orientation:portrait) and (max-width:640px){ /* Handy hochkant: obere Leiste bricht um statt seitlich auszulaufen */
+  #topbar{flex-wrap:wrap;height:auto;overflow:visible;row-gap:6px}
+  .seg button,.tbtn{padding:6px 9px;font-size:13px;min-height:36px}
+}
+#rotHint{position:fixed;inset:0;z-index:100;background:rgba(29,39,51,.95);color:#fff;display:none;align-items:center;justify-content:center;text-align:center;padding:20px}
+#rotHint .box{max-width:420px;display:flex;flex-direction:column;align-items:center;gap:14px;font-size:18px}
+#rotHint svg{width:80px;height:80px;stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+#rotHint button{font-size:17px;background:#fff;color:#1d2433;border:0;border-radius:10px;padding:10px 18px;min-height:44px}
+@media (orientation:landscape) and (max-height:500px){body:not(.quer) #rotHint{display:flex}} /* Handy quer: Drehhinweis */
 </style>
 </head>
 <body>
@@ -162,8 +179,9 @@ body.big #title{font-size:17px}
       <div id="title">Stromkreis</div>
       <div class="seg" id="segView"><button data-v="sym" class="on">Symbole</button><button data-v="icon">Bauteile</button></div>
       <div class="seg" id="segSide"><button data-v="off" class="on">Schaltung</button><button data-v="water">+ Wasser</button><button data-v="height">+ Höhe</button><button data-v="energy">+ Energie</button><button data-v="kpk">+ KPK-Energie</button><button data-v="meas">+ Messreihe</button></div>
+      <button class="tbtn" id="btnSide" title="Zusatzansicht wählen">▣ <span id="sideLbl">Schaltung</span> ▾</button>
       <button class="tbtn" id="btnView">⚙ Ansicht</button>
-      <button class="tbtn" id="btnBig" title="Größere Schrift für Fernseher und Beamer">A+</button>
+      <button class="tbtn" id="btnSmall" title="Schrift kleiner">A−</button><button class="tbtn" id="btnBig" title="Schrift größer (Fernseher, Beamer)">A+</button>
       <button class="tbtn" id="btnPanel" title="Bedienfeld ein- oder ausblenden">▤</button>
       <button class="tbtn" id="btnFull" title="Vollbild">⛶</button>
     </div>
@@ -171,9 +189,10 @@ body.big #title{font-size:17px}
       <canvas id="cv"></canvas>
       <canvas id="side"></canvas>
       <div id="banner"></div>
-      <div id="measBar"><div class="seg" id="measMode"><button data-v="IU" class="on">I über U</button><button data-v="Rl">R über l</button><button data-v="RA">R über A</button></div><button class="chip go" id="mAdd">＋ Messpunkt</button><button class="chip" id="mUndo" title="Letzten Messpunkt löschen">↶</button><button class="chip" id="mClr">✕ alle</button></div>
+      <div id="measBar"><div class="seg" id="measMode"><button data-v="IU" class="on">I über U</button><button data-v="Rl">R über l</button><button data-v="RA">R über A</button></div><button class="chip go" id="mAdd">＋ Messpunkt</button><button class="chip" id="mUndo" title="Letzten Messpunkt löschen">↶</button><button class="chip" id="mClr">✕ alle</button><button class="chip" id="mCsv" title="Messwerte als Tabelle für Excel und Numbers speichern">⤓ Tabelle</button></div>
       <div id="meshBox"></div>
       <div id="miniU"><b style="white-space:nowrap">U<sub>0</sub> = <span id="miniUVal">6,0 V</span></b><input type="range" id="miniUSlider" min="0" max="120" value="60" aria-label="Spannung"></div>
+      <div id="sidePop"></div>
       <div id="viewPop">
         <div class="vrow"><span>Potenzial als Farbe</span><button class="sw on" data-k="colors"></button></div>
         <div class="vrow"><span>Ladungsträger zeigen</span><button class="sw on" data-k="particles"></button></div>
@@ -188,7 +207,7 @@ body.big #title{font-size:17px}
       <div class="blk">
         <div class="bh"><span>Netzgerät</span><span id="srcState" class="small"></span><button class="chip" id="btnPol" style="min-height:28px;padding:2px 8px;font-size:12px" aria-label="Netzgerät umpolen">⇄ umpolen</button></div>
         <div class="row"><span class="big" id="uVal">6,0 V</span><span class="small" id="uInfo"></span></div>
-        <input type="range" id="uSlider" min="0" max="120" value="60" aria-label="Spannung">
+        <div class="row" style="gap:6px;flex-wrap:nowrap"><button class="ustep" id="uMinus" aria-label="Spannung 0,1 V kleiner">−</button><input type="range" id="uSlider" min="0" max="120" value="60" aria-label="Spannung" style="flex:1 1 auto;min-width:0"><button class="ustep" id="uPlus" aria-label="Spannung 0,1 V größer">+</button></div>
         <div class="row small"><span style="white-space:nowrap">R<sub>i</sub> = <b id="riVal">0,0 Ω</b></span><input type="range" id="riSlider" min="0" max="20" value="0" style="height:24px" aria-label="Innenwiderstand"></div>
       </div>
       <div class="blk">
@@ -207,6 +226,7 @@ body.big #title{font-size:17px}
           <button class="tool" data-t="W"><b>W</b>Leistung</button>
           <button class="tool" data-t="G"><b>⏚</b>Erdung</button>
           <button class="tool" data-t="M"><b>↻</b>Masche</button>
+          <button class="tool" data-t="K"><b>●</b>Knoten</button>
         </div>
         <div id="toolHint"></div>
       </div>
@@ -246,19 +266,25 @@ body.big #title{font-size:17px}
   <h3>Was man sieht</h3>
   <ul>
     <li><b>Farbe</b> = elektrisches Potenzial φ. Jede Farbe steht für genau ein Potenzial, 0 V (Erdung) ist grün. Die Skala ist fest und gilt in allen Schaltungen.</li>
-    <li><b>Punkte</b> = Ladungsträger. Kein Teilchen entsteht oder verschwindet. Die Dichte ist überall gleich. In einem Kabel mit gleichem Querschnitt ist das Tempo (Driftgeschwindigkeit) proportional zur Stromstärke. Tippe ein Kabel an, um seinen Querschnitt zu ändern: Bei doppeltem Querschnitt driften doppelt so viele Ladungsträger nebeneinander, jeder nur halb so schnell, die Stromstärke bleibt gleich (I = n · e · A · v). An jedem Knoten fließen genau so viele Teilchen ab, wie zufließen.</li>
+    <li><b>Punkte</b> = Ladungsträger. Kein Teilchen entsteht oder verschwindet. Die Dichte ist überall gleich. In einem Kabel mit gleichem Querschnitt ist das Tempo (Driftgeschwindigkeit) proportional zur Stromstärke. Tippe ein Kabel an, um seinen Querschnitt zu ändern (mit dem Werkzeug „Knoten“ teilst du ein Kabel vorher in zwei): Bei doppeltem Querschnitt driften doppelt so viele Ladungsträger nebeneinander, jeder nur halb so schnell, die Stromstärke bleibt gleich (I = n · e · A · v). An jedem Knoten fließen genau so viele Teilchen ab, wie zufließen.</li>
     <li><b>Lampen realistisch</b>: Der Glühdraht hat kalt etwa ein Zwölftel seines Betriebswiderstands, also gilt das ohmsche Gesetz für Lampen nicht.</li>
     <li><b>Wasserkreis</b> (nach Plappert): Druck ≙ Potenzial, Druckunterschied ≙ Spannung, Wasserstrom ≙ Stromstärke, Engstelle ≙ Widerstand, Turbine ≙ Lampe, Pumpe ≙ Netzgerät. Die Steigrohre zeigen den Druck.</li>
     <li><b>Höhenmodell</b>: Höhe ≙ Potenzial. Das Netzgerät hebt die Ladung an, in den Bauteilen geht es bergab. Gezeigt wird die technische Stromrichtung.</li>
     <li><b>↻ Masche</b>: zeigt einen geschlossenen Weg. Die Summe der Anstiege ist gleich der Summe der Abfälle (Maschenregel).</li>
     <li><b>Energiefluss</b> (nach KPK): Pfeilbreite ∝ Energiestromstärke P. In der Schaltung fließt durch ein Kabel der Energiestrom P = φ · I, bezogen auf die Erdung.</li>
+    <li><b>Tastatur</b>: Pfeiltaste rechts/links (oder die Knöpfe − und + am Netzgerät) stellt die Spannung um 0,1 V höher/tiefer.</li>
+    <li><b>Messreihe</b>: „⤓ Tabelle“ speichert die Messwerte als CSV-Datei, die Excel und Numbers als Tabelle öffnen.</li>
     <li><b>KPK-Energieflussdiagramm</b> (+ KPK-Energie): Energie = grüner Pfeil, Träger = gelbe Linie, Energieumlader = rotes Kästchen. Erhaltene Träger (Elektrizität, Drehimpuls) laufen auf einer geschlossenen Bahn; Entropie und Licht entstehen im Umlader und verlassen ihn.</li>
   </ul>
   </div>
   </div>
   <p style="text-align:right;margin:10px 0 0"><button class="tbtn on" id="helpClose">Schließen</button></p>
 </div></div>
-<div id="portrait">Bitte das iPad ins Querformat drehen.</div>
+<div id="rotHint"><div class="box">
+  <svg viewBox="0 0 64 64"><rect x="20" y="6" width="24" height="42" rx="4"/><path d="M29 42h6"/><path d="M50 30a20 20 0 0 1-12 22M38 52l1-6M38 52l-6-1"/></svg>
+  <div>Bitte das Handy hochkant halten.</div>
+  <button id="rotGo">Trotzdem quer weiter</button>
+</div></div>
 <script>
 'use strict';
 /* ===================== Konstanten ===================== */
@@ -318,7 +344,7 @@ const SCENES = {
 };
 
 /* ===================== Zustand ===================== */
-const st = {scene:'R', view:'sym', side:'off', dir:'t', lampReal:true, colors:true, particles:true,
+const st = {fs:1, scene:'R', view:'sym', side:'off', dir:'t', lampReal:true, colors:true, particles:true,
   energyOverlay:false, phiLabels:false, tempo:1, U:6, Ri:0, cableR:0, tool:'select', sel:null, fuse:false, time:0};
 let S = null; // aktuelle Schaltung
 
@@ -396,7 +422,8 @@ function fillEdge(e){
 }
 /* Querschnitt: Anzahl der Spuren k eines Kabelstücks (Bauteile und Zuleitungen: 1).
    Gleiche Ladungsträgerdichte je Volumen -> k-mal so viele Träger je Länge, Driftgeschwindigkeit v = I/(n·e·A) nur 1/k. */
-function kOf(e){ return e.cable!=null&&(e.type==='wire'||e.type==='amm')?(S.cableA[e.cable]||1):1; }
+function kOf(e){ return e.cable!=null&&(e.type==='wire'||e.type==='amm'||e.type==='volt')?(S.cableA[e.cable]||1):1; }
+function cableFrac(cab){ return S.edges.reduce((a,e)=>a+(e.cable===cab?(e.frac||0):0),0); }
 function setCableA(cab,k){ const old=S.cableA[cab]||1; if(old===k) return;
   S.cableA[cab]=k; S.cables[cab]=S.cables[cab]*old/k; // R = ρ·l/A
   for(const e of S.edges) if(e.cable===cab) fillEdge(e);
@@ -412,6 +439,16 @@ function flipSource(){ const e=S.edges.find(x=>x.type==='src'); if(!e) return; c
   [e.a,e.b]=[e.b,e.a]; e.path=mkPath([...e.path.pts].reverse()); const L=e.path.len; e.ps=e.ps.map(v=>L-v); e.pw=e.pw.map(v=>L-v);
   if(S.ground===oldMinus) S.ground=e.a;
   rebuildAdj(); solve(); renderSel(); }
+/* Knoten setzen: Kabel an Stelle s teilen; der hintere Teil wird ein eigenes Kabel (gleicher Widerstand je Länge, gleicher Querschnitt) */
+function setKnot(e,s){
+  if(s<14||s>e.path.len-14) return false;
+  const old=e.cable, a0=e.a, b0=e.b, ni=splitWire(e,s); if(ni===a0||ni===b0) return false;
+  const nc=S.nextCable++; S.cables[nc]=S.cables[old]; S.cableA[nc]=S.cableA[old]||1; S.nodes[ni].knot=true;
+  // alle Stücke des alten Kabels hinter dem Knoten umhängen
+  let node=ni, prev=e;
+  for(let guard=0;guard<500;guard++){ const nx=S.adj[node].find(x=>x!==prev&&x.cable===old); if(!nx) break; nx.cable=nc; prev=nx; node=nx.a===node?nx.b:nx.a; }
+  solve(); return true;
+}
 function nodeDegree(i){ return S.adj[i].length; }
 
 /* Kabel an Stelle s teilen; gibt den Knotenindex zurück */
@@ -902,7 +939,7 @@ function wattmeter3D(c,F){
 /* ===================== Zeichnen: Schaltung ===================== */
 function drawCircuit(c,V,mode){
   c.setTransform(1,0,0,1,0,0); c.clearRect(0,0,c.canvas.width,c.canvas.height);
-  setT(c,V); FK=Math.min(PORTRAIT()?1.7:9,Math.max(1,0.78/V.sc))*(st.big?1.25:1);
+  setT(c,V); FK=Math.min(PORTRAIT()?1.7:9,Math.max(1,0.78/V.sc))*st.fs;
   const water=mode==='water', D3=is3D(mode);
   if(D3){ // Platte einmal pro Größe vorzeichnen, dann nur noch kopieren
     const key=c.canvas.width+'x'+c.canvas.height+':'+V.sc.toFixed(4);
@@ -922,10 +959,10 @@ function drawCircuit(c,V,mode){
   for(const e of S.edges) if(e.type==='amm'||e.type==='volt'){ if(e.meter.mode==='series') D3?drawWire3D(c,e,WW):drawWire(c,e,WW,mode); }
   if(D3){ // Verteilerklemmen und Stecker
     for(let i=0;i<S.nodes.length;i++){ const adj=S.adj[i]; if(!adj.length) continue;
-      if(adj.length>=3) junction3D(c,S.nodes[i],S.phi[i]);
+      if(adj.length>=3||S.nodes[i].knot) junction3D(c,S.nodes[i],S.phi[i]);
       else if(adj.some(e=>e.type==='comp')&&adj.some(e=>e.type!=='comp')) plug3D(c,S.nodes[i],S.phi[i]); }
   } else if(!water){ // Verzweigungspunkte
-    for(let i=0;i<S.nodes.length;i++){ if(nodeDegree(i)>=3){ const n=S.nodes[i];
+    for(let i=0;i<S.nodes.length;i++){ if(nodeDegree(i)>=3||S.nodes[i].knot){ const n=S.nodes[i];
       c.fillStyle='#20262f'; c.beginPath(); c.arc(n.x,n.y,WW*0.95,0,7); c.fill();
       c.fillStyle=st.colors?potColor(S.phi[i]):'#3b4250'; c.beginPath(); c.arc(n.x,n.y,WW*0.95-2,0,7); c.fill(); } }
   }
@@ -1268,7 +1305,7 @@ function drawRubber(c){
 }
 /* Farblegende rechts */
 function drawLegend(c){
-  c.setTransform(DPR,0,0,DPR,0,0); FK=st.big?1.25:1;
+  c.setTransform(DPR,0,0,DPR,0,0); FK=st.fs;
   const W=cv._w, y=cv._h-30, x0=Math.max(70,W*0.12), x1=W-Math.max(30,W*0.06), L=x1-x0;
   const neg=S.phi.some(v=>v<-0.005);
   const vmin=neg?-12:0, vmax=12, xOf=v=>x0+(v-vmin)/(vmax-vmin)*L;
@@ -1365,7 +1402,7 @@ function drawWaterMeter(c,m){
 }
 function drawWaterPanel(){
   const c=sctx; drawCircuit(c,VS,'water');
-  c.setTransform(DPR,0,0,DPR,0,0); FK=st.big?1.25:1;
+  c.setTransform(DPR,0,0,DPR,0,0); FK=st.fs;
   c.fillStyle='#1d2433'; c.font=fnt('700',14,'-apple-system,Arial'); c.textAlign='left'; c.textBaseline='top';
   c.fillText('Wasserstromkreis (nach Plappert)',12,10);
   c.font=fnt('500',12,'-apple-system,Arial'); c.fillStyle='#5d6779';
@@ -1375,7 +1412,7 @@ function drawWaterPanel(){
 
 /* ===================== Energieflussdiagramm (Energie, Pfeilfarbe nach Träger) ===================== */
 function drawEnergyPanel(){
-  const c=sctx, W=side._w, H=side._h; c.setTransform(DPR,0,0,DPR,0,0); FK=st.big?1.25:1; c.clearRect(0,0,W,H);
+  const c=sctx, W=side._w, H=side._h; c.setTransform(DPR,0,0,DPR,0,0); FK=st.fs; c.clearRect(0,0,W,H);
   c.fillStyle='#1d2433'; c.font=fnt('700',14,'-apple-system,Arial'); c.textAlign='left'; c.textBaseline='top';
   c.fillText('Energieflussdiagramm',12,10);
   c.font=fnt('500',12,'-apple-system,Arial'); c.fillStyle='#5d6779'; c.fillText('Pfeilbreite ∝ Energiestromstärke P',12,28);
@@ -1444,10 +1481,10 @@ function flowStripes(c,x0,y0,x1,y1,w){ if(w<=3) return; c.save(); c.strokeStyle=
    erzeugte Träger (Entropie, Licht) verlassen den Umlader als einfacher Pfeil. */
 const KPK={E:'rgba(22,163,74,.88)', Etxt:'#166534', T:'#facc15', Tdash:'#a16207', Ttxt:'#854d0e', U:'#fecaca', Urand:'#dc2626'};
 function drawKpkPanel(){
-  const c=sctx, W=side._w, H=side._h; c.setTransform(DPR,0,0,DPR,0,0); FK=st.big?(W<520?1.12:1.25):1; c.clearRect(0,0,W,H); // schmale Spalte: Schrift etwas weniger vergrößern
+  const c=sctx, W=side._w, H=side._h; c.setTransform(DPR,0,0,DPR,0,0); FK=(W<520?Math.min(st.fs,1.12):st.fs); c.clearRect(0,0,W,H); // schmale Spalte: Schrift etwas weniger vergrößern
   c.fillStyle='#1d2433'; c.font=fnt('700',14,'-apple-system,Arial'); c.textAlign='left'; c.textBaseline='top';
   c.fillText('KPK-Energieflussdiagramm',12,10);
-  c.font=fnt('500',12,'-apple-system,Arial'); c.fillStyle='#5d6779'; c.fillText('Pfeilbreite ∝ Energiestromstärke P',12,28);
+  c.font=fnt('500',12,'-apple-system,Arial'); c.fillStyle='#5d6779'; c.fillText('Pfeildicke ∝ Leistung P (Energie pro Sekunde)',12,28);
   const src=S.edges.find(e=>e.type==='src');
   const Pin=st.fuse?0:st.U*src.I; const Pi=st.fuse?0:src.I*src.I*Math.max(st.Ri,0);
   const moving=!st.fuse&&Math.abs(src.I)>1e-6;
@@ -1456,8 +1493,8 @@ function drawKpkPanel(){
   let Pw=0; for(const e of S.edges){ if(e.type==='wire'&&resOf(e)>0) Pw+=Math.max(0,powerOf(e)); }
   if(Pw>0.0005) recv.push({name:['Kabel',''],P:Pw,cable:true});
   const n=Math.max(1,recv.length), top=62, bot=H-50-(Pi>0.0005?46:0);
-  const maxW=Math.min(34,(bot-top)/n*0.28);
-  let k=12; if(Pin*k>maxW*n*0.9) k=maxW*n*0.9/Math.max(Pin,1e-9); // px pro W
+  const maxW=Math.min(48,(bot-top)/n*0.36);
+  let k=40; if(Pin*k>maxW*n*0.9) k=maxW*n*0.9/Math.max(Pin,1e-9); // px pro W: fester Maßstab, nur bei großer Leistung verkleinert
   const wOf=P=>Math.max(P>0.0005?1.5:0.8,P*k);
   const D1=7, D2=19; // Abstand der beiden Trägerlinien unter dem Energiepfeil
   // Ausgänge jedes Empfängers
@@ -1465,13 +1502,13 @@ function drawKpkPanel(){
     if(r.motor&&mechFrac(r.e)>0){ const m=mechFrac(r.e); outs=[{lab:'Drehimpuls',P:r.P*m,loop:true},{lab:'Entropie',P:r.P*(1-m)}]; }
     else if(r.lamp){ const eta=lightFrac(r.e); outs=[{lab:'Licht',P:r.P*eta},{lab:'Entropie',P:r.P*(1-eta)}]; }
     else outs=[{lab:'Entropie',P:r.P}];
-    outs.forEach(o=>{ o.w=wOf(o.P); o.h=o.w+(o.loop?D2:D1)+4; });
+    outs.forEach(o=>{ o.w=wOf(o.P); o.h=Math.max(o.w+(o.loop?D2:D1)+4,28); });
     r.outs=outs; r.outH=outs.reduce((a,o)=>a+o.h,0)+(outs.length-1)*6;
     r.h=Math.max(56,r.w+D2+24,r.outH+14); });
   // waagerechte Aufteilung: Eingang | Netzgerät | Pfeile | Empfänger | Ausgänge mit Beschriftung
   const sL=60*FK; let xe=W-72*FK, rR=xe-Math.max(28,W*0.06);
-  let bxw=Math.min(110,Math.max(84,W*0.2)), rbw=Math.min(110,Math.max(90,W*0.2));
-  const gap=rR-rbw-sL-bxw; if(gap<40){ const d=40-gap; rbw=Math.max(76,rbw-d/2); bxw=Math.max(80,bxw-d/2); } // schmale Spalte
+  let bxw=Math.min(100,Math.max(80,W*0.18)), rbw=Math.min(90,Math.max(62,W*0.15));
+  const gap=rR-rbw-sL-bxw; if(gap<56){ const d=56-gap; rbw=Math.max(56,rbw-d/2); bxw=Math.max(78,bxw-d/2); } // schmale Spalte: Platz für die Leistung am Pfeil
   else if(gap>160){ rR=sL+bxw+160+rbw; xe=rR+70; } // breite Spalte: Pfeile nicht unnötig lang
   const sR=sL+bxw, sx=sL+bxw/2, rL=rR-rbw, rx=rL+rbw/2;
   recv.forEach((r,i)=>{ r.ry=top+(bot-top)*(i+0.5)/n; r.yE=r.ry-(D2+2)/2; });
@@ -1482,24 +1519,24 @@ function drawKpkPanel(){
   const need=Math.max(124,wIn+D2+72); if(bBot-bTop<need){ const m=(bTop+bBot)/2; bTop=m-need/2; bBot=m+need/2; }
   const cy=(bTop+bBot)/2, bh=bBot-bTop;
   // 1) Energieumlader
-  umlader(c,sx,cy,bxw,bh,'Netzgerät',fP(Pin),null,bTop+(bh>150?40:24)-cy);
-  recv.forEach(r=>umlader(c,rx,r.ry,rbw,r.h,r.cable?'Kabel':null,fP(r.P),r.name));
+  umlader(c,sx,cy,bxw,bh,'Netzgerät',null,null,bTop+24-cy);
+  recv.forEach(r=>umlader(c,rx,r.ry,rbw,r.h,r.cable?'Kabel':null,null,r.name));
+  const pLab=(t,x,y,al)=>{ c.font=fnt('700',11,'Arial'); c.fillStyle=KPK.Etxt; c.textAlign=al||'left'; c.textBaseline='bottom'; c.fillText(t,x,y); }; // Leistung am Energiepfeil
   // 2) Eingang: Energie mit Elektrizität aus der Steckdose (Träger läuft hinein und wieder hinaus)
-  const yIn=Math.max(cy+6,bTop+(bh>150?60:44)+wIn/2);
+  const yIn=Math.max(cy+6,bTop+64+wIn/2);
   kpkArrowH(c,10,sL-2,yIn,wIn);
   carrierU(c,10,sL+9,yIn+wIn/2+D1,yIn+wIn/2+D2,'left',moving);
   c.font=fnt('700',11,'Arial'); c.textAlign='left'; c.textBaseline='bottom'; c.fillStyle=KPK.Etxt;
-  c.fillText('Energie',8,yIn-wIn/2-4);
+  c.fillText('Energie',8,yIn-wIn/2-18*FK); pLab(fP(Pin),8,yIn-wIn/2-3);
   c.font=fnt('700',10,'Arial'); c.textBaseline='top'; c.fillStyle=KPK.Ttxt; c.fillText('Elektrizität',6,yIn+wIn/2+D2+8);
-  c.font=fnt('500',11,'Arial'); c.fillStyle='#5d6779'; c.fillText(fP(Pin),8,yIn+wIn/2+D2+22);
   // Verluste im Netzgerät (Innenwiderstand): Entropie entsteht
   if(Pi>0.0005){ const w=wOf(Pi), y0=bBot, y1=Math.min(H-52,y0+44);
     kpkArrowV(c,sx,y0+2,y1,w); carrierLine(c,[[sx+w/2+D1,y0-10],[sx+w/2+D1,y1]],moving);
-    c.font=fnt('700',10.5,'Arial'); c.fillStyle=KPK.Ttxt; c.textAlign='left'; c.textBaseline='middle'; c.fillText('Entropie',sx+w/2+D1+8,y1-8); }
+    c.font=fnt('700',10.5,'Arial'); c.fillStyle=KPK.Ttxt; c.textAlign='left'; c.textBaseline='middle'; c.fillText('Entropie',sx+w/2+D1+8,y1-8); pLab(fP(Pi),sx+w/2+D1+8,y1-16); }
   // 3) Vom Netzgerät zu jedem Empfänger: Energie und geschlossene Elektrizitätsschleife
   recv.forEach(r=>{
     const y=r.yE;
-    kpkArrowH(c,sR+1,rL-1,y,r.w);
+    kpkArrowH(c,sR+1,rL-1,y,r.w); pLab(fP(r.P),(sR+rL)/2,y-r.w/2-5,'center');
     carrierLoop(c,sR-9,rL+9,y+r.w/2+D1,y+r.w/2+D2,moving);
     // Ausgänge
     const ex=rR+1;
@@ -1510,12 +1547,13 @@ function drawKpkPanel(){
       if(o.loop) carrierLoop(c,ex-9,xe,a,b,moving);
       else carrierLine(c,[[ex-10,a],[xe,a]],moving);
       c.font=fnt('700',10.5,'Arial'); c.textAlign='left'; c.textBaseline='middle'; c.fillStyle=KPK.Ttxt;
-      c.fillText(o.lab,xe+(o.loop?9:4),o.loop?(a+b)/2:a); });
+      const ly=o.loop?(a+b)/2:a; c.fillText(o.lab,xe+(o.loop?9:4),ly); pLab(fP(o.P),xe+(o.loop?9:4),ly-6); });
   });
   // 4) Legende
   const ly=H-34; c.font=fnt('500',11,'Arial'); c.textAlign='left'; c.textBaseline='middle';
-  const w1=Math.max(1,k*1); c.fillStyle=KPK.E; c.fillRect(12,ly-w1/2,26,w1); c.fillStyle='#5d6779'; c.fillText('≙ 1 W Energie',42,ly);
-  let lx=42+c.measureText('≙ 1 W Energie').width+14;
+  const Pl=k>=20?0.1:1, lt='≙ '+fP(Pl)+' Energiestromstärke'; // Maßstab der Pfeilbreite
+  const w1=Math.max(1,k*Pl); c.fillStyle=KPK.E; c.fillRect(12,ly-w1/2,26,w1); c.fillStyle='#5d6779'; c.fillText(lt,42,ly);
+  let lx=42+c.measureText(lt).width+14;
   c.strokeStyle=KPK.T; c.lineWidth=4; c.beginPath(); c.moveTo(lx,ly); c.lineTo(lx+22,ly); c.stroke(); c.fillStyle='#5d6779'; c.fillText('Träger',lx+28,ly);
   lx+=28+c.measureText('Träger').width+14;
   c.fillStyle=KPK.U; c.strokeStyle=KPK.Urand; c.lineWidth=2; roundRect(c,lx,ly-7,20,14,3); c.fill(); c.stroke(); c.fillStyle='#5d6779'; c.fillText('Energieumlader',lx+26,ly);
@@ -1622,7 +1660,7 @@ function hPhi(e,s){ // Zuleitungen eben, das Potenzial ändert sich nur im Baute
   const L=e.path.len, h=e.type==='src'?16:compHalf(e,false), s0=L/2-h, s1=L/2+h, pa=S.phi[e.a], pb=S.phi[e.b];
   if(s<=s0) return pa; if(s>=s1) return pb; return pa+(pb-pa)*(s-s0)/(s1-s0); }
 function drawHeightPanel(){
-  const c=sctx, W=side._w, H=side._h; c.setTransform(DPR,0,0,DPR,0,0); FK=st.big?1.25:1; c.clearRect(0,0,W,H);
+  const c=sctx, W=side._w, H=side._h; c.setTransform(DPR,0,0,DPR,0,0); FK=st.fs; c.clearRect(0,0,W,H);
   c.fillStyle='#1d2433'; c.font=fnt('700',14,'-apple-system,Arial'); c.textAlign='left'; c.textBaseline='top'; c.fillText('Höhenmodell',12,10);
   c.font=fnt('500',12,'-apple-system,Arial'); c.fillStyle='#5d6779'; c.fillText('Höhe ≙ Potenzial φ, Höhenunterschied ≙ Spannung U',12,28);
   const neg=S.phi.some(v=>v<-0.005), vmax=12, vmin=neg?-12:0;
@@ -1683,7 +1721,7 @@ function addPoint(){ const e=measDut(); if(!e) return; const c=e.comp;
   const sg=c.rev?-1:1; c.pts.push({U:sg*uOf(e), I:sg*e.I, mat:c.mat, l:c.l, A:c.kind==='D'?drahtA(c):0}); }
 function niceStep(r,n){ const raw=r/n, p=Math.pow(10,Math.floor(Math.log10(raw))), m=raw/p; return (m<1.5?1:m<3?2:m<7?5:10)*p; }
 function drawMeasPanel(){
-  const c=sctx, W=side._w, H=side._h; c.setTransform(DPR,0,0,DPR,0,0); FK=st.big?1.25:1; c.clearRect(0,0,W,H);
+  const c=sctx, W=side._w, H=side._h; c.setTransform(DPR,0,0,DPR,0,0); FK=st.fs; c.clearRect(0,0,W,H);
   const e=measDut(); if(!e) return; const comp=e.comp, nm=compName(comp), mode=st.measMode, draht=comp.kind==='D';
   c.fillStyle='#1d2433'; richText(c,[[mode==='IU'?'Kennlinie von ':'Widerstand von '],[nm[0]],[nm[1],1]],12,19,14,'left',700);
   c.fillStyle='#5d6779'; richText(c,[[KINDNAME[comp.kind]+': '+compValue(e)]],12,38,11.5,'left',500);
@@ -1776,6 +1814,8 @@ function tap(x,y){
     if(hitComp(x,y)) flash('In ein Bauteil kann man nichts einbauen. Tippe auf ein Kabel oder ziehe von Punkt zu Punkt.'); return; }
   if(t==='W'){ const e=hitComp(x,y); if(e){ if(S.meters.some(m=>m.mode==='attach'&&m.edge===e)){ flash('Hier misst schon ein Leistungsmesser.'); return; }
       const m={type:'W',mode:'attach',edge:e,E:0,id:Math.random()}; S.meters.push(m); select({kind:'meter',m}); updateUI(); } else flash('Tippe auf ein Bauteil oder das Netzgerät.'); return; }
+  if(t==='K'){ const w=hitWire(x,y); if(w){ if(setKnot(w.edge,w.s)){ setTool('select'); flash('Knoten gesetzt. Tippe ein Kabelstück an, um seinen Querschnitt zu ändern.'); } else flash('Zu nah am Ende des Kabels. Tippe weiter in die Mitte.'); }
+    else flash('Tippe auf ein Kabel.'); return; }
   if(t==='G'){ const h=hitPoint(x,y); if(h){ S.ground=pointNode(h); solve(); } else flash('Tippe auf ein Kabel oder einen Anschluss.'); }
 }
 let flashT=null;
@@ -1797,8 +1837,8 @@ function collectWarnings(){
     if(c.kind==='D'&&c.T>250) w.push({h:`Der Draht ist ${nf(c.T,0)} °C heiß${c.T>500?' und glüht':''}. Sein Widerstand ist dadurch ${c.mat===2?'kaum':'deutlich'} größer.`});
     if(c.kind==='Mo'&&c.block&&powerOf(e)>2) w.push({h:`${nm} ist festgehalten: Ohne Drehung fehlt die Gegenspannung, der Strom ist groß und der Motor wird heiß.`}); }
   for(const m of S.meters){
-    if(m.type==='A'&&m.mode==='parallel') w.push({t:'Amperemeter parallel angeschlossen: Es überbrückt den Abschnitt fast ohne Widerstand.'});
-    if(m.type==='V'&&m.mode==='series') w.push({t:'Voltmeter in Reihe eingebaut: Sein großer Widerstand unterbricht den Stromkreis fast.'}); }
+    if(m.type==='A'&&m.mode==='parallel') w.push({t:'Amperemeter parallel angeschlossen: Es überbrückt den Abschnitt fast ohne Widerstand.',b:'Amperemeter entfernen',f:()=>removeMeter(m)});
+    if(m.type==='V'&&m.mode==='series') w.push({t:'Voltmeter in Reihe eingebaut: Sein großer Widerstand unterbricht den Stromkreis fast.',b:'Voltmeter entfernen',f:()=>removeMeter(m)}); }
   S.warnings=w; renderBanner();
 }
 function renderBanner(){
@@ -1821,7 +1861,8 @@ const TOOLHINT={select:'Bauteil, Kabel oder Verzweigung antippen.',
   V:'Von Punkt zu Punkt ziehen: parallel messen.<br>Kabel antippen: in Reihe.',
   W:'Bauteil oder Netzgerät antippen: Leistung und Energie messen.',
   G:'Punkt antippen: Dort ist φ = 0 V (grün).',
-  M:'Kabel oder Bauteil antippen: Masche wählen. Die Pfeile zeigen den Umlaufsinn.'};
+  M:'Kabel oder Bauteil antippen: Masche wählen. Die Pfeile zeigen den Umlaufsinn.',
+  K:'Kabel antippen: Knoten setzen. Das Kabel wird zu zwei Kabeln, z. B. für verschiedene Querschnitte.'};
 function renderSel(){
   const box=$('selBox'), s=st.sel;
   if(st.tool==='M'){ const n=(S.meshes||[]).length;
@@ -1845,7 +1886,7 @@ function renderSel(){
   } else if(s.kind==='edge'&&s.e.type==='wire'){
     const R=S.cables[s.e.cable];
     const kA=S.cableA[s.e.cable]||1;
-    h='Kabel'; ctl=`<div class="row"><b style="min-width:62px">${nf(R,2)} Ω</b><input type="range" id="wSl" min="0" max="40" value="${Math.round(R*20)}"></div><div class="row" style="gap:4px;flex-wrap:nowrap"><span class="small" style="white-space:nowrap">A in mm²</span><div class="seg" style="flex:0 0 auto">${AQ.map((a,i)=>`<button class="${kA===i+1?'on':''}" data-a="qA" data-k="${i+1}" style="min-height:28px;padding:3px 7px">${nf(a,1)}</button>`).join('')}</div></div>`; wide=`<div class="chips"><button class="chip" data-a="insA">Amperemeter hier einbauen</button><button class="chip" data-a="gnd">Erdung hierher</button></div>`;
+    h='Kabel'; ctl=`<div class="row"><span class="small">R = <b>${nf(R*cableFrac(s.e.cable),2)} Ω</b></span></div><div class="row" style="gap:4px;flex-wrap:nowrap"><span class="small" style="white-space:nowrap" title="Querschnitt A in mm²">A/mm²</span><div class="seg" style="flex:0 0 auto">${AQ.map((a,i)=>`<button class="${kA===i+1?'on':''}" data-a="qA" data-k="${i+1}" style="min-height:28px;padding:3px 4px">${nf(a,1)}</button>`).join('')}</div></div>`; wide=`<div class="chips"><button class="chip" data-a="insA" title="Amperemeter hier einbauen">+ Amperemeter</button><button class="chip" data-a="gnd" title="Erdung hierher legen">Erdung hier</button></div>`;
   } else if(s.kind==='node'){
     h='Verzweigung · Knotenregel'; ctl='<div class="small">Was zufließt, fließt auch wieder ab. Kein Ladungsträger geht verloren.</div>';
   } else if(s.kind==='meter'){ const m=s.m;
@@ -1863,7 +1904,6 @@ function renderSel(){
   on('matSel',el=>{ const c=s.e.comp; c.mat=+el.value; c.burned=false; c.T=20; solve(); renderSel(); });
   on('diSel',el=>{ const c=s.e.comp; c.di=+el.value; c.burned=false; c.T=20; solve(); renderSel(); });
   on('lSl',el=>{ const c=s.e.comp; c.l=+el.value/10; c.burned=false; c.T=20; el.previousElementSibling.textContent=nf(c.l,2)+' m'; solve(); });
-  const ws=$('wSl'); if(ws) ws.addEventListener('input',()=>{ S.cables[s.e.cable]=+ws.value/20; ws.previousElementSibling.textContent=nf(S.cables[s.e.cable],2)+' Ω'; solve(); });
   renderReadout();
 }
 function setKind(e,k){ const c=e.comp; c.kind=k; c.burned=false; c.Rl=null; c.T=20; c.run=0; c.vd=0.5; c.rev=false; c.block=false; c.pts=[];
@@ -1913,10 +1953,19 @@ $('help').addEventListener('click',e=>{ if(e.target.id==='help') $('help').class
 function segBind(id,fn){ const el=$(id); el.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{ el.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); fn(b.dataset.v); })); }
 segBind('segView',v=>{st.view=v;});
 function setSide(v){ st.side=v; $('segSide').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.v===v));
+  const sb=$('segSide').querySelector(`[data-v="${v}"]`); $('sideLbl').textContent=sb?sb.textContent.replace(/^\+\s*/,''):''; $('btnSide').classList.toggle('on',v!=='off');
+  $('sidePop').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.v===v));
   $('stage').classList.toggle('withside',v!=='off'); $('stage').classList.toggle('withmeas',v==='meas'); updateMeasBar(); resize(); }
 segBind('segSide',setSide);
 segBind('segDir',v=>{st.dir=v;});
 segBind('segLamp',v=>{st.lampReal=v==='real'; S.edges.forEach(e=>{if(e.comp) e.comp.Rl=null;}); solve();});
+// Menü der Zusatzansichten aus den Knöpfen von segSide aufbauen
+$('sidePop').innerHTML=[...$('segSide').querySelectorAll('button')].map(b=>`<button data-v="${b.dataset.v}" class="${b.classList.contains('on')?'on':''}">${b.textContent}</button>`).join('');
+$('sidePop').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{ setSide(b.dataset.v); $('sidePop').classList.remove('open'); }));
+$('btnSide').onclick=ev=>{ ev.stopPropagation(); const p=$('sidePop'), r=$('btnSide').getBoundingClientRect(), m=$('stage').getBoundingClientRect();
+  p.style.left=Math.max(4,Math.min(r.left-m.left,m.width-210))+'px'; p.style.top=Math.max(4,r.bottom-m.top+4)+'px'; p.classList.toggle('open'); };
+document.addEventListener('pointerdown',ev=>{ const p=$('sidePop'); if(p.classList.contains('open')&&!p.contains(ev.target)&&!$('btnSide').contains(ev.target)) p.classList.remove('open'); });
+$('rotGo').onclick=()=>{ document.body.classList.add('quer'); setTimeout(resize,0); };
 $('btnView').onclick=ev=>{ ev.stopPropagation(); $('viewPop').classList.toggle('open'); $('btnView').classList.toggle('on'); };
 document.addEventListener('pointerdown',ev=>{ const p=$('viewPop'); if(p.classList.contains('open')&&!p.contains(ev.target)&&ev.target.id!=='btnView'){ p.classList.remove('open'); $('btnView').classList.remove('on'); } });
 document.querySelectorAll('.sw').forEach(b=>b.addEventListener('click',()=>{ const k=b.dataset.k; st[k]=!st[k]; b.classList.toggle('on',st[k]); }));
@@ -1931,12 +1980,37 @@ document.querySelectorAll('.tool').forEach(b=>b.addEventListener('click',()=>set
 $('mAdd').onclick=addPoint;
 $('mUndo').onclick=()=>{ const e=measDut(); if(e) e.comp.pts.pop(); };
 $('mClr').onclick=()=>{ const e=measDut(); if(e) e.comp.pts=[]; };
+/* Messreihe als CSV (Semikolon, Dezimalkomma, UTF-8 mit BOM) – öffnet in Excel und Numbers als Tabelle */
+function exportCsv(){
+  const e=measDut(); if(!e) return; const c=e.comp; if(!c.pts.length){ flash('Noch keine Messpunkte. Erst „＋ Messpunkt“ antippen.'); return; }
+  const [b,n]=compName(c), nm=b+(n||''), draht=c.kind==='D', d=new Date();
+  const num=(v,k)=>isFinite(v)?v.toFixed(k).replace('.',','):'';
+  const q=t=>'"'+String(t).replace(/"/g,'""')+'"';
+  const rows=[[`Messreihe zu ${nm} (${KINDNAME[c.kind]}: ${compValue(e)})`],[`Stromkreis-Labor, ${d.toLocaleDateString('de-DE')} ${d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})}`],[]];
+  rows.push(draht?['Nr.','Material','l in m','A in mm²','U in V','I in mA','R in Ω']:['Nr.','U in V','I in mA','R = U/I in Ω']);
+  c.pts.forEach((p,i)=>{ const R=Math.abs(p.I)>1e-9?p.U/p.I:NaN;
+    rows.push(draht?[i+1,MATS[p.mat].n,num(p.l,2),num(p.A,4),num(p.U,3),num(p.I*1000,3),num(R,3)]:[i+1,num(p.U,3),num(p.I*1000,3),num(R,3)]); });
+  const csv='\ufeff'+rows.map(r=>r.map(v=>typeof v==='number'||/^-?\d+(,\d+)?$/.test(v)?v:q(v)).join(';')).join('\r\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`Messreihe_${nm.replace(/[^A-Za-z0-9_-]/g,'')}.csv`; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},1000);
+}
+$('mCsv').onclick=exportCsv;
+/* Pfeiltasten links/rechts und Knöpfe −/+: Spannung in Schritten von 0,1 V */
+function stepU(d){ st.U=Math.max(0,Math.min(12,Math.round((st.U+d)*10)/10)); $('uSlider').value=Math.round(st.U*10); solve(); }
+$('uMinus').onclick=()=>stepU(-0.1); $('uPlus').onclick=()=>stepU(0.1);
+document.addEventListener('keydown',ev=>{
+  if(ev.key!=='ArrowLeft'&&ev.key!=='ArrowRight') return;
+  const t=ev.target; if(t&&(t.tagName==='INPUT'||t.tagName==='SELECT'||t.tagName==='TEXTAREA')) return;
+  ev.preventDefault(); stepU(ev.key==='ArrowRight'?0.1:-0.1); });
 segBind('measMode',v=>{ st.measMode=v; });
 $('btnClear').onclick=()=>{ while(S.meters.length) removeMeter(S.meters[0]); };
-function setBig(on){ st.big=on; document.body.classList.toggle('big',on); $('btnBig').classList.toggle('on',on); savePrefs(); setTimeout(resize,0); }
+const FS=[0.9,1,1.15,1.3,1.5]; // Schriftstufen (Faktor)
+function setFs(f){ st.fs=Math.max(FS[0],Math.min(FS[FS.length-1],f)); st.big=st.fs>1.05; document.body.classList.toggle('big',st.big);
+  $('btnBig').disabled=st.fs>=FS[FS.length-1]; $('btnSmall').disabled=st.fs<=FS[0]; savePrefs(); setTimeout(resize,0); }
+function stepFs(d){ const i=FS.findIndex(v=>Math.abs(v-st.fs)<1e-6); setFs(FS[Math.max(0,Math.min(FS.length-1,(i<0?1:i)+d))]); }
 function setPanel(show){ document.body.classList.toggle('nopanel',!show); $('btnPanel').classList.toggle('on',!show); savePrefs(); setTimeout(resize,0); }
-function savePrefs(){ try{ localStorage.setItem('stromkreislabor',JSON.stringify({big:st.big,nopanel:document.body.classList.contains('nopanel')})); }catch(e){} }
-$('btnBig').onclick=()=>setBig(!st.big);
+function savePrefs(){ try{ localStorage.setItem('stromkreislabor',JSON.stringify({fs:st.fs,nopanel:document.body.classList.contains('nopanel')})); }catch(e){} }
+$('btnBig').onclick=()=>stepFs(1); $('btnSmall').onclick=()=>stepFs(-1);
 $('btnPanel').onclick=()=>setPanel(document.body.classList.contains('nopanel'));
 const FULLHINT='Vollbild ist hier nicht möglich. Tipp: In Safari über „Teilen“ → „Zum Home-Bildschirm“ öffnen.';
 $('btnFull').onclick=()=>{ const d=document, el=d.documentElement;
@@ -1974,7 +2048,7 @@ function frame(now){
 }
 window.addEventListener('resize',resize);
 $('toolHint').innerHTML=TOOLHINT.select;
-try{ const pr=JSON.parse(localStorage.getItem('stromkreislabor')||'{}'); if(pr.big){ st.big=true; document.body.classList.add('big'); $('btnBig').classList.add('on'); } if(pr.nopanel){ document.body.classList.add('nopanel'); $('btnPanel').classList.add('on'); } }catch(e){}
+try{ const pr=JSON.parse(localStorage.getItem('stromkreislabor')||'{}'); if(pr.fs) setFs(+pr.fs); else if(pr.big) setFs(1.3); if(pr.nopanel){ document.body.classList.add('nopanel'); $('btnPanel').classList.add('on'); } }catch(e){}
 loadScene('R'); resize(); requestAnimationFrame(frame);
 
 /* Prüfhilfen (für Tests) */
