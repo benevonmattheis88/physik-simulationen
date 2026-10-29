@@ -13,13 +13,28 @@
   html, body { margin:0; height:100%; background:var(--bg); color:var(--ink);
                font-family:-apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow:hidden;
                -webkit-text-size-adjust:100%; }
-  #app { display:flex; height:100vh; height:100dvh; width:100vw; }
-  #stage { flex:1 1 auto; position:relative; min-width:0; min-height:0; background:#fbfcfd; overflow:hidden; }
+  /* Aufteilung: Aufträge oben, Bausteine links, Fläche in der Mitte, alles Weitere unten */
+  #app { display:grid; height:100vh; height:100dvh; width:100vw;
+         grid-template-columns:15rem minmax(0,1fr); grid-template-rows:auto minmax(0,1fr) auto;
+         grid-template-areas:"top top" "pal stage" "bot bot"; }
+  #stage { grid-area:stage; position:relative; min-width:0; min-height:0; background:#fbfcfd; overflow:hidden; }
   #sv { position:absolute; inset:0; display:block; width:100%; height:100%; touch-action:none; user-select:none; -webkit-user-select:none; }
-  #panel { flex:0 0 23rem; max-width:50vw; background:var(--panel); border-left:1px solid var(--line);
-           padding:.6rem .85rem; display:flex; flex-direction:column; gap:.5rem; overflow-y:auto; }
-  body.nopanel #panel { display:none; }
-  h1 { font-size:1.2rem; margin:0; color:var(--blue); }
+  .bar { background:var(--panel); }
+  #top { grid-area:top; display:flex; flex-wrap:wrap; align-items:center; gap:6px 12px; padding:.35rem .6rem; border-bottom:1px solid var(--line); }
+  #top .tabs button { flex:none; }
+  #aufSec { display:flex; flex-wrap:wrap; align-items:center; gap:6px 12px; }
+  #aufListe { display:flex; flex-wrap:wrap; gap:4px; }
+  #aufListe button, #aufBtns button { font-size:.93rem; padding:.3rem .55rem; min-height:2.3rem; }
+  #aufBtns { gap:4px; }
+  #auftrag { flex-basis:100%; font-size:.95rem; line-height:1.3; background:#f1f6fc; border:1px solid #d3e2f3; border-radius:8px; padding:.3rem .55rem; }
+  #pal { grid-area:pal; background:var(--panel); border-right:1px solid var(--line); overflow-y:auto; padding:.45rem .5rem; display:flex; flex-direction:column; gap:6px; min-height:0; }
+  #palette { display:flex; flex-direction:column; gap:6px; }
+  #bot { grid-area:bot; border-top:1px solid var(--line); padding:.45rem .6rem; display:grid; gap:.5rem .8rem;
+         grid-template-columns:minmax(0,1fr) minmax(0,1.25fr) minmax(0,1fr) minmax(0,1fr); max-height:34vh; }
+  #bot .cell { display:flex; flex-direction:column; gap:.4rem; min-width:0; overflow-y:auto; max-height:calc(34vh - .9rem); }
+  body.nopanel #top, body.nopanel #pal, body.nopanel #bot { display:none; }
+  body.nopanel #app { grid-template-columns:minmax(0,1fr); grid-template-areas:"top" "stage" "bot"; }
+  h1 { font-size:1.15rem; margin:0; color:var(--blue); }
   button, select, input[type=text] { font:inherit; font-size:1rem; border-radius:8px; border:1px solid var(--line); color:var(--ink); }
   button { padding:.45rem .6rem; background:#eef2f7; cursor:pointer; touch-action:manipulation; min-height:2.5rem; }
   button.on { background:var(--blue); color:#fff; border-color:var(--blue); }
@@ -50,6 +65,9 @@
   .checks { display:flex; flex-wrap:wrap; gap:.25rem .9rem; }
   .checks label { display:flex; align-items:center; gap:5px; min-height:1.9rem; }
   .checks input { width:1.3rem; height:1.3rem; }
+  .chk { display:flex; align-items:center; gap:6px; min-height:1.9rem; }
+  .chk input { width:1.3rem; height:1.3rem; flex:none; }
+  #selbox .btns button { padding:.3rem .35rem; font-size:.9rem; min-width:0; }
   .row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 
   /* Bausteinliste */
@@ -96,26 +114,24 @@
     h1 { display:none; }
     button { padding:.35rem .55rem; min-height:2.35rem; }
   }
-  @media (max-width: 900px) and (orientation: landscape) { #panel { flex-basis:20rem; } }
 
-  /* iPad hochkant: Fläche oben, Bedienfeld zweispaltig darunter */
+  /* iPad hochkant: gleiche Aufteilung, unten zwei Spalten */
   @media (min-width: 641px) and (max-width: 900px) and (orientation: portrait) {
-    #app { flex-direction:column; }
-    #panel { flex:0 0 auto; max-width:none; height:42vh; width:100%; border-left:0; border-top:1px solid var(--line);
-             display:grid; grid-template-columns:1fr 1fr; gap:.45rem 1.1rem; align-content:start; align-items:start; }
-    #panel > .col { display:flex; flex-direction:column; gap:.5rem; min-width:0; }
-    h1 { display:none; }
+    #app { grid-template-columns:13rem minmax(0,1fr); }
+    #bot { grid-template-columns:1fr 1fr; max-height:36vh; }
+    #bot .cell { max-height:none; overflow:visible; }
+    #bot { overflow-y:auto; }
   }
-  #panel > .col { display:flex; flex-direction:column; gap:.5rem; min-width:0; }
 
-  /* Handy hochkant: Fläche oben, Bedienfeld darunter, Seite darf scrollen */
+  /* Handy hochkant: Aufträge, Fläche, Bausteine, Rest untereinander, Seite darf scrollen */
   @media (max-width: 640px) {
     html, body { height:auto; overflow:auto; }
-    #app { flex-direction:column; height:auto; min-height:100vh; }
-    #stage { flex:none; height:min(120vw, 64vh); }
+    #app { display:flex; flex-direction:column; height:auto; min-height:100vh; }
+    #top { order:1; } #stage { order:2; flex:none; height:min(120vw, 64vh); } #pal { order:3; border-right:0; border-top:1px solid var(--line); overflow:visible; }
+    #bot { order:4; display:flex; flex-direction:column; max-height:none; }
+    #bot .cell { max-height:none; overflow:visible; }
     body.nopanel #stage { height:100vh; height:100dvh; }
-    #panel { flex:none; width:100%; max-width:none; border-left:0; border-top:1px solid var(--line); overflow:visible; }
-    h1 { display:block; }
+    h1 { display:block; flex-basis:100%; }
     .tools button { min-width:40px; height:40px; min-height:40px; padding:0 8px; }
     #legend { font-size:.8rem; top:54px; }
   }
@@ -133,6 +149,26 @@
 </head>
 <body>
 <div id="app">
+  <div id="top" class="bar">
+    <h1>Energiefluss-Baukasten</h1>
+    <div class="tabs">
+      <button id="tabFrei" class="on">Frei bauen</button>
+      <button id="tabAuf">Aufgaben</button>
+    </div>
+    <div id="aufSec" class="hidden">
+      <div id="aufListe"></div>
+      <div class="btns hidden" id="aufBtns">
+        <button id="aufLeer">Leer</button>
+        <button id="aufLuecke">Lückendiagramm</button>
+        <button id="aufLsg">Lösung</button>
+      </div>
+    </div>
+    <div id="auftrag" class="hidden"></div>
+  </div>
+  <div id="pal">
+    <div class="lbl">Bausteine: ziehen oder antippen</div>
+    <div id="palette"></div>
+  </div>
   <div id="stage">
     <svg id="sv" xmlns="http://www.w3.org/2000/svg"></svg>
     <div id="legend"><span>Energiestromstärke</span><span class="bar" id="legBar"></span><span id="legTxt"></span></div>
@@ -151,25 +187,9 @@
       <button id="zIn" title="Vergrößern">+</button>
     </div>
   </div>
-  <div id="panel">
-    <div class="col">
-      <h1>Energiefluss-Baukasten</h1>
-      <div class="tabs">
-        <button id="tabFrei" class="on">Frei bauen</button>
-        <button id="tabAuf">Aufgaben</button>
-      </div>
-      <div id="aufSec" class="hidden" style="display:flex;flex-direction:column;gap:.45rem">
-        <div class="grid2" id="aufListe"></div>
-        <div id="auftrag" class="box hidden"></div>
-        <div class="btns hidden" id="aufBtns">
-          <button id="aufLeer">Leer anfangen</button>
-          <button id="aufLuecke">Lückendiagramm</button>
-          <button id="aufLsg">Lösung</button>
-        </div>
-      </div>
-
-      <div id="selbox" class="box"></div>
-
+  <div id="bot" class="bar">
+    <div class="cell"><div id="selbox" class="box"></div></div>
+    <div class="cell">
       <div class="btns">
         <button id="pruefBtn">Prüfen</button>
         <button id="undo" title="Rückgängig">↶ Zurück</button>
@@ -177,11 +197,7 @@
       </div>
       <div id="pruef" class="box hidden"></div>
     </div>
-
-    <div class="col">
-      <div class="lbl">Bausteine (zum Entnehmen ziehen oder antippen)</div>
-      <div id="palette" style="display:flex;flex-direction:column;gap:6px"></div>
-
+    <div class="cell">
       <div class="checks">
         <label><input id="cbAbw" type="checkbox">Abwärme verlangen</label>
         <label><input id="cbGas" type="checkbox">Abgase</label>
@@ -190,7 +206,8 @@
         <label><input id="cbGrid" type="checkbox" checked>Raster</label>
       </div>
       <div class="row"><span class="lbl">Maßstab: Pfeilbreite</span><select id="scaleSel" aria-label="Maßstab"></select></div>
-
+    </div>
+    <div class="cell">
       <div class="grid2">
         <button id="pngBtn">Als Bild speichern</button>
         <button id="saveBtn">Diagramm speichern</button>
@@ -198,10 +215,9 @@
         <button id="clearBtn">Alles löschen</button>
       </div>
       <input type="file" id="fileIn" accept=".json,application/json" class="hidden">
-
       <details class="small"><summary>Bedienung, Hinweise und Vereinfachungen</summary>
         <div>
-        <b>Bedienung:</b> Bausteine aus der Liste nach links auf die Fläche ziehen oder antippen. Es wird immer eine Kopie entnommen. Pfeilenden ziehen und an einem Kästchen loslassen: Dann docken sie an und wandern mit. Den Pfeil selbst ziehen biegt ihn. Leere Fläche ziehen verschiebt die Ansicht. Zum Löschen auf den Papierkorb unten links ziehen.<br><br>
+        <b>Bedienung:</b> Bausteine aus der Liste links auf die Fläche ziehen oder antippen. Es wird immer eine Kopie entnommen. Pfeilenden ziehen und an einem Kästchen loslassen: Dann docken sie an und wandern mit. Den Pfeil selbst ziehen biegt ihn. Zwischen zwei Kästchen rastet ein Pfeil gerade ein, wenn das geht. Ein Hin- und ein Rückpfeil desselben Trägers zwischen zwei Kästchen werden automatisch zu einer geschlossenen Schleife. Leere Fläche ziehen verschiebt die Ansicht. Zum Löschen auf den Papierkorb unten links ziehen.<br><br>
         <b>Farben nach KPK:</b> Energiepfeile grün, Trägerpfeile gelb, Energieumlader rot. Die Breite der Energiepfeile ist proportional zur Energiestromstärke (fester Maßstab, oben links angezeigt). Der Maßstab gilt für das ganze Diagramm.<br><br>
         <b>Prüfen:</b> Geprüft wird erst auf Knopfdruck: Energiebilanz an jedem Umlader, ob zu jedem Energiepfeil ein Trägerpfeil gehört (gleicher Anfang, gleiches Ende), ob Träger mit Erhaltungsgröße (Elektrizität, Drehimpuls, Impuls, Wasser, Luft, Öl) geschlossen oder wieder hinausgeführt sind, und ob die Träger zum Umlader passen. Bei Aufgaben wird zusätzlich mit einer Musterlösung verglichen. Die Musterlösung ist ein Vorschlag, andere sinnvolle Lösungen sind möglich.<br><br>
         <b>Vereinfachungen:</b> Schall und Funkwellen sind hier eigene Träger (genau genommen sind Schall Impuls und Funkwellen Licht). „Warmes Wasser“ als Träger ist eine Vereinfachung, nach KPK trägt die Entropie die Energie und das Wasser transportiert sie nur. Stoffliche Träger (Brennstoff, Nahrung, Wasserstoff) werden umgewandelt und deshalb offen gezeichnet. Beim Antriebsrad wird nicht gezeigt, woher der Impuls kommt (aus der Erde). Die Zahlenwerte in den Aufgaben sind gerundete Beispielwerte.
@@ -288,7 +304,7 @@
 
   const SCALES = [1,2,5,10,20,50,100,200,500,1e3,2e3,5e3,1e4,2e4,5e4,1e5,2e5,5e5,1e6,1e7,1e8,5e8,1e9];
   const UNIT = 30;          // Pfeilbreite (Welteinheiten) für 1 Maßstabseinheit
-  const GAP = 26;           // Abstand Hin- und Rückweg einer Schleife
+  const GAP = 46;           // Breite der Ellipse aus Hin- und Rückweg
   const GRID = 20;
 
   /* ---------- Aufgaben ---------- */
@@ -298,29 +314,29 @@
     { t:"Fahrraddynamo", scale:10, txt:"Beim Radfahren treibt ein Dynamo eine Glühlampe an. Baue das Energieflussdiagramm vom Menschen bis zum Licht der Lampe.",
       n:[["m","Mensch","u",230,320],["g","Generator","u",560,320],["l","Glühlampe","u",890,320]],
       a:[["e",0,[-250,0],"m:l:0.3",25],["t","nahrung",[-250,0],"m:l:0.75"],
-         ["e",0,"m:r:0.3","g:l:0.3",5],["t","dreh","m:r:0.72","g:l:0.72",0,{r:1}],
+         ["e",0,"m:r:0.3","g:l:0.3",5],["t","dreh","m:r:0.8","g:l:0.8",0,{r:1}],
          ["e",0,"m:b:0.7",[0,150],20,{abw:1}],["t","ent","m:b:0.3",[0,150],0,{abw:1}],
-         ["e",0,"g:r:0.3","l:l:0.3",3],["t","el","g:r:0.72","l:l:0.72",0,{r:1}],
+         ["e",0,"g:r:0.3","l:l:0.3",3],["t","el","g:r:0.8","l:l:0.8",0,{r:1}],
          ["e",0,"g:b:0.7",[0,150],2,{abw:1}],["t","ent","g:b:0.3",[0,150],0,{abw:1}],
          ["e",0,"l:r:0.3",[190,0],0.2],["t","licht","l:r:0.72",[190,0]],
          ["e",0,"l:b:0.7",[0,150],2.8,{abw:1}],["t","ent","l:b:0.3",[0,150],0,{abw:1}]] },
     { t:"Wasserkocher", scale:1000, txt:"Ein Wasserkocher an der Steckdose erhitzt Wasser. Baue das Energieflussdiagramm.",
       n:[["s","Steckdose","quelle",300,320],["w","Wasserkocher","u",650,320]],
-      a:[["e",0,"s:r:0.3","w:l:0.3",2000],["t","el","s:r:0.72","w:l:0.72",0,{r:1}],
+      a:[["e",0,"s:r:0.3","w:l:0.3",2000],["t","el","s:r:0.8","w:l:0.8",0,{r:1}],
          ["e",0,"w:r:0.3",[200,0],2000],["t","ent","w:r:0.72",[200,0]]] },
     { t:"Solarventilator", scale:10, txt:"Eine Solarzelle in der Sonne treibt über einen Elektromotor einen kleinen Ventilator an. Baue das Energieflussdiagramm von der Sonne bis zur bewegten Luft.",
       n:[["so","Sonne","quelle",110,320],["z","Solarzelle","u",390,320],["mo","Elektromotor","u",680,320],["v","Ventilator","u",970,320]],
       a:[["e",0,"so:r:0.3","z:l:0.3",10],["t","licht","so:r:0.72","z:l:0.72"],
-         ["e",0,"z:r:0.3","mo:l:0.3",2],["t","el","z:r:0.72","mo:l:0.72",0,{r:1}],
+         ["e",0,"z:r:0.3","mo:l:0.3",2],["t","el","z:r:0.8","mo:l:0.8",0,{r:1}],
          ["e",0,"z:b:0.7",[0,150],8,{abw:1}],["t","ent","z:b:0.3",[0,150],0,{abw:1}],
-         ["e",0,"mo:r:0.3","v:l:0.3",1.5],["t","dreh","mo:r:0.72","v:l:0.72",0,{r:1}],
+         ["e",0,"mo:r:0.3","v:l:0.3",1.5],["t","dreh","mo:r:0.8","v:l:0.8",0,{r:1}],
          ["e",0,"mo:b:0.7",[0,150],0.5,{abw:1}],["t","ent","mo:b:0.3",[0,150],0,{abw:1}],
          ["e",0,"v:r:0.3",[180,0],1.2],["t","luft","v:r:0.72",[180,0]],
          ["e",0,"v:b:0.7",[0,150],0.3,{abw:1}],["t","ent","v:b:0.3",[0,150],0,{abw:1}]] },
     { t:"Auto", scale:50000, txt:"Ein Auto mit Verbrennungsmotor fährt. Baue das Energieflussdiagramm vom Tank bis zu den Antriebsrädern.",
       n:[["ta","Tank","speicher",150,320],["mo","Verbrennungsmotor","u",470,320],["ra","Antriebsrad","u",800,320]],
       a:[["e",0,"ta:r:0.3","mo:l:0.3",100000],["t","brenn","ta:r:0.75","mo:l:0.75"],
-         ["e",0,"mo:r:0.3","ra:l:0.3",30000],["t","dreh","mo:r:0.72","ra:l:0.72",0,{r:1}],
+         ["e",0,"mo:r:0.3","ra:l:0.3",30000],["t","dreh","mo:r:0.8","ra:l:0.8",0,{r:1}],
          ["e",0,"mo:b:0.7",[0,160],70000,{abw:1}],["t","ent","mo:b:0.3",[0,160],0,{abw:1}],
          ["g",0,"mo:t:0.5",[0,-130],0,{gas:1}],
          ["e",0,"ra:r:0.3",[190,0],28000],["t","imp","ra:r:0.72",[190,0]],
@@ -330,15 +346,15 @@
       a:[["e",0,"st:r:0.3","tu:l:0.3",14],["t","wasser","st:r:0.75","tu:l:0.75"],
          ["t","wasser","tu:t:0.5",[0,-130]],
          ["e",0,"tu:b:0.7",[0,150],2,{abw:1}],["t","ent","tu:b:0.3",[0,150],0,{abw:1}],
-         ["e",0,"tu:r:0.3","g:l:0.3",12],["t","dreh","tu:r:0.72","g:l:0.72",0,{r:1}],
-         ["e",0,"g:r:0.3","l:l:0.3",11],["t","el","g:r:0.72","l:l:0.72",0,{r:1}],
+         ["e",0,"tu:r:0.3","g:l:0.3",12],["t","dreh","tu:r:0.8","g:l:0.8",0,{r:1}],
+         ["e",0,"g:r:0.3","l:l:0.3",11],["t","el","g:r:0.8","l:l:0.8",0,{r:1}],
          ["e",0,"g:b:0.7",[0,150],1,{abw:1}],["t","ent","g:b:0.3",[0,150],0,{abw:1}],
          ["e",0,"l:r:0.3",[190,0],4],["t","licht","l:r:0.72",[190,0]],
          ["e",0,"l:b:0.7",[0,150],7,{abw:1}],["t","ent","l:b:0.3",[0,150],0,{abw:1}]] },
     { t:"Zentralheizung", scale:5000, txt:"Eine Ölheizung erwärmt über warmes Wasser einen Heizkörper, der das Zimmer heizt. Baue das Energieflussdiagramm vom Tank bis ins Zimmer.",
       n:[["ta","Tank","speicher",150,320],["k","Heizkessel","u",460,320],["h","Heizkörper","u",790,320]],
       a:[["e",0,"ta:r:0.3","k:l:0.3",10000],["t","brenn","ta:r:0.75","k:l:0.75"],
-         ["e",0,"k:r:0.3","h:l:0.3",9000],["t","wwasser","k:r:0.72","h:l:0.72",0,{r:1}],
+         ["e",0,"k:r:0.3","h:l:0.3",9000],["t","wwasser","k:r:0.8","h:l:0.8",0,{r:1}],
          ["e",0,"k:b:0.7",[0,150],1000,{abw:1}],["t","ent","k:b:0.3",[0,150],0,{abw:1}],
          ["g",0,"k:t:0.5",[0,-130],0,{gas:1}],
          ["e",0,"h:r:0.3",[190,0],9000],["t","ent","h:r:0.72",[190,0]]] },
@@ -348,9 +364,9 @@
          ["e",0,"k:r:0.3","tu:l:0.3",9e8],["t","ent","k:r:0.75","tu:l:0.75"],
          ["e",0,"k:b:0.7",[0,150],1e8,{abw:1}],["t","ent","k:b:0.3",[0,150],0,{abw:1}],
          ["g",0,"k:t:0.5",[0,-130],0,{gas:1}],
-         ["e",0,"tu:r:0.3","g:l:0.3",4.2e8],["t","dreh","tu:r:0.72","g:l:0.72",0,{r:1}],
+         ["e",0,"tu:r:0.3","g:l:0.3",4.2e8],["t","dreh","tu:r:0.8","g:l:0.8",0,{r:1}],
          ["e",0,"tu:b:0.7",[0,150],4.8e8,{abw:1}],["t","ent","tu:b:0.3",[0,150],0,{abw:1}],
-         ["e",0,"g:r:0.3","h:l:0.3",4.1e8],["t","el","g:r:0.72","h:l:0.72",0,{r:1}],
+         ["e",0,"g:r:0.3","h:l:0.3",4.1e8],["t","el","g:r:0.8","h:l:0.8",0,{r:1}],
          ["e",0,"g:b:0.7",[0,150],1e7,{abw:1}],["t","ent","g:b:0.3",[0,150],0,{abw:1}]] }
   ];
 
@@ -433,21 +449,42 @@
     return best;
   }
   const qpt = (p0, c, p1, t) => ({ x:(1-t)*(1-t)*p0.x + 2*(1-t)*t*c.x + t*t*p1.x, y:(1-t)*(1-t)*p0.y + 2*(1-t)*t*c.y + t*t*p1.y });
+  // Einrasten: Liegen beide Enden an gegenüberliegenden Seiten zweier Kästchen, wird der Pfeil gerade,
+  // sofern das Ende dabei auf dem Kästchenrand bleibt.
+  function effEnds(a) {
+    let ea = a.a, eb = a.b;
+    if (ea.n && eb.n && ea.n !== eb.n && SZ.get(ea.n) && SZ.get(eb.n)) {
+      const lr = e => e.s === "l" || e.s === "r", H = lr(ea) && lr(eb), V = !lr(ea) && !lr(eb);
+      if (H || V) {
+        const fit = (end, p) => {
+          const n = byId(end.n), z = SZ.get(end.n);
+          const t = H ? (p.y - (n.y - z.h / 2)) / z.h : (p.x - (n.x - z.w / 2)) / z.w;
+          return t >= 0.04 && t <= 0.96 ? { ...end, t } : null;
+        };
+        const nb = fit(eb, endPos(ea));
+        if (nb) eb = nb; else { const na = fit(ea, endPos(eb)); if (na) ea = na; }
+      }
+    }
+    return [ea, eb];
+  }
   function geom(a) {
-    const p0 = endPos(a.a), p1 = endPos(a.b);
+    const [ea, eb] = effEnds(a);
+    let p0 = endPos(ea), p1 = endPos(eb);
     const dx = p1.x - p0.x, dy = p1.y - p0.y, len = Math.hypot(dx, dy) || 1;
-    const nx = -dy / len, ny = dx / len, b = a.bend || 0;
-    const c = { x:(p0.x + p1.x) / 2 + nx * b, y:(p0.y + p1.y) / 2 + ny * b };
-    const g = { p0, p1, c, n:{ x:nx, y:ny }, w:aw(a) };
+    const nx = -dy / len, ny = dx / len, b = a.bend || 0, mx = (p0.x + p1.x) / 2, my = (p0.y + p1.y) / 2;
+    const cc = { x:mx + nx * b, y:my + ny * b };
+    const g = { p0, p1, c:cc, cc, n:{ x:nx, y:ny }, w:aw(a) };
     if (a.k === "t" && a.r) {
-      // Rückweg: um GAP versetzt; angedockte Enden bleiben auf dem Rand ihres Kästchens
-      const shift = end => {
-        if (!end.n || !SZ.get(end.n)) { const p = endPos(end); return { x:p.x + nx * GAP, y:p.y + ny * GAP }; }
+      // Geschlossene Schleife als Ellipse: Hinweg wölbt sich zur einen, Rückweg zur anderen Seite
+      const shift = (end, d) => {
+        const p = endPos(end);
+        if (!end.n || !SZ.get(end.n)) return { x:p.x + nx * d, y:p.y + ny * d };
         const z = SZ.get(end.n), lr = end.s === "l" || end.s === "r";
-        const dt = (lr ? ny : nx) * GAP / (lr ? z.h : z.w);
-        return endPos({ ...end, t:Math.min(0.96, Math.max(0.04, end.t + dt)) });
+        return endPos({ ...end, t:Math.min(0.97, Math.max(0.03, end.t + (lr ? ny : nx) * d / (lr ? z.h : z.w))) });
       };
-      g.r = { p0:shift(a.b), p1:shift(a.a), c:{ x:c.x + nx * GAP, y:c.y + ny * GAP } };
+      g.p0 = shift(ea, -7); g.p1 = shift(eb, -7);
+      g.c = { x:mx + nx * (b - GAP), y:my + ny * (b - GAP) };
+      g.r = { p0:shift(eb, 7), p1:shift(ea, 7), c:{ x:mx + nx * (b + GAP), y:my + ny * (b + GAP) } };
     }
     return g;
   }
@@ -533,12 +570,12 @@
         }
       }
       // Beschriftung
-      const m = qpt(g.p0, g.c, g.p1, 0.5);
+      const m = qpt(g.p0, g.cc, g.p1, 0.5);
       if (a.k === "e") {
         const off = g.w / 2 + s * 0.8, x = m.x - g.n.x * off, y = m.y - g.n.y * off + s * 0.35;
         out.push(`<text class="lab" x="${x}" y="${y}" text-anchor="${anc(-g.n.x)}" fill="#1d6b31">${fmtP(a.P)}</text>`);
       } else {
-        const off = (a.r ? GAP : 0) + g.w / 2 + s * 0.85, x = m.x + g.n.x * off, y = m.y + g.n.y * off + s * 0.35;
+        const off = (a.r ? GAP / 2 : 0) + g.w / 2 + s * 0.85, x = m.x + g.n.x * off, y = m.y + g.n.y * off + s * 0.35;
         out.push(`<text class="lab" x="${x}" y="${y}" text-anchor="${anc(g.n.x)}" fill="${a.k === "t" ? "#6b5200" : "#4b535c"}">${esc(a.k === "t" ? carName(a) : "Abgase")}</text>`);
       }
       out.push(`</g>`);
@@ -559,7 +596,7 @@
     // Griffe des gewählten Pfeils
     const sa = !exp && U.sel && D.arrows.find(a => a.id === U.sel);
     if (sa) {
-      const g = geom(sa), m = qpt(g.p0, g.c, g.p1, 0.5), r = 12 / Math.max(.6, Math.min(U.Z, 1.4));
+      const g = geom(sa), m = qpt(g.p0, g.cc, g.p1, 0.5), r = 12 / Math.max(.6, Math.min(U.Z, 1.4));
       for (const [part, p, col] of [["a", g.p0, "#fff"], ["b", g.p1, "#fff"], ["m", m, "#e8eef6"]]) {
         out.push(`<g data-id="${sa.id}" data-part="${part}"><circle cx="${p.x}" cy="${p.y}" r="${r * 2.1}" fill="transparent"/><circle cx="${p.x}" cy="${p.y}" r="${r}" fill="${col}" stroke="#1F4E79" stroke-width="3"/></g>`);
       }
@@ -619,6 +656,17 @@
   }
   function updUndo() { $("undo").disabled = U.hi <= 0; $("redo").disabled = U.hi >= U.hist.length - 1; }
   function changed() { U.flags.clear(); $("pruef").classList.add("hidden"); }
+
+  // Zwei Trägerpfeile desselben Trägers hin und zurück zwischen zwei Kästchen werden eine geschlossene Schleife
+  function mergeLoops() {
+    let merged = false;
+    for (const x of D.arrows) {
+      if (x.k !== "t" || x.r || !x.a.n || !x.b.n) continue;
+      const y = D.arrows.find(y => y !== x && y.k === "t" && !y.r && carKey(y) === carKey(x) && y.a.n === x.b.n && y.b.n === x.a.n);
+      if (y) { x.r = true; D.arrows = D.arrows.filter(z => z !== y); if (U.sel === y.id) U.sel = x.id; merged = true; break; }
+    }
+    return merged ? (mergeLoops(), true) : false;
+  }
 
   /* ---------- Bausteine anlegen ---------- */
   const nid = () => "o" + (D.next++);
@@ -767,7 +815,15 @@
     const w = toWorld(e.clientX, e.clientY);
     if (d.mode === "pan") { U.VX = d.vx - (e.clientX - d.sx) / U.Z; U.VY = d.vy - (e.clientY - d.sy) / U.Z; render(); return; }
     const o = byId(d.id); if (!o) return;
-    if (d.mode === "node") { o.x = snap(w.x + d.ox); o.y = snap(w.y + d.oy); }
+    if (d.mode === "node") {
+      const nx = snap(w.x + d.ox), ny = snap(w.y + d.oy), dx = nx - o.x, dy = ny - o.y;
+      o.x = nx; o.y = ny;
+      // freie Pfeilenden wandern mit, wenn das andere Ende an diesem Kästchen hängt
+      for (const a of D.arrows) {
+        if (a.a.n === o.id && !a.b.n) { a.b.x += dx; a.b.y += dy; }
+        if (a.b.n === o.id && !a.a.n) { a.a.x += dx; a.a.y += dy; }
+      }
+    }
     else if (d.mode === "move") {
       const dx = w.x - d.w0.x, dy = w.y - d.w0.y;
       o.a = { x:snap(d.a0.x + dx), y:snap(d.a0.y + dy) }; o.b = { x:snap(d.b0.x + dx), y:snap(d.b0.y + dy) };
@@ -798,8 +854,16 @@
     if ((d.mode === "node" || d.mode === "move") && overTrash(e)) { removeObj(d.id); return; }
     if (d.mode === "end" && o) {
       if (d.dk) o[d.end] = { n:d.dk.n, s:d.dk.s, t:Math.round(d.dk.t * 100) / 100 };
-      else o[d.end] = { x:snap(o[d.end].x), y:snap(o[d.end].y) };
+      else {
+        o[d.end] = { x:snap(o[d.end].x), y:snap(o[d.end].y) };
+        // freies Ende rastet waagerecht oder senkrecht zum anderen Ende ein
+        layout();
+        const q = endPos(o[d.end === "a" ? "b" : "a"]), e = o[d.end];
+        if (Math.abs(e.y - q.y) < 30) e.y = q.y;
+        if (Math.abs(e.x - q.x) < 30) e.x = q.x;
+      }
       U.dockPreview = null;
+      mergeLoops();
     }
     render(); renderSel(); commit();
   }
@@ -829,14 +893,14 @@
     } else if (o.k === "t") {
       h = `<div class="titel">Trägerpfeil</div>
         <select id="sCar" aria-label="Träger">${Object.keys(CAR).map(c => `<option value="${c}"${c === o.c ? " selected" : ""}>${esc(CAR[c].p || CAR[c].n)}</option>`).join("")}</select>
-        ${o.c === "eigen" ? `<input type="text" id="sCname" placeholder="Name des Trägers" value="${esc(o.cname || "")}"><label class="row small"><input type="checkbox" id="sCerh"${o.cerh ? " checked" : ""}> hat eine Erhaltungsgröße</label>` : ""}
-        <label class="row"><input type="checkbox" id="sRueck" style="width:1.3rem;height:1.3rem"${o.r ? " checked" : ""}> Rückweg (geschlossene Schleife)</label>`;
+        ${o.c === "eigen" ? `<input type="text" id="sCname" placeholder="Name des Trägers" value="${esc(o.cname || "")}"><label class="chk small"><input type="checkbox" id="sCerh"${o.cerh ? " checked" : ""}> hat eine Erhaltungsgröße</label>` : ""}
+        <label class="chk"><input type="checkbox" id="sRueck"${o.r ? " checked" : ""}> Rückweg (geschlossene Schleife)</label>`;
     } else h = `<div class="titel">Abgase</div><div class="small">Stoffpfeil ohne Energie (CO<sub>2</sub>, Wasserdampf).</div>`;
     B.innerHTML = h + btns;
     const on = (id, ev, f) => { const el = $(id); if (el) el.addEventListener(ev, f); };
     on("sDel", "click", () => removeObj(o.id));
     on("sCopy", "click", () => copyObj(o.id));
-    on("sFlip", "click", () => { const t = o.a; o.a = o.b; o.b = t; changed(); render(); commit(); });
+    on("sFlip", "click", () => { const t = o.a; o.a = o.b; o.b = t; changed(); mergeLoops(); render(); renderSel(); commit(); });
     on("sName", "input", e => { o.name = e.target.value; render(); });
     on("sName", "change", () => { changed(); commit(); });
     const setP = v => { o.P = Math.max(0, Math.round(v * 20) / 20) * D.scale; $("sP").value = o.P / D.scale; $("sPout").textContent = fmtP(o.P); render(); };
@@ -844,7 +908,7 @@
     on("sP", "change", commit);
     on("sPm", "click", () => { changed(); setP(o.P / D.scale - 0.1); commit(); });
     on("sPp", "click", () => { changed(); setP(Math.min(8, o.P / D.scale + 0.1)); commit(); });
-    on("sCar", "change", e => { o.c = e.target.value; if (o.c === "eigen" && o.cname == null) { o.cname = ""; o.cerh = false; } changed(); render(); renderSel(); commit(); });
+    on("sCar", "change", e => { o.c = e.target.value; if (o.c === "eigen" && o.cname == null) { o.cname = ""; o.cerh = false; } changed(); mergeLoops(); render(); renderSel(); commit(); });
     on("sCname", "input", e => { o.cname = e.target.value; render(); });
     on("sCname", "change", () => { changed(); commit(); });
     on("sCerh", "change", e => { o.cerh = e.target.checked; changed(); commit(); });
@@ -977,8 +1041,8 @@
       }
       layout();
       for (const [a, fr, to] of pend) {
-        if (Array.isArray(fr)) { const p = endPos(a.b); a.a = { x:p.x + fr[0] * 0.8, y:p.y + fr[1] * 0.8 }; }
-        if (Array.isArray(to)) { const p = endPos(a.a); a.b = { x:p.x + to[0] * 0.8, y:p.y + to[1] * 0.8 }; }
+        if (Array.isArray(fr)) { const p = endPos(effEnds(a)[1]); a.a = { x:p.x + fr[0] * 0.8, y:p.y + fr[1] * 0.8 }; }
+        if (Array.isArray(to)) { const p = endPos(effEnds(a)[0]); a.b = { x:p.x + to[0] * 0.8, y:p.y + to[1] * 0.8 }; }
       }
     }
     U.sel = null; changed(); syncScale(); render(); renderSel(); commit(); fit();
@@ -989,7 +1053,7 @@
       U.task = +b.dataset.i;
       $("aufListe").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
       $("auftrag").innerHTML = `<b>Auftrag:</b> ${esc(TASKS[U.task].txt)}`;
-      $("auftrag").classList.remove("hidden"); $("aufBtns").classList.remove("hidden");
+      $("auftrag").classList.remove("hidden"); $("aufBtns").classList.remove("hidden"); requestAnimationFrame(resize);
       loadTask(U.task, "leer");
     });
   }
@@ -997,7 +1061,8 @@
     U.mode = m;
     $("tabFrei").classList.toggle("on", m === "frei"); $("tabAuf").classList.toggle("on", m === "auf");
     $("aufSec").classList.toggle("hidden", m !== "auf");
-    changed();
+    $("auftrag").classList.toggle("hidden", m !== "auf" || U.task == null);
+    changed(); requestAnimationFrame(resize);
   }
 
   /* ---------- Maßstab ---------- */
