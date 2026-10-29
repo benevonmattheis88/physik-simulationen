@@ -616,10 +616,11 @@
         out.push(`<text class="lab" x="${x}" y="${y}" text-anchor="${anc(g.n.x)}" fill="${a.k === "t" ? "#6b5200" : "#4b535c"}">${esc(a.k === "t" ? carName(a) : "Abgase")}</text>`);
         const Q = a.k === "t" && o.strom && CARQ[a.c];
         if (Q && (a.qI != null || a.qU != null)) {
-          const parts = [];
-          if (a.qI != null) parts.push(`${Q.I.y.s} = ${fmtNum(a.qI, 3)} ${Q.I.u}`);
-          if (a.qU != null) parts.push(`${Q.U.y.s} = ${fmtNum(a.qU, 3)} ${Q.U.u}`);
-          out.push(`<text class="lab" x="${x}" y="${y + s * 1.15}" text-anchor="${anc(g.n.x)}" fill="#6b5200" style="font-weight:500">${parts.join(" · ")}</text>`);
+          // Beschriftung wie im Unterricht: P = U · I = 1 V · 10 A
+          const txt = a.qI != null && a.qU != null
+            ? `P = ${Q.U.y.s} · ${Q.I.y.s} = ${fmtNum(a.qU, 3)} ${Q.U.u} · ${fmtNum(a.qI, 3)} ${Q.I.u}`
+            : a.qI != null ? `${Q.I.y.s} = ${fmtNum(a.qI, 3)} ${Q.I.u}` : `${Q.U.y.s} = ${fmtNum(a.qU, 3)} ${Q.U.u}`;
+          out.push(`<text class="lab" x="${x}" y="${y + s * 1.15}" text-anchor="${anc(g.n.x)}" fill="#6b5200" style="font-weight:500">${txt}</text>`);
         }
       }
       out.push(`</g>`);
@@ -1021,7 +1022,7 @@
       const v = num(e.target.value);
       o["q" + k] = isFinite(v) ? v : null; changed(); render();
       const Q = CARQ[o.c], P = o.qI != null && o.qU != null ? o.qI * o.qU * Q.f : null;
-      $("sQP").innerHTML = `P = ${Q.U.y.h} · ${Q.I.y.h}${P == null ? "" : " = " + fmtP(P)}`;
+      $("sQP").innerHTML = `P = ${Q.U.y.h} · ${Q.I.y.h}${P == null ? "" : " = " + fmtNum(o.qU, 3) + " " + Q.U.u + " · " + fmtNum(o.qI, 3) + " " + Q.I.u + " = " + fmtP(P)}`;
     });
     for (const k of ["I", "U"]) on("sQ" + k, "change", commit);
     on("sCar", "change", e => { o.c = e.target.value; if (o.c === "eigen" && o.cname == null) { o.cname = ""; o.cerh = false; } changed(); mergeLoops(); render(); renderSel(); commit(); });
@@ -1059,7 +1060,7 @@
       if (t.qI == null || t.qU == null) { warn("Beim Trägerpfeil " + carName(t) + (t.a.n ? " aus " + nodeName(t.a.n) : "") + " fehlen noch " + Q.I.n + " " + Q.I.y.h + " und " + Q.U.n + " " + Q.U.y.h + ".", [t.id]); continue; }
       const Pc = t.qI * t.qU * Q.f;
       if (Math.abs(Pc - e.P) > Math.max(e.P * 0.02, D.scale * 0.01))
-        err("Energiestromstärke und Trägerstrom passen nicht zusammen: " + Q.U.y.h + " · " + Q.I.y.h + " = " + fmtNum(t.qU, 3) + " " + Q.U.u + " · " + fmtNum(t.qI, 3) + " " + Q.I.u + " = " + fmtP(Pc) + ", am Energiepfeil stehen " + fmtP(e.P) + ".", [e.id, t.id]);
+        err("Energiestromstärke und Trägerstrom passen nicht zusammen: P = " + Q.U.y.h + " · " + Q.I.y.h + " = " + fmtNum(t.qU, 3) + " " + Q.U.u + " · " + fmtNum(t.qI, 3) + " " + Q.I.u + " = " + fmtP(Pc) + ", am Energiepfeil stehen " + fmtP(e.P) + ".", [e.id, t.id]);
     }
     let bilanzHinweis = false;
     for (const n of D.nodes) {
