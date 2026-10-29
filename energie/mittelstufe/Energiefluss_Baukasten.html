@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Energiefluss-Baukasten (KPK)</title>
+<style>
+  :root { --bg:#f4f6f9; --panel:#ffffff; --ink:#1d2733; --muted:#5b6675; --line:#d5dbe3;
+          --energie:#2E9A45; --traeger:#F2C230; --traeger-d:#B8900C; --umlader:#C8382B; --blue:#1F4E79; --orange:#E67E22; }
+  * { box-sizing:border-box; }
+  html { font-size:14px; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--ink);
+               font-family:-apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow:hidden;
+               -webkit-text-size-adjust:100%; }
+  /* Aufteilung: Aufträge oben, Bausteine links, Fläche in der Mitte, alles Weitere unten */
+  #app { display:grid; height:100vh; height:100dvh; width:100vw;
+         grid-template-columns:15rem minmax(0,1fr); grid-template-rows:auto minmax(0,1fr) auto;
+         grid-template-areas:"top top" "pal stage" "bot bot"; }
+  #stage { grid-area:stage; position:relative; min-width:0; min-height:0; background:#fbfcfd; overflow:hidden; }
+  #sv { position:absolute; inset:0; display:block; width:100%; height:100%; touch-action:none; user-select:none; -webkit-user-select:none; }
+  .bar { background:var(--panel); }
+  #top { grid-area:top; display:flex; flex-wrap:wrap; align-items:center; gap:6px 12px; padding:.35rem .6rem; border-bottom:1px solid var(--line); }
+  #top .tabs button { flex:none; }
+  #aufSec { display:flex; flex-wrap:wrap; align-items:center; gap:6px 12px; }
+  #aufListe { display:flex; flex-wrap:wrap; gap:4px; }
+  #aufListe button, #aufBtns button { font-size:.93rem; padding:.3rem .55rem; min-height:2.3rem; }
+  #aufBtns { gap:4px; }
+  #auftrag { flex-basis:100%; font-size:.95rem; line-height:1.3; background:#f1f6fc; border:1px solid #d3e2f3; border-radius:8px; padding:.3rem .55rem; }
+  #pal { grid-area:pal; background:var(--panel); border-right:1px solid var(--line); overflow-y:auto; padding:.45rem .5rem; display:flex; flex-direction:column; gap:6px; min-height:0; }
+  #palette { display:flex; flex-direction:column; gap:6px; }
+  #bot { grid-area:bot; border-top:1px solid var(--line); padding:.45rem .6rem; display:grid; gap:.5rem .8rem;
+         grid-template-columns:minmax(0,1fr) minmax(0,1.25fr) minmax(0,1fr) minmax(0,1fr); max-height:34vh; }
+  #bot .cell { display:flex; flex-direction:column; gap:.4rem; min-width:0; overflow-y:auto; max-height:calc(34vh - .9rem); }
+  body.nopanel #top, body.nopanel #pal, body.nopanel #bot { display:none; }
+  body.nopanel #app { grid-template-columns:minmax(0,1fr); grid-template-areas:"top" "stage" "bot"; }
+  h1 { font-size:1.15rem; margin:0; color:var(--blue); }
+  button, select, input[type=text] { font:inherit; font-size:1rem; border-radius:8px; border:1px solid var(--line); color:var(--ink); }
+  button { padding:.45rem .6rem; background:#eef2f7; cursor:pointer; touch-action:manipulation; min-height:2.5rem; }
+  button.on { background:var(--blue); color:#fff; border-color:var(--blue); }
+  button:disabled { opacity:.45; cursor:default; }
+  select { padding:.35rem .4rem; background:#fff; min-height:2.3rem; max-width:100%; }
+  input[type=text] { padding:.4rem .5rem; width:100%; min-height:2.3rem; }
+  .tabs, .btns { display:flex; gap:6px; }
+  .tabs button, .btns button { flex:1; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+  .grid2 button { font-size:.93rem; padding:.35rem .4rem; line-height:1.15; }
+  .lbl { font-size:.86rem; color:var(--muted); font-weight:600; }
+  .small { font-size:.86rem; color:var(--muted); line-height:1.35; }
+  .hidden { display:none !important; }
+  .box { border:1px solid var(--line); border-radius:8px; padding:.45rem .55rem; display:flex; flex-direction:column; gap:.4rem; }
+  #selbox { background:#f5f8fc; }
+  #selbox .titel { font-weight:700; }
+  #auftrag { background:#f1f6fc; border-color:#d3e2f3; line-height:1.35; }
+  #pruefBtn { background:var(--energie); color:#fff; border-color:var(--energie); font-weight:700; }
+  #pruef ul { margin:0; padding-left:1.1rem; display:flex; flex-direction:column; gap:.25rem; }
+  #pruef li.err { color:#b3261e; } #pruef li.warn { color:#8a5a00; } #pruef li.ok { color:#1e7a34; font-weight:600; }
+  #pruef .kopf { font-weight:700; }
+  .par { display:flex; flex-direction:column; gap:.15rem; }
+  .par .head { display:flex; justify-content:space-between; align-items:baseline; }
+  .par .head output { font-weight:700; font-variant-numeric:tabular-nums; }
+  .par .line { display:flex; align-items:center; gap:6px; }
+  .par .line button { flex:0 0 2.7rem; padding:0; font-size:1.3rem; font-weight:600; }
+  .par input[type=range] { flex:1; min-width:0; height:2rem; }
+  .checks { display:flex; flex-wrap:wrap; gap:.25rem .9rem; }
+  .checks label { display:flex; align-items:center; gap:5px; min-height:1.9rem; }
+  .checks input { width:1.3rem; height:1.3rem; }
+  .chk { display:flex; align-items:center; gap:6px; min-height:1.9rem; }
+  .chk input { width:1.3rem; height:1.3rem; flex:none; }
+  #selbox .btns button { padding:.3rem .35rem; font-size:.9rem; min-width:0; }
+  .row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+
+  /* Bausteinliste */
+  details.grp { border:1px solid var(--line); border-radius:8px; }
+  details.grp > summary { cursor:pointer; padding:.45rem .6rem; font-weight:700; min-height:2.4rem; display:flex; align-items:center; gap:8px; list-style:none; }
+  details.grp > summary::-webkit-details-marker { display:none; }
+  details.grp > summary::before { content:"▸"; color:var(--muted); }
+  details.grp[open] > summary::before { content:"▾"; }
+  details.grp .items { display:flex; flex-wrap:wrap; gap:6px; padding:0 .5rem .55rem; }
+  details.sub { width:100%; }
+  details.sub > summary { cursor:pointer; font-size:.88rem; color:var(--muted); font-weight:600; padding:.25rem 0; min-height:2rem; display:flex; align-items:center; }
+  details.sub .items { padding:0 0 .3rem; }
+  .pi { touch-action:pan-y; user-select:none; -webkit-user-select:none; cursor:grab; font-size:.95rem; line-height:1.15;
+        padding:.4rem .6rem; min-height:2.3rem; display:inline-flex; flex-direction:column; justify-content:center; }
+  .pi small { font-size:.75rem; color:var(--muted); font-weight:400; }
+  .pi.t { background:#fdf3cc; border:2px solid var(--traeger); border-radius:999px; font-weight:700; color:#4a3a00; }
+  .pi.e { background:#e6f4e9; border:2px solid var(--energie); border-radius:999px; font-weight:700; color:#16502a; }
+  .pi.g { background:#eceff2; border:2px dashed #8a929c; border-radius:999px; font-weight:700; color:#3b434c; }
+  .pi.u { background:#fff; border:2px solid var(--umlader); border-radius:4px; font-weight:600; }
+  .pi.q { background:#fff; border:2px solid var(--umlader); border-radius:12px; font-weight:600; }
+  .ghost { position:fixed; z-index:40; pointer-events:none; opacity:.85; transform:translate(-50%,-50%); box-shadow:0 4px 14px rgba(0,0,0,.3); }
+
+  /* Werkzeugleisten auf der Fläche */
+  .tools { position:absolute; display:flex; gap:6px; z-index:5; user-select:none; -webkit-user-select:none; }
+  #palette, #legend, #leerHinweis { user-select:none; -webkit-user-select:none; }
+  #tools { top:8px; right:8px; }
+  #zoomTools { bottom:26px; right:8px; }
+  .tools button { min-width:44px; height:44px; min-height:44px; padding:0 10px; font-size:16px; font-weight:600;
+                  background:rgba(255,255,255,.9); border:1px solid #c3ccd8; border-radius:10px;
+                  box-shadow:0 2px 6px rgba(0,0,0,.2); display:flex; align-items:center; justify-content:center; }
+  .tools button svg { width:22px; height:22px; stroke:var(--ink); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  #legend { position:absolute; top:8px; left:8px; z-index:4; background:rgba(255,255,255,.9); border:1px solid #d5dbe3; border-radius:8px;
+            padding:4px 8px; font-size:.9rem; display:flex; align-items:center; gap:8px; pointer-events:none; }
+  #legend .bar { background:var(--energie); width:28px; display:inline-block; border-radius:1px; }
+  #trash { position:absolute; left:8px; bottom:8px; z-index:4; width:56px; height:56px; border-radius:12px; border:2px dashed #b9c1cc;
+           background:rgba(255,255,255,.85); display:flex; align-items:center; justify-content:center; pointer-events:none; }
+  #trash svg { width:28px; height:28px; stroke:#6b7480; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  #trash.hot { border-color:#c8382b; background:#fde3df; transform:scale(1.12); }
+  #trash.hot svg { stroke:#c8382b; }
+  #leerHinweis { position:absolute; left:50%; top:45%; transform:translate(-50%,-50%); text-align:center; color:#7b8592; font-size:1.15rem;
+                 max-width:80%; pointer-events:none; line-height:1.4; }
+
+  @media (max-height: 800px) {
+    h1 { display:none; }
+    button { padding:.35rem .55rem; min-height:2.35rem; }
+  }
+
+  /* iPad hochkant: gleiche Aufteilung, unten zwei Spalten */
+  @media (min-width: 641px) and (max-width: 900px) and (orientation: portrait) {
+    #app { grid-template-columns:13rem minmax(0,1fr); }
+    #bot { grid-template-columns:1fr 1fr; max-height:36vh; }
+    #bot .cell { max-height:none; overflow:visible; }
+    #bot { overflow-y:auto; }
+  }
+
+  /* Handy hochkant: Aufträge, Fläche, Bausteine, Rest untereinander, Seite darf scrollen */
+  @media (max-width: 640px) {
+    html, body { height:auto; overflow:auto; }
+    #app { display:flex; flex-direction:column; height:auto; min-height:100vh; }
+    #top { order:1; } #stage { order:2; flex:none; height:min(120vw, 64vh); } #pal { order:3; border-right:0; border-top:1px solid var(--line); overflow:visible; }
+    #bot { order:4; display:flex; flex-direction:column; max-height:none; }
+    #bot .cell { max-height:none; overflow:visible; }
+    body.nopanel #stage { height:100vh; height:100dvh; }
+    h1 { display:block; flex-basis:100%; }
+    .tools button { min-width:40px; height:40px; min-height:40px; padding:0 8px; }
+    #legend { font-size:.8rem; top:54px; }
+  }
+
+  /* Drehhinweis, wenn das Handy quer gehalten wird */
+  #rotate { display:none; position:fixed; inset:0; z-index:50; background:rgba(29,39,51,.94); color:#fff;
+            align-items:center; justify-content:center; text-align:center; padding:20px; }
+  #rotate .rb { max-width:420px; display:flex; flex-direction:column; align-items:center; gap:14px; font-size:18px; }
+  #rotate svg { width:80px; height:80px; stroke:#fff; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+  #rotate button { font-size:17px; background:#fff; color:var(--ink); padding:10px 18px; }
+  @media (orientation: landscape) and (max-height: 500px) {
+    body:not(.quer) #rotate { display:flex; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="top" class="bar">
+    <h1>Energiefluss-Baukasten</h1>
+    <div class="tabs">
+      <button id="tabFrei" class="on">Frei bauen</button>
+      <button id="tabAuf">Aufgaben</button>
+    </div>
+    <div id="aufSec" class="hidden">
+      <div id="aufListe"></div>
+      <div class="btns hidden" id="aufBtns">
+        <button id="aufLeer">Leer</button>
+        <button id="aufLuecke">Lückendiagramm</button>
+        <button id="aufLsg">Lösung</button>
+      </div>
+    </div>
+    <div id="auftrag" class="hidden"></div>
+  </div>
+  <div id="pal">
+    <div class="lbl">Bausteine: ziehen oder antippen</div>
+    <div id="palette"></div>
+  </div>
+  <div id="stage">
+    <svg id="sv" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div id="legend"><span>Energiestromstärke</span><span class="bar" id="legBar"></span><span id="legTxt"></span></div>
+    <div id="leerHinweis">Zieh Bausteine aus der Liste auf diese Fläche<br>oder tippe sie in der Liste an.</div>
+    <div id="trash" title="Zum Löschen hierher ziehen"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg></div>
+    <div class="tools" id="tools">
+      <button id="fsMinus" title="Schrift kleiner">A−</button>
+      <button id="fsPlus" title="Schrift größer">A+</button>
+      <button id="look" title="Darstellung umschalten">Schlicht</button>
+      <button id="full" title="Vollbild"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      <button id="panelBtn" title="Bedienfeld aus-/einblenden"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg></button>
+    </div>
+    <div class="tools" id="zoomTools">
+      <button id="zOut" title="Verkleinern">−</button>
+      <button id="zFit" title="Alles einpassen"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="1"/><path d="M8 10h8M8 14h5"/></svg></button>
+      <button id="zIn" title="Vergrößern">+</button>
+    </div>
+  </div>
+  <div id="bot" class="bar">
+    <div class="cell"><div id="selbox" class="box"></div></div>
+    <div class="cell">
+      <div class="btns">
+        <button id="pruefBtn">Prüfen</button>
+        <button id="undo" title="Rückgängig">↶ Zurück</button>
+        <button id="redo" title="Wiederholen">↷ Vor</button>
+      </div>
+      <div id="pruef" class="box hidden"></div>
+    </div>
+    <div class="cell">
+      <div class="checks">
+        <label><input id="cbAbw" type="checkbox">Abwärme verlangen</label>
+        <label><input id="cbGas" type="checkbox">Abgase</label>
+        <label><input id="cbEta" type="checkbox">Wirkungsgrad</label>
+        <label><input id="cbAnim" type="checkbox" checked>Animation</label>
+        <label><input id="cbGrid" type="checkbox" checked>Raster</label>
+      </div>
+      <div class="row"><span class="lbl">Maßstab: Pfeilbreite</span><select id="scaleSel" aria-label="Maßstab"></select></div>
+    </div>
+    <div class="cell">
+      <div class="grid2">
+        <button id="pngBtn">Als Bild speichern</button>
+        <button id="saveBtn">Diagramm speichern</button>
+        <button id="openBtn">Diagramm öffnen</button>
+        <button id="clearBtn">Alles löschen</button>
+      </div>
+      <input type="file" id="fileIn" accept=".json,application/json" class="hidden">
+      <details class="small"><summary>Bedienung, Hinweise und Vereinfachungen</summary>
+        <div>
+        <b>Bedienung:</b> Bausteine aus der Liste links auf die Fläche ziehen oder antippen. Es wird immer eine Kopie entnommen. Pfeilenden ziehen und an einem Kästchen loslassen: Dann docken sie an und wandern mit. Den Pfeil selbst ziehen biegt ihn. Zwischen zwei Kästchen rastet ein Pfeil gerade ein, wenn das geht. Ein Hin- und ein Rückpfeil desselben Trägers zwischen zwei Kästchen werden automatisch zu einer geschlossenen Schleife. Leere Fläche ziehen verschiebt die Ansicht. Zum Löschen auf den Papierkorb unten links ziehen.<br><br>
+        <b>Farben nach KPK:</b> Energiepfeile grün, Trägerpfeile gelb, Energieumlader rot. Die Breite der Energiepfeile ist proportional zur Energiestromstärke (fester Maßstab, oben links angezeigt). Der Maßstab gilt für das ganze Diagramm.<br><br>
+        <b>Prüfen:</b> Geprüft wird erst auf Knopfdruck: Energiebilanz an jedem Umlader, ob zu jedem Energiepfeil ein Trägerpfeil gehört (gleicher Anfang, gleiches Ende), ob Träger mit Erhaltungsgröße (Elektrizität, Drehimpuls, Impuls, Wasser, Luft, Öl) geschlossen oder wieder hinausgeführt sind, und ob die Träger zum Umlader passen. Bei Aufgaben wird zusätzlich mit einer Musterlösung verglichen. Die Musterlösung ist ein Vorschlag, andere sinnvolle Lösungen sind möglich.<br><br>
+        <b>Vereinfachungen:</b> Schall und Funkwellen sind hier eigene Träger (genau genommen sind Schall Impuls und Funkwellen Licht). „Warmes Wasser“ als Träger ist eine Vereinfachung, nach KPK trägt die Entropie die Energie und das Wasser transportiert sie nur. Stoffliche Träger (Brennstoff, Nahrung, Wasserstoff) werden umgewandelt und deshalb offen gezeichnet. Beim Antriebsrad wird nicht gezeigt, woher der Impuls kommt (aus der Erde). Die Zahlenwerte in den Aufgaben sind gerundete Beispielwerte.
+        </div>
+      </details>
+    </div>
+  </div>
+</div>
+<div id="rotate">
+  <div class="rb">
+    <svg viewBox="0 0 64 64"><rect x="20" y="6" width="24" height="42" rx="4"/><path d="M29 42h6"/><path d="M50 30a20 20 0 0 1-12 22M38 52l1-6M38 52l-6-1"/></svg>
+    <div>Bitte das Handy hochkant halten.</div>
+    <button id="rotGo">Trotzdem quer weiter</button>
+  </div>
+</div>
+<script>
+(function () {
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  };
+
+  /* ---------- Daten: Träger, Umlader, Quellen ---------- */
+  // e = Erhaltungsgröße (geschlossen zeichnen oder wieder hinausführen)
+  const CAR = {
+    el:{n:"Elektrizität", e:1}, dreh:{n:"Drehimpuls", e:1}, imp:{n:"Impuls", e:1},
+    ent:{n:"Entropie", e:0, p:"Entropie (Wärme)"}, licht:{n:"Licht", e:0}, funk:{n:"Funkwellen", e:0, p:"Funk-/Mikrowellen"},
+    schall:{n:"Schall", e:0}, wasser:{n:"Wasser", e:1}, wwasser:{n:"warmes Wasser", e:1}, luft:{n:"Luft", e:1},
+    oel:{n:"Hydrauliköl", e:1}, brenn:{n:"Brennstoff + Sauerstoff", e:0}, nahrung:{n:"Nahrung + Sauerstoff", e:0},
+    h2:{n:"Wasserstoff + Sauerstoff", e:0}, kern:{n:"Kernbrennstoff", e:0}, eigen:{n:"eigener Träger", e:0}
+  };
+  // [Name, rein, raus, Beispiele]
+  const UM = [
+    ["Elektrizität hinein", [
+      ["Elektromotor",["el"],["dreh","ent"],"Bohrmaschine, E-Auto"], ["Glühlampe",["el"],["licht","ent"]], ["LED-Lampe",["el"],["licht","ent"]],
+      ["Leuchtstoffröhre",["el"],["licht","ent"]], ["Bildschirm",["el"],["licht","ent"],"auch Beamer"], ["Laser",["el"],["licht","ent"]],
+      ["Wasserkocher",["el"],["ent"],"auch Tauchsieder"], ["Elektroherd",["el"],["ent"],"Bügeleisen, Toaster"], ["Föhn",["el"],["ent","luft"],"auch Heizlüfter"],
+      ["Lautsprecher",["el"],["schall","ent"],"auch Kopfhörer"], ["Klingel",["el"],["schall","ent"]], ["Hubmagnet",["el"],["imp","ent"],"Türöffner"],
+      ["Magnetron",["el"],["funk","ent"],"im Mikrowellenherd"], ["Sendeantenne",["el"],["funk"],"Handy, Radio, WLAN"],
+      ["Elektrische Pumpe",["el"],["wasser","ent"]], ["Kompressor",["el"],["luft","ent"]], ["Transformator",["el"],["el","ent"],"auch Netzteil"],
+      ["Elektrolyseur",["el"],["h2","ent"]], ["Wärmepumpe",["el","ent"],["ent"]], ["Kühlschrank",["el","ent"],["ent"]]
+    ]],
+    ["Drehimpuls hinein", [
+      ["Generator",["dreh"],["el","ent"],"auch Dynamo"], ["Getriebe",["dreh"],["dreh","ent"],"Riemen, Kette"], ["Kreiselpumpe",["dreh"],["wasser","ent"]],
+      ["Ventilator",["dreh"],["luft","ent"],"auch Gebläse"], ["Propeller",["dreh"],["imp","ent"],"Schiffsschraube"], ["Antriebsrad",["dreh"],["imp","ent"],"Auto, Fahrrad, Lok"],
+      ["Seilwinde",["dreh"],["imp","ent"],"Kran"], ["Scheibenbremse",["dreh"],["ent"]], ["Schleifmaschine",["dreh"],["ent"],"Rührwerk"]
+    ]],
+    ["Impuls hinein", [
+      ["Kurbel",["imp"],["dreh","ent"],"Pleuel, Fahrradpedal"], ["Bremse",["imp"],["ent"],"Reibung, Schlitten"], ["Knautschzone",["imp"],["ent"],"Hammer auf Nagel"],
+      ["Luftpumpe",["imp"],["luft","ent"]], ["Kolbenpumpe",["imp"],["wasser","ent"]], ["Piezo-Feuerzeug",["imp"],["el"]], ["Saite",["imp"],["schall"],"Trommel, Stimmgabel"]
+    ]],
+    ["Wasser, Luft oder Öl hinein", [
+      ["Wasserturbine",["wasser"],["dreh","ent"],"Wasserrad"], ["Windrad",["luft"],["dreh","ent"]], ["Segel",["luft"],["imp"]],
+      ["Druckluftmotor",["luft"],["imp","ent"],"Presslufthammer"], ["Hydraulikzylinder",["oel"],["imp","ent"],"Bagger, Hebebühne"], ["Heizkörper",["wwasser"],["ent"]]
+    ]],
+    ["Entropie hinein", [
+      ["Dampfturbine",["ent"],["dreh","ent"],"Dampfmaschine"], ["Stirlingmotor",["ent"],["dreh","ent"]], ["Thermogenerator",["ent"],["el","ent"]], ["Glut",["ent"],["licht","ent"],"glühende Herdplatte"]
+    ]],
+    ["Licht, Funkwellen oder Schall hinein", [
+      ["Solarzelle",["licht"],["el","ent"]], ["Sonnenkollektor",["licht"],["ent"],"schwarze Fläche"], ["Pflanze",["licht"],["nahrung"],"Fotosynthese"],
+      ["Empfangsantenne",["funk"],["el"],"Radio, Handy"], ["Essen im Mikrowellenherd",["funk"],["ent"]], ["Mikrofon",["schall"],["el"]], ["Schallschluckende Wand",["schall"],["ent"],"auch Ohr"]
+    ]],
+    ["Stoffe hinein", [
+      ["Verbrennungsmotor",["brenn"],["dreh","ent"],"Auto, Rasenmäher"], ["Gasturbine",["brenn"],["dreh","ent"],"Düsentriebwerk"], ["Rakete",["brenn"],["imp","ent"]],
+      ["Heizkessel",["brenn"],["wwasser","ent"],"Gas-/Ölheizung"], ["Ofen",["brenn"],["ent"],"Kamin, Gasherd"], ["Kerze",["brenn"],["ent","licht"],"Öllampe"],
+      ["Dampfkessel",["brenn"],["ent"],"im Kraftwerk"], ["Kohlekraftwerk",["brenn"],["el","ent"],"als ein Kästchen"], ["Brennstoffzelle",["h2"],["el","ent"]],
+      ["Mensch",["nahrung"],["imp","dreh","ent"],"Muskeln"], ["Pferd",["nahrung"],["imp","ent"]], ["Glühwürmchen",["nahrung"],["licht","ent"]],
+      ["Kernreaktor",["kern"],["ent"]], ["Kernkraftwerk",["kern"],["el","ent"],"als ein Kästchen"]
+    ]]
+  ];
+  // [Name, Art, Träger, Beispiele]
+  const QU = [
+    ["Sonne","quelle",["licht"]], ["Steckdose","quelle",["el"],"Elektrizitätswerk"], ["Batterie","quelle",["el"]],
+    ["Akku","speicher",["el"]], ["Stausee","speicher",["wasser"],"Pumpspeicherwerk"], ["Schwungrad","speicher",["dreh"]],
+    ["Feder","speicher",["imp"],"Gummiband"], ["Tank","speicher",["brenn"],"Benzin, Gas, Öl"], ["Druckluftflasche","speicher",["luft"]],
+    ["Wärmespeicher","speicher",["ent"]], ["Umgebung","empf",["ent"],"Luft, Erdboden"], ["Haushalte","empf",["el"],"Stadt"], ["Weltall","empf",["licht"]]
+  ];
+  const KIND = { u:"", quelle:"Quelle", speicher:"Speicher", empf:"Empfänger" };
+  const SPEC = {};
+  UM.forEach(g => g[1].forEach(([n, r, o]) => SPEC[n.toLowerCase()] = { rein:r, raus:o }));
+  QU.forEach(([n, k, c]) => SPEC[n.toLowerCase()] = { rein:c, raus:c, q:1 });
+
+  const SCALES = [1,2,5,10,20,50,100,200,500,1e3,2e3,5e3,1e4,2e4,5e4,1e5,2e5,5e5,1e6,1e7,1e8,5e8,1e9];
+  const UNIT = 30;          // Pfeilbreite (Welteinheiten) für 1 Maßstabseinheit
+  const GAP = 46;           // Breite der Ellipse aus Hin- und Rückweg
+  const GRID = 20;
+
+  /* ---------- Aufgaben ---------- */
+  // Knoten: [id, Name, Art, x, y]; Pfeile: [Art, Träger, von, nach, P, Optionen]
+  // von/nach: "id:Seite:t" oder [dx, dy] relativ zum anderen Ende; Optionen: r = Rückweg, abw = Abwärme, gas = Abgase
+  const TASKS = [
+    { t:"Fahrraddynamo", scale:10, txt:"Beim Radfahren treibt ein Dynamo eine Glühlampe an. Baue das Energieflussdiagramm vom Menschen bis zum Licht der Lampe.",
+      n:[["m","Mensch","u",230,320],["g","Generator","u",560,320],["l","Glühlampe","u",890,320]],
+      a:[["e",0,[-250,0],"m:l:0.3",25],["t","nahrung",[-250,0],"m:l:0.75"],
+         ["e",0,"m:r:0.3","g:l:0.3",5],["t","dreh","m:r:0.8","g:l:0.8",0,{r:1}],
+         ["e",0,"m:b:0.7",[0,150],20,{abw:1}],["t","ent","m:b:0.3",[0,150],0,{abw:1}],
+         ["e",0,"g:r:0.3","l:l:0.3",3],["t","el","g:r:0.8","l:l:0.8",0,{r:1}],
+         ["e",0,"g:b:0.7",[0,150],2,{abw:1}],["t","ent","g:b:0.3",[0,150],0,{abw:1}],
+         ["e",0,"l:r:0.3",[190,0],0.2],["t","licht","l:r:0.72",[190,0]],
+         ["e",0,"l:b:0.7",[0,150],2.8,{abw:1}],["t","ent","l:b:0.3",[0,150],0,{abw:1}]] },
+    { t:"Wasserkocher", scale:1000, txt:"Ein Wasserkocher an der Steckdose erhitzt Wasser. Baue das Energieflussdiagramm.",
+      n:[["s","Steckdose","quelle",300,320],["w","Wasserkocher","u",650,320]],
+      a:[["e",0,"s:r:0.3","w:l:0.3",2000],["t","el","s:r:0.8","w:l:0.8",0,{r:1}],
+         ["e",0,"w:r:0.3",[200,0],2000],["t","ent","w:r:0.72",[200,0]]] },
+    { t:"Solarventilator", scale:10, txt:"Eine Solarzelle in der Sonne treibt über einen Elektromotor einen kleinen Ventilator an. Baue das Energieflussdiagramm von der Sonne bis zur bewegten Luft.",
+      n:[["so","Sonne","quelle",110,320],["z","Solarzelle","u",390,320],["mo","Elektromotor","u",680,320],["v","Ventilator","u",970,320]],
+      a:[["e",0,"so:r:0.3","z:l:0.3",10],["t","licht","so:r:0.72","z:l:0.72"],
+         ["e",0,"z:r:0.3","mo:l:0.3",2],["t","el","z:r:0.8","mo:l:0.8",0,{r:1}],
+         ["e",0,"z:b:0.7",[0,150],8,{abw:1}],["t","ent","z:b:0.3",[0,150],0,{abw:1}],
+         ["e",0,"mo:r:0.3","v:l:0.3",1.5],["t","dreh","mo:r:0.8","v:l:0.8",0,{r:1}],
+         ["e",0,"mo:b:0.7",[0,150],0.5,{abw:1}],["t","ent","mo:b:0.3",[0,150],0,{abw:1}],
+         ["e",0,"v:r:0.3",[180,0],1.2],["t","luft","v:r:0.72",[180,0]],
+         ["e",0,"v:b:0.7",[0,150],0.3,{abw:1}],["t","ent","v:b:0.3",[0,150],0,{abw:1}]] },
+    { t:"Auto", scale:50000, txt:"Ein Auto mit Verbrennungsmotor fährt. Baue das Energieflussdiagramm vom Tank bis zu den Antriebsrädern.",
+      n:[["ta","Tank","speicher",150,320],["mo","Verbrennungsmotor","u",470,320],["ra","Antriebsrad","u",800,320]],
+      a:[["e",0,"ta:r:0.3","mo:l:0.3",100000],["t","brenn","ta:r:0.75","mo:l:0.75"],
+         ["e",0,"mo:r:0.3","ra:l:0.3",30000],["t","dreh","mo:r:0.8","ra:l:0.8",0,{r:1}],
+         ["e",0,"mo:b:0.7",[0,160],70000,{abw:1}],["t","ent","mo:b:0.3",[0,160],0,{abw:1}],
+         ["g",0,"mo:t:0.5",[0,-130],0,{gas:1}],
+         ["e",0,"ra:r:0.3",[190,0],28000],["t","imp","ra:r:0.72",[190,0]],
+         ["e",0,"ra:b:0.7",[0,150],2000,{abw:1}],["t","ent","ra:b:0.3",[0,150],0,{abw:1}]] },
+    { t:"Wasserkraftwerk", scale:10, txt:"Ein Wasserkraftwerk am Stausee versorgt eine LED-Lampe (Zahlen pro Lampe). Baue das Energieflussdiagramm vom Stausee bis zum Licht.",
+      n:[["st","Stausee","speicher",120,320],["tu","Wasserturbine","u",420,320],["g","Generator","u",720,320],["l","LED-Lampe","u",1010,320]],
+      a:[["e",0,"st:r:0.3","tu:l:0.3",14],["t","wasser","st:r:0.75","tu:l:0.75"],
+         ["t","wasser","tu:t:0.5",[0,-130]],
+         ["e",0,"tu:b:0.7",[0,150],2,{abw:1}],["t","ent","tu:b:0.3",[0,150],0,{abw:1}],
+         ["e",0,"tu:r:0.3","g:l:0.3",12],["t","dreh","tu:r:0.8","g:l:0.8",0,{r:1}],
+         ["e",0,"g:r:0.3","l:l:0.3",11],["t","el","g:r:0.8","l:l:0.8",0,{r:1}],
+         ["e",0,"g:b:0.7",[0,150],1,{abw:1}],["t","ent","g:b:0.3",[0,150],0,{abw:1}],
+         ["e",0,"l:r:0.3",[190,0],4],["t","licht","l:r:0.72",[190,0]],
+         ["e",0,"l:b:0.7",[0,150],7,{abw:1}],["t","ent","l:b:0.3",[0,150],0,{abw:1}]] },
+    { t:"Zentralheizung", scale:5000, txt:"Eine Ölheizung erwärmt über warmes Wasser einen Heizkörper, der das Zimmer heizt. Baue das Energieflussdiagramm vom Tank bis ins Zimmer.",
+      n:[["ta","Tank","speicher",150,320],["k","Heizkessel","u",460,320],["h","Heizkörper","u",790,320]],
+      a:[["e",0,"ta:r:0.3","k:l:0.3",10000],["t","brenn","ta:r:0.75","k:l:0.75"],
+         ["e",0,"k:r:0.3","h:l:0.3",9000],["t","wwasser","k:r:0.8","h:l:0.8",0,{r:1}],
+         ["e",0,"k:b:0.7",[0,150],1000,{abw:1}],["t","ent","k:b:0.3",[0,150],0,{abw:1}],
+         ["g",0,"k:t:0.5",[0,-130],0,{gas:1}],
+         ["e",0,"h:r:0.3",[190,0],9000],["t","ent","h:r:0.72",[190,0]]] },
+    { t:"Kohlekraftwerk", scale:5e8, txt:"Ein Kohlekraftwerk, zerlegt in Dampfkessel, Dampfturbine und Generator, versorgt Haushalte. Baue das Energieflussdiagramm.",
+      n:[["k","Dampfkessel","u",210,320],["tu","Dampfturbine","u",500,320],["g","Generator","u",790,320],["h","Haushalte","empf",1070,320]],
+      a:[["e",0,[-250,0],"k:l:0.3",1e9],["t","brenn",[-250,0],"k:l:0.75"],
+         ["e",0,"k:r:0.3","tu:l:0.3",9e8],["t","ent","k:r:0.75","tu:l:0.75"],
+         ["e",0,"k:b:0.7",[0,150],1e8,{abw:1}],["t","ent","k:b:0.3",[0,150],0,{abw:1}],
+         ["g",0,"k:t:0.5",[0,-130],0,{gas:1}],
+         ["e",0,"tu:r:0.3","g:l:0.3",4.2e8],["t","dreh","tu:r:0.8","g:l:0.8",0,{r:1}],
+         ["e",0,"tu:b:0.7",[0,150],4.8e8,{abw:1}],["t","ent","tu:b:0.3",[0,150],0,{abw:1}],
+         ["e",0,"g:r:0.3","h:l:0.3",4.1e8],["t","el","g:r:0.8","h:l:0.8",0,{r:1}],
+         ["e",0,"g:b:0.7",[0,150],1e7,{abw:1}],["t","ent","g:b:0.3",[0,150],0,{abw:1}]] }
+  ];
+
+  /* ---------- Zustand ---------- */
+  let D = { nodes:[], arrows:[], scale:10, next:1 };
+  const U = { sel:null, Z:1, VX:0, VY:0, fs:1, look:"3d", mode:"frei", task:null, flags:new Set(), drag:null, dockPreview:null, hist:[], hi:-1 };
+  const sv = $("sv");
+  const byId = id => D.nodes.find(n => n.id === id) || D.arrows.find(a => a.id === id);
+  const opt = () => ({ abw:$("cbAbw").checked, gas:$("cbGas").checked, eta:$("cbEta").checked, anim:$("cbAnim").checked, grid:$("cbGrid").checked });
+
+  /* ---------- Hilfen ---------- */
+  const fmtNum = (v, d) => v.toLocaleString("de-DE", { maximumFractionDigits:d });
+  function fmtP(P) {
+    const a = Math.abs(P);
+    if (a >= 1e9) return fmtNum(P / 1e9, 2) + " GW";
+    if (a >= 1e6) return fmtNum(P / 1e6, 1) + " MW";
+    if (a >= 1e3) return fmtNum(P / 1e3, a >= 1e4 ? 1 : 2) + " kW";
+    return fmtNum(P, a >= 10 ? 1 : 2) + " W";
+  }
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+  const carName = a => a.c === "eigen" ? (a.cname || "eigener Träger") : CAR[a.c].n;
+  const carKey = a => a.c === "eigen" ? "eigen:" + (a.cname || "").trim().toLowerCase() : a.c;
+  const carErh = a => a.c === "eigen" ? !!a.cerh : !!CAR[a.c].e;
+  const snap = v => opt().grid ? Math.round(v / GRID) * GRID : v;
+  const mctx = document.createElement("canvas").getContext("2d");
+  const FONT = "-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+  const fsz = () => 16 * U.fs;
+
+  function wrap(text, maxW, size, weight) {
+    mctx.font = (weight || 600) + " " + size + "px " + FONT;
+    const words = String(text).split(" "), lines = []; let cur = "";
+    for (const w of words) {
+      const t = cur ? cur + " " + w : w;
+      if (cur && mctx.measureText(t).width > maxW) { lines.push(cur); cur = w; } else cur = t;
+    }
+    if (cur) lines.push(cur);
+    return { lines, w: Math.max(...lines.map(l => mctx.measureText(l).width), 0) };
+  }
+
+  /* ---------- Geometrie ---------- */
+  const aw = a => a.k === "e" ? Math.max(3, a.P / D.scale * UNIT) : a.k === "t" ? 10 : 8;
+  let SZ = new Map();
+  function layout() {
+    SZ = new Map();
+    const o = opt();
+    for (const n of D.nodes) {
+      const s = fsz(), tw = wrap(n.name, 180 * U.fs, s);
+      let w = Math.max(120, tw.w + 32), h = tw.lines.length * s * 1.25 + 28 + (n.kind !== "u" ? 14 * U.fs : 0) + (o.eta && n.kind === "u" ? 18 * U.fs : 0);
+      const need = { l:24, r:24, t:24, b:24 };
+      for (const a of D.arrows) for (const end of [a.a, a.b]) if (end.n === n.id) need[end.s] += aw(a) + (a.k === "t" ? (a.r ? GAP + 10 : 10) : 6);
+      h = Math.max(h, need.l, need.r); w = Math.max(w, need.t, need.b);
+      SZ.set(n.id, { w, h, lines:tw.lines });
+    }
+  }
+  function endPos(end) {
+    if (!end.n) return { x:end.x, y:end.y };
+    const n = byId(end.n), z = SZ.get(end.n);
+    if (!n || !z) return { x:end.x || 0, y:end.y || 0 };
+    const L = n.x - z.w / 2, T = n.y - z.h / 2;
+    switch (end.s) {
+      case "l": return { x:L, y:T + end.t * z.h };
+      case "r": return { x:L + z.w, y:T + end.t * z.h };
+      case "t": return { x:L + end.t * z.w, y:T };
+      default:  return { x:L + end.t * z.w, y:T + z.h };
+    }
+  }
+  function nearDock(p, skipNode) {
+    let best = null;
+    for (const n of D.nodes) {
+      if (n.id === skipNode) continue;
+      const z = SZ.get(n.id), L = n.x - z.w / 2, R = n.x + z.w / 2, T = n.y - z.h / 2, B = n.y + z.h / 2, m = 28;
+      if (p.x < L - m || p.x > R + m || p.y < T - m || p.y > B + m) continue;
+      const cand = [
+        { s:"l", d:Math.abs(p.x - L), t:(p.y - T) / z.h }, { s:"r", d:Math.abs(p.x - R), t:(p.y - T) / z.h },
+        { s:"t", d:Math.abs(p.y - T), t:(p.x - L) / z.w }, { s:"b", d:Math.abs(p.y - B), t:(p.x - L) / z.w }
+      ].sort((u, v) => u.d - v.d)[0];
+      cand.t = Math.min(0.92, Math.max(0.08, cand.t));
+      if (!best || cand.d < best.d) best = { n:n.id, s:cand.s, t:cand.t, d:cand.d };
+    }
+    return best;
+  }
+  const qpt = (p0, c, p1, t) => ({ x:(1-t)*(1-t)*p0.x + 2*(1-t)*t*c.x + t*t*p1.x, y:(1-t)*(1-t)*p0.y + 2*(1-t)*t*c.y + t*t*p1.y });
+  // Einrasten: Liegen beide Enden an gegenüberliegenden Seiten zweier Kästchen, wird der Pfeil gerade,
+  // sofern das Ende dabei auf dem Kästchenrand bleibt.
+  function effEnds(a) {
+    let ea = a.a, eb = a.b;
+    if (ea.n && eb.n && ea.n !== eb.n && SZ.get(ea.n) && SZ.get(eb.n)) {
+      const lr = e => e.s === "l" || e.s === "r", H = lr(ea) && lr(eb), V = !lr(ea) && !lr(eb);
+      if (H || V) {
+        const fit = (end, p) => {
+          const n = byId(end.n), z = SZ.get(end.n);
+          const t = H ? (p.y - (n.y - z.h / 2)) / z.h : (p.x - (n.x - z.w / 2)) / z.w;
+          return t >= 0.04 && t <= 0.96 ? { ...end, t } : null;
+        };
+        const nb = fit(eb, endPos(ea));
+        if (nb) eb = nb; else { const na = fit(ea, endPos(eb)); if (na) ea = na; }
+      }
+    }
+    return [ea, eb];
+  }
+  function geom(a) {
+    const [ea, eb] = effEnds(a);
+    let p0 = endPos(ea), p1 = endPos(eb);
+    const dx = p1.x - p0.x, dy = p1.y - p0.y, len = Math.hypot(dx, dy) || 1;
+    const nx = -dy / len, ny = dx / len, b = a.bend || 0, mx = (p0.x + p1.x) / 2, my = (p0.y + p1.y) / 2;
+    const cc = { x:mx + nx * b, y:my + ny * b };
+    const g = { p0, p1, c:cc, cc, n:{ x:nx, y:ny }, w:aw(a) };
+    if (a.k === "t" && a.r) {
+      // Geschlossene Schleife als Ellipse: Hinweg wölbt sich zur einen, Rückweg zur anderen Seite
+      const shift = (end, d) => {
+        const p = endPos(end);
+        if (!end.n || !SZ.get(end.n)) return { x:p.x + nx * d, y:p.y + ny * d };
+        const z = SZ.get(end.n), lr = end.s === "l" || end.s === "r";
+        return endPos({ ...end, t:Math.min(0.97, Math.max(0.03, end.t + (lr ? ny : nx) * d / (lr ? z.h : z.w))) });
+      };
+      g.p0 = shift(ea, -7); g.p1 = shift(eb, -7);
+      g.c = { x:mx + nx * (b - GAP), y:my + ny * (b - GAP) };
+      g.r = { p0:shift(eb, 7), p1:shift(ea, 7), c:{ x:mx + nx * (b + GAP), y:my + ny * (b + GAP) } };
+    }
+    return g;
+  }
+  function arrowShape(p0, c, p1, w, kind) {
+    const hl = kind === "e" ? Math.max(18, w * 0.55 + 12) : kind === "t" ? 20 : 16;
+    const hw = kind === "e" ? w + 2 * Math.max(8, w * 0.35) : kind === "t" ? 26 : 22;
+    let lo = 0, hi = 1;
+    for (let i = 0; i < 22; i++) { const m = (lo + hi) / 2, q = qpt(p0, c, p1, m); if (Math.hypot(q.x - p1.x, q.y - p1.y) > hl * 0.9) lo = m; else hi = m; }
+    const t = lo, e = qpt(p0, c, p1, t), c2 = { x:p0.x + (c.x - p0.x) * t, y:p0.y + (c.y - p0.y) * t };
+    let dx = p1.x - e.x, dy = p1.y - e.y; const L = Math.hypot(dx, dy) || 1; dx /= L; dy /= L;
+    const bx = p1.x - dx * hl, by = p1.y - dy * hl, px = -dy * hw / 2, py = dx * hw / 2;
+    const f = v => v.toFixed(1);
+    return {
+      d:`M${f(p0.x)},${f(p0.y)} Q${f(c2.x)},${f(c2.y)} ${f(bx + dx * 1.5)},${f(by + dy * 1.5)}`,
+      head:`${f(bx + px)},${f(by + py)} ${f(p1.x)},${f(p1.y)} ${f(bx - px)},${f(by - py)}`
+    };
+  }
+
+  /* ---------- Träger zu Energiepfeilen, Prüfungen ---------- */
+  function sameEnd(x, y) {
+    if (x.n || y.n) return x.n === y.n;
+    return Math.hypot(x.x - y.x, x.y - y.y) < 150;
+  }
+  function carrierFor(e) {
+    return D.arrows.find(t => t.k === "t" && ((sameEnd(t.a, e.a) && sameEnd(t.b, e.b)) || (t.r && sameEnd(t.a, e.b) && sameEnd(t.b, e.a))));
+  }
+  function effi(n) {
+    const ins = D.arrows.filter(a => a.k === "e" && a.b.n === n.id), outs = D.arrows.filter(a => a.k === "e" && a.a.n === n.id);
+    const pin = ins.reduce((s, a) => s + a.P, 0);
+    if (pin <= 0 || !outs.length) return null;
+    const sp = SPEC[n.name.trim().toLowerCase()];
+    const main = sp ? sp.raus.filter(c => c !== "ent") : null;
+    let use = 0;
+    for (const a of outs) {
+      const t = carrierFor(a), c = t ? t.c : null;
+      if (!c) continue;
+      if (sp && !main.length) { if (c === "ent") use += a.P; }
+      else if (c !== "ent") use += a.P;
+    }
+    return use / pin;
+  }
+
+  /* ---------- Zeichnen ---------- */
+  const anc = nx => nx > 0.5 ? "start" : nx < -0.5 ? "end" : "middle";
+  function svgDoc(exp) {
+    layout();
+    const o = opt(), s = fsz(), look3d = U.look === "3d";
+    const out = [];
+    out.push(`<defs><style>
+      .lab{font:600 ${s * 0.95}px ${FONT};paint-order:stroke;stroke:#fff;stroke-width:4px;stroke-linejoin:round}
+      .nm{font:600 ${s}px ${FONT};fill:#1d2733}
+      .kd{font:italic ${s * 0.75}px ${FONT};fill:#6b7480}
+      .eta{font:700 ${s * 0.85}px ${FONT};fill:#1e7a34}
+      @keyframes fl{to{stroke-dashoffset:-40}} @keyframes ft{to{stroke-dashoffset:-24}}
+      .ae{animation:fl 1.2s linear infinite} .at{animation:ft 1s linear infinite}
+      @media (prefers-reduced-motion: reduce){.ae,.at{animation:none}}
+    </style>
+    <filter id="sh" filterUnits="userSpaceOnUse" x="-100000" y="-100000" width="200000" height="200000"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-opacity=".28"/></filter>
+    <linearGradient id="gU" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#fff5f3"/><stop offset="1" stop-color="#f6d9d4"/></linearGradient>
+    <linearGradient id="gE" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4cbf63"/><stop offset="1" stop-color="#23803a"/></linearGradient>
+    <pattern id="pg" width="${GRID}" height="${GRID}" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1.2" fill="#d3d9e1"/></pattern></defs>`);
+    if (!exp && o.grid) out.push(`<rect x="${U.VX - 2000}" y="${U.VY - 2000}" width="${sv.clientWidth / U.Z + 4000}" height="${sv.clientHeight / U.Z + 4000}" fill="url(#pg)"/>`);
+    const order = { e:0, g:1, t:2 };
+    const arrows = [...D.arrows].sort((p, q) => order[p.k] - order[q.k]);
+    for (const a of arrows) {
+      const g = geom(a), flag = !exp && U.flags.has(a.id), sel = !exp && U.sel === a.id;
+      const paths = [[g.p0, g.c, g.p1]]; if (g.r) paths.push([g.r.p0, g.r.c, g.r.p1]);
+      out.push(`<g data-id="${a.id}" data-part="body">`);
+      for (const [p0, c, p1] of paths) {
+        const sh = arrowShape(p0, c, p1, g.w, a.k);
+        if (!exp) out.push(`<path d="M${p0.x},${p0.y} Q${c.x},${c.y} ${p1.x},${p1.y}" stroke="transparent" stroke-width="${g.w + 26}" fill="none"/>`);
+        if (flag || sel) out.push(`<path d="${sh.d}" stroke="${flag ? "rgba(229,57,53,.45)" : "rgba(31,78,121,.35)"}" stroke-width="${g.w + 14}" fill="none" stroke-linecap="round"/><polygon points="${sh.head}" fill="none" stroke="${flag ? "rgba(229,57,53,.45)" : "rgba(31,78,121,.35)"}" stroke-width="7" stroke-linejoin="round"/>`);
+        if (a.k === "e") {
+          const fill = "#2E9A45";
+          out.push(`<path d="${sh.d}" stroke="${fill}" stroke-width="${g.w}" fill="none"${look3d ? ' filter="url(#sh)"' : ""}/><polygon points="${sh.head}" fill="${fill}"${look3d ? ' filter="url(#sh)"' : ""}/>`);
+          if (look3d && g.w > 8) out.push(`<path d="${sh.d}" stroke="rgba(255,255,255,.28)" stroke-width="${Math.max(2, g.w * 0.25)}" fill="none" transform="translate(0,${-g.w * 0.18})"/>`);
+          if (o.anim && !exp) out.push(`<path class="ae" d="${sh.d}" stroke="rgba(255,255,255,.45)" stroke-width="${Math.max(1.5, g.w * 0.4)}" stroke-dasharray="8 32" fill="none"/>`);
+        } else if (a.k === "t") {
+          out.push(`<path d="${sh.d}" stroke="#B8900C" stroke-width="${g.w + 3}" fill="none"/><path d="${sh.d}" stroke="#F2C230" stroke-width="${g.w}" fill="none"/><polygon points="${sh.head}" fill="#F2C230" stroke="#B8900C" stroke-width="1.5" stroke-linejoin="round"/>`);
+          if (o.anim && !exp) out.push(`<path class="at" d="${sh.d}" stroke="#8a6a00" stroke-width="3.5" stroke-dasharray="3 21" stroke-linecap="round" fill="none"/>`);
+        } else {
+          out.push(`<path d="${sh.d}" stroke="#8a929c" stroke-width="${g.w}" stroke-dasharray="10 7" fill="none"/><polygon points="${sh.head}" fill="#8a929c"/>`);
+        }
+      }
+      // Beschriftung
+      const m = qpt(g.p0, g.cc, g.p1, 0.5);
+      if (a.k === "e") {
+        const off = g.w / 2 + s * 0.8, x = m.x - g.n.x * off, y = m.y - g.n.y * off + s * 0.35;
+        out.push(`<text class="lab" x="${x}" y="${y}" text-anchor="${anc(-g.n.x)}" fill="#1d6b31">${fmtP(a.P)}</text>`);
+      } else {
+        const off = (a.r ? GAP / 2 : 0) + g.w / 2 + s * 0.85, x = m.x + g.n.x * off, y = m.y + g.n.y * off + s * 0.35;
+        out.push(`<text class="lab" x="${x}" y="${y}" text-anchor="${anc(g.n.x)}" fill="${a.k === "t" ? "#6b5200" : "#4b535c"}">${esc(a.k === "t" ? carName(a) : "Abgase")}</text>`);
+      }
+      out.push(`</g>`);
+    }
+    for (const n of D.nodes) {
+      const z = SZ.get(n.id), L = n.x - z.w / 2, T = n.y - z.h / 2, rx = n.kind === "u" ? 3 : 14;
+      const flag = !exp && U.flags.has(n.id), sel = !exp && U.sel === n.id, prev = !exp && U.dockPreview === n.id;
+      out.push(`<g data-id="${n.id}" data-part="node">`);
+      if (flag || sel || prev) out.push(`<rect x="${L - 7}" y="${T - 7}" width="${z.w + 14}" height="${z.h + 14}" rx="${rx + 6}" fill="none" stroke="${flag ? "#e53935" : prev ? "#2E9A45" : "#1F4E79"}" stroke-width="3" stroke-dasharray="${prev ? "0" : "8 5"}"/>`);
+      out.push(`<rect x="${L}" y="${T}" width="${z.w}" height="${z.h}" rx="${rx}" fill="${look3d ? "url(#gU)" : "#fff"}" stroke="#C8382B" stroke-width="3"${look3d ? ' filter="url(#sh)"' : ""}/>`);
+      const lh = s * 1.25, extra = (n.kind !== "u" ? 14 * U.fs : 0), eta = opt().eta && n.kind === "u" ? effi(n) : null, etaH = opt().eta && n.kind === "u" ? 18 * U.fs : 0;
+      let y = n.y - (z.lines.length * lh + extra + etaH) / 2 + lh * 0.8;
+      if (n.kind !== "u") { out.push(`<text class="kd" x="${n.x}" y="${y - lh * 0.8 + 12 * U.fs}" text-anchor="middle">${KIND[n.kind]}</text>`); y += extra; }
+      for (const l of z.lines) { out.push(`<text class="nm" x="${n.x}" y="${y}" text-anchor="middle">${esc(l)}</text>`); y += lh; }
+      if (etaH) out.push(`<text class="eta" x="${n.x}" y="${y - lh * 0.15}" text-anchor="middle">η = ${eta == null ? "?" : fmtNum(Math.round(eta * 100), 0) + " %"}</text>`);
+      out.push(`</g>`);
+    }
+    // Griffe des gewählten Pfeils
+    const sa = !exp && U.sel && D.arrows.find(a => a.id === U.sel);
+    if (sa) {
+      const g = geom(sa), m = qpt(g.p0, g.cc, g.p1, 0.5), r = 12 / Math.max(.6, Math.min(U.Z, 1.4));
+      for (const [part, p, col] of [["a", g.p0, "#fff"], ["b", g.p1, "#fff"], ["m", m, "#e8eef6"]]) {
+        out.push(`<g data-id="${sa.id}" data-part="${part}"><circle cx="${p.x}" cy="${p.y}" r="${r * 2.1}" fill="transparent"/><circle cx="${p.x}" cy="${p.y}" r="${r}" fill="${col}" stroke="#1F4E79" stroke-width="3"/></g>`);
+      }
+    }
+    return out.join("");
+  }
+  function render() {
+    sv.setAttribute("viewBox", `${U.VX} ${U.VY} ${sv.clientWidth / U.Z} ${sv.clientHeight / U.Z}`);
+    sv.innerHTML = svgDoc(false);
+    const bw = UNIT * U.Z;
+    $("legBar").style.width = Math.max(10, Math.min(120, 1.2 * bw)) + "px";
+    $("legBar").style.height = Math.max(2, bw) + "px";
+    $("legTxt").textContent = "≙ " + fmtP(D.scale);
+    $("leerHinweis").classList.toggle("hidden", D.nodes.length + D.arrows.length > 0);
+  }
+
+  /* ---------- Ansicht ---------- */
+  function bbox() {
+    layout();
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    const add = (x, y) => { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); };
+    for (const n of D.nodes) { const z = SZ.get(n.id); add(n.x - z.w / 2, n.y - z.h / 2); add(n.x + z.w / 2, n.y + z.h / 2); }
+    for (const a of D.arrows) { const g = geom(a); for (const p of [g.p0, g.p1, qpt(g.p0, g.c, g.p1, .5)]) { add(p.x - g.w, p.y - g.w - 30); add(p.x + g.w, p.y + g.w + 30 + (g.r ? GAP : 0)); } }
+    return x0 === Infinity ? null : { x0, y0, x1, y1 };
+  }
+  function fit() {
+    const W = sv.clientWidth, H = sv.clientHeight, b = bbox();
+    if (!W || !H) return;
+    if (!b) { U.Z = Math.max(0.45, Math.min(1.1, W / 1150)); U.VX = 0; U.VY = 0; render(); return; }
+    const m = 60, bw = b.x1 - b.x0 + 2 * m, bh = b.y1 - b.y0 + 2 * m;
+    U.Z = Math.max(0.2, Math.min(1.3, W / bw, H / bh));
+    U.VX = (b.x0 + b.x1) / 2 - W / U.Z / 2; U.VY = (b.y0 + b.y1) / 2 - H / U.Z / 2;
+    render();
+  }
+  function zoomBy(f, cx, cy) {
+    const W = sv.clientWidth, H = sv.clientHeight;
+    if (cx == null) { cx = W / 2; cy = H / 2; }
+    const wx = U.VX + cx / U.Z, wy = U.VY + cy / U.Z;
+    U.Z = Math.max(0.2, Math.min(3, U.Z * f));
+    U.VX = wx - cx / U.Z; U.VY = wy - cy / U.Z; render();
+  }
+  function toWorld(cx, cy) { const r = sv.getBoundingClientRect(); return { x:U.VX + (cx - r.left) / U.Z, y:U.VY + (cy - r.top) / U.Z }; }
+
+  /* ---------- Verlauf, Speichern ---------- */
+  const snapShot = () => JSON.stringify(D);
+  function commit() {
+    const s = snapShot();
+    if (U.hist[U.hi] === s) return;
+    U.hist = U.hist.slice(0, U.hi + 1); U.hist.push(s);
+    if (U.hist.length > 80) U.hist.shift();
+    U.hi = U.hist.length - 1;
+    store.set("kpkbau_diagramm", s); updUndo();
+  }
+  function restore(s) {
+    D = JSON.parse(s); U.sel = null; U.flags.clear();
+    syncScale(); render(); renderSel(); store.set("kpkbau_diagramm", s); updUndo();
+  }
+  function updUndo() { $("undo").disabled = U.hi <= 0; $("redo").disabled = U.hi >= U.hist.length - 1; }
+  function changed() { U.flags.clear(); $("pruef").classList.add("hidden"); }
+
+  // Zwei Trägerpfeile desselben Trägers hin und zurück zwischen zwei Kästchen werden eine geschlossene Schleife
+  function mergeLoops() {
+    let merged = false;
+    for (const x of D.arrows) {
+      if (x.k !== "t" || x.r || !x.a.n || !x.b.n) continue;
+      const y = D.arrows.find(y => y !== x && y.k === "t" && !y.r && carKey(y) === carKey(x) && y.a.n === x.b.n && y.b.n === x.a.n);
+      if (y) { x.r = true; D.arrows = D.arrows.filter(z => z !== y); if (U.sel === y.id) U.sel = x.id; merged = true; break; }
+    }
+    return merged ? (mergeLoops(), true) : false;
+  }
+
+  /* ---------- Bausteine anlegen ---------- */
+  const nid = () => "o" + (D.next++);
+  let addCount = 0;
+  function addItem(it, wx, wy) {
+    changed();
+    if (wx == null) {
+      const c = { x:U.VX + sv.clientWidth / U.Z / 2, y:U.VY + sv.clientHeight / U.Z / 2 }, k = addCount++ % 6;
+      wx = c.x + (k - 2.5) * 24; wy = c.y + (k - 2.5) * 24;
+    }
+    let obj;
+    if (it.type === "node") {
+      obj = { id:nid(), name:it.name, kind:it.kind, x:snap(wx), y:snap(wy) };
+      D.nodes.push(obj);
+    } else {
+      layout();
+      const inside = D.nodes.find(n => { const z = SZ.get(n.id); return Math.abs(wx - n.x) < z.w / 2 && Math.abs(wy - n.y) < z.h / 2; });
+      let a, b;
+      if (inside) {
+        // freien Platz auf der rechten Seite suchen, damit Pfeile nicht übereinanderliegen
+        const used = D.arrows.flatMap(x => [x.a, x.b]).filter(e => e.n === inside.id && e.s === "r").map(e => e.t);
+        const t = [0.3, 0.72, 0.5, 0.15, 0.88].find(v => used.every(u => Math.abs(u - v) > 0.1)) || 0.5;
+        a = { n:inside.id, s:"r", t }; const p = endPos(a); b = { x:snap(p.x + 180), y:p.y };
+      }
+      else { a = { x:snap(wx - 90), y:snap(wy) }; b = { x:snap(wx + 90), y:snap(wy) }; }
+      obj = { id:nid(), k:it.k, a, b, bend:0 };
+      if (it.k === "t") { obj.c = it.c; obj.r = false; if (it.c === "eigen") { obj.cname = ""; obj.cerh = false; } }
+      if (it.k === "e") obj.P = D.scale;
+      D.arrows.push(obj);
+    }
+    U.sel = obj.id; render(); renderSel(); commit();
+  }
+  function removeObj(id) {
+    const n = D.nodes.find(x => x.id === id);
+    if (n) {
+      layout();
+      for (const a of D.arrows) for (const k of ["a", "b"]) if (a[k].n === id) { const p = endPos(a[k]); a[k] = { x:p.x, y:p.y }; }
+      D.nodes = D.nodes.filter(x => x.id !== id);
+    } else D.arrows = D.arrows.filter(x => x.id !== id);
+    if (U.sel === id) U.sel = null;
+    changed(); render(); renderSel(); commit();
+  }
+  function copyObj(id) {
+    const o = byId(id); if (!o) return;
+    layout();
+    const c = JSON.parse(JSON.stringify(o)); c.id = nid();
+    if (c.kind) { c.x += 40; c.y += 40; D.nodes.push(c); }
+    else { for (const k of ["a", "b"]) { const p = endPos(o[k]); c[k] = { x:p.x + 40, y:p.y + 40 }; } D.arrows.push(c); }
+    U.sel = c.id; changed(); render(); renderSel(); commit();
+  }
+
+  /* ---------- Bausteinliste ---------- */
+  function buildPalette() {
+    const P = $("palette"), o = opt();
+    const grp = (title, open, inner) => `<details class="grp"${open ? " open" : ""}><summary>${title}</summary>${inner}</details>`;
+    const items = arr => `<div class="items">${arr.join("")}</div>`;
+    const tItems = Object.keys(CAR).map(c => `<div class="pi t" data-it='${JSON.stringify({ type:"arrow", k:"t", c })}'>${esc(CAR[c].p || CAR[c].n)}</div>`);
+    let html = grp("Trägerpfeile", true, items(tItems));
+    html += grp("Energiepfeil", true, items([`<div class="pi e" data-it='{"type":"arrow","k":"e"}'>Energie</div>`].concat(o.gas ? [`<div class="pi g" data-it='{"type":"arrow","k":"g"}'>Abgase</div>`] : [])));
+    const sub = UM.map(([t, list]) => `<details class="sub"><summary>${esc(t)}</summary><div class="items">${list.map(([n, , , h]) =>
+      `<div class="pi u" data-it='${JSON.stringify({ type:"node", name:n, kind:"u" })}'>${esc(n)}${h ? `<small>${esc(h)}</small>` : ""}</div>`).join("")}</div></details>`).join("");
+    html += grp("Energieumlader", false, `<div class="items">${sub}<div class="pi u" data-it='{"type":"node","name":"Eigener Umlader","kind":"u"}'>Eigener Umlader<small>Text selbst eingeben</small></div></div>`);
+    html += grp("Quellen, Speicher, Empfänger", false, items(QU.map(([n, k, , h]) =>
+      `<div class="pi q" data-it='${JSON.stringify({ type:"node", name:n, kind:k })}'>${esc(n)}<small>${KIND[k]}${h ? ": " + esc(h) : ""}</small></div>`)));
+    const openState = [...P.querySelectorAll("details")].map(d => d.open);
+    P.innerHTML = html;
+    if (openState.length) [...P.querySelectorAll("details")].forEach((d, i) => { if (i < openState.length) d.open = openState[i]; });
+  }
+  // Ziehen aus der Liste
+  let pd = null;
+  $("palette").addEventListener("pointerdown", e => {
+    const el = e.target.closest(".pi"); if (!el) return;
+    if (e.pointerType === "mouse") e.preventDefault();   // keine Textauswahl beim Ziehen mit der Maus
+    pd = { el, it:JSON.parse(el.dataset.it), x:e.clientX, y:e.clientY, id:e.pointerId, drag:false, ghost:null };
+  });
+  window.addEventListener("pointermove", e => {
+    if (!pd || e.pointerId !== pd.id) return;
+    const dx = e.clientX - pd.x, dy = e.clientY - pd.y;
+    if (!pd.drag) {
+      // Waagerecht ziehen holt den Baustein heraus, senkrecht scrollt die Liste (Handy: nur Antippen)
+      if (innerWidth > 640 && Math.hypot(dx, dy) > 10 && Math.abs(dx) > Math.abs(dy) * 1.1) {
+        pd.drag = true; pd.ghost = pd.el.cloneNode(true); pd.ghost.classList.add("ghost"); document.body.appendChild(pd.ghost);
+        try { pd.el.setPointerCapture(e.pointerId); } catch (er) {}
+      } else return;
+    }
+    e.preventDefault();
+    pd.ghost.style.left = e.clientX + "px"; pd.ghost.style.top = e.clientY + "px";
+  }, { passive:false });
+  function pdEnd(e, cancel) {
+    if (!pd || e.pointerId !== pd.id) return;
+    const p = pd; pd = null;
+    if (p.ghost) p.ghost.remove();
+    if (cancel) return;
+    if (p.drag) {
+      const r = sv.getBoundingClientRect();
+      if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) { const w = toWorld(e.clientX, e.clientY); addItem(p.it, w.x, w.y); }
+    } else if (Math.hypot(e.clientX - p.x, e.clientY - p.y) < 10) addItem(p.it);
+  }
+  window.addEventListener("pointerup", e => pdEnd(e, false));
+  window.addEventListener("pointercancel", e => pdEnd(e, true));
+
+  /* ---------- Bedienung auf der Fläche ---------- */
+  function overTrash(e) { const r = $("trash").getBoundingClientRect(); return e.clientX >= r.left - 6 && e.clientX <= r.right + 6 && e.clientY >= r.top - 6 && e.clientY <= r.bottom + 6; }
+  // Zwei Finger: Ansicht zoomen und verschieben
+  const touches = new Map(); let pinch = null;
+  function pinchState() { const [p, q] = [...touches.values()]; return { d:Math.hypot(p.x - q.x, p.y - q.y) || 1, mx:(p.x + q.x) / 2, my:(p.y + q.y) / 2 }; }
+  sv.addEventListener("pointerdown", e => {
+    if (e.pointerType === "touch") {
+      touches.set(e.pointerId, { x:e.clientX, y:e.clientY });
+      if (touches.size === 2) {
+        if (U.drag && U.drag.moved && U.drag.mode !== "pan") commit();
+        U.drag = null; U.dockPreview = null;
+        const st = pinchState(), w = toWorld(st.mx, st.my); pinch = { ...st, Z:U.Z, wx:w.x, wy:w.y };
+        try { sv.setPointerCapture(e.pointerId); } catch (er) {}
+        return;
+      }
+    }
+    if (U.drag || pinch) return;
+    const g = e.target.closest("[data-id]"), w = toWorld(e.clientX, e.clientY);
+    try { sv.setPointerCapture(e.pointerId); } catch (er) {}
+    if (!g) { U.drag = { mode:"pan", sx:e.clientX, sy:e.clientY, vx:U.VX, vy:U.VY, moved:false, id:e.pointerId }; return; }
+    const id = g.dataset.id, part = g.dataset.part, o = byId(id);
+    const was = U.sel; U.sel = id;
+    if (part === "node") U.drag = { mode:"node", id, ox:o.x - w.x, oy:o.y - w.y };
+    else if (part === "a" || part === "b") U.drag = { mode:"end", id, end:part };
+    else if (part === "m") U.drag = { mode:"bend", id };
+    else {
+      layout();
+      const free = !o.a.n && !o.b.n;
+      U.drag = free ? { mode:"move", id, w0:w, a0:{ ...o.a }, b0:{ ...o.b } } : { mode:"bend", id, start:w };
+    }
+    U.drag.sx = e.clientX; U.drag.sy = e.clientY; U.drag.moved = false; U.drag.pid = e.pointerId;
+    U.drag.pointer = e.pointerId;
+    if (was !== id) { render(); renderSel(); }
+  });
+  sv.addEventListener("pointermove", e => {
+    if (touches.has(e.pointerId)) touches.set(e.pointerId, { x:e.clientX, y:e.clientY });
+    if (pinch && touches.size === 2) {
+      const st = pinchState(), r = sv.getBoundingClientRect();
+      U.Z = Math.max(0.2, Math.min(3, pinch.Z * st.d / pinch.d));
+      U.VX = pinch.wx - (st.mx - r.left) / U.Z; U.VY = pinch.wy - (st.my - r.top) / U.Z; render(); return;
+    }
+    const d = U.drag; if (!d) return;
+    if (!d.moved && Math.hypot(e.clientX - d.sx, e.clientY - d.sy) < 6) return;
+    if (!d.moved) { d.moved = true; if (d.mode !== "pan") changed(); }
+    const w = toWorld(e.clientX, e.clientY);
+    if (d.mode === "pan") { U.VX = d.vx - (e.clientX - d.sx) / U.Z; U.VY = d.vy - (e.clientY - d.sy) / U.Z; render(); return; }
+    const o = byId(d.id); if (!o) return;
+    if (d.mode === "node") {
+      const nx = snap(w.x + d.ox), ny = snap(w.y + d.oy), dx = nx - o.x, dy = ny - o.y;
+      o.x = nx; o.y = ny;
+      // freie Pfeilenden wandern mit, wenn das andere Ende an diesem Kästchen hängt
+      for (const a of D.arrows) {
+        if (a.a.n === o.id && !a.b.n) { a.b.x += dx; a.b.y += dy; }
+        if (a.b.n === o.id && !a.a.n) { a.a.x += dx; a.a.y += dy; }
+      }
+    }
+    else if (d.mode === "move") {
+      const dx = w.x - d.w0.x, dy = w.y - d.w0.y;
+      o.a = { x:snap(d.a0.x + dx), y:snap(d.a0.y + dy) }; o.b = { x:snap(d.b0.x + dx), y:snap(d.b0.y + dy) };
+    } else if (d.mode === "end") {
+      layout();
+      const dk = nearDock(w, null);
+      o[d.end] = { x:w.x, y:w.y };
+      U.dockPreview = dk && dk.d < 30 ? dk.n : null;
+      d.dk = U.dockPreview ? dk : null;
+    } else if (d.mode === "bend") {
+      layout();
+      const p0 = endPos(o.a), p1 = endPos(o.b), dx = p1.x - p0.x, dy = p1.y - p0.y, L = Math.hypot(dx, dy) || 1;
+      const nx = -dy / L, ny = dx / L, mx = (p0.x + p1.x) / 2, my = (p0.y + p1.y) / 2;
+      o.bend = Math.round(2 * ((w.x - mx) * nx + (w.y - my) * ny));
+      if (Math.abs(o.bend) < 14) o.bend = 0;
+    }
+    if (d.mode === "node" || d.mode === "move") $("trash").classList.toggle("hot", overTrash(e));
+    render();
+  });
+  function svUp(e) {
+    touches.delete(e.pointerId);
+    if (pinch) { if (touches.size < 2) pinch = null; return; }
+    const d = U.drag; if (!d) return;
+    U.drag = null; $("trash").classList.remove("hot");
+    if (d.mode === "pan") { if (!d.moved && U.sel) { U.sel = null; render(); renderSel(); } return; }
+    if (!d.moved) return;
+    const o = byId(d.id);
+    if ((d.mode === "node" || d.mode === "move") && overTrash(e)) { removeObj(d.id); return; }
+    if (d.mode === "end" && o) {
+      if (d.dk) o[d.end] = { n:d.dk.n, s:d.dk.s, t:Math.round(d.dk.t * 100) / 100 };
+      else {
+        o[d.end] = { x:snap(o[d.end].x), y:snap(o[d.end].y) };
+        // freies Ende rastet waagerecht oder senkrecht zum anderen Ende ein
+        layout();
+        const q = endPos(o[d.end === "a" ? "b" : "a"]), e = o[d.end];
+        if (Math.abs(e.y - q.y) < 30) e.y = q.y;
+        if (Math.abs(e.x - q.x) < 30) e.x = q.x;
+      }
+      U.dockPreview = null;
+      mergeLoops();
+    }
+    render(); renderSel(); commit();
+  }
+  sv.addEventListener("pointerup", svUp);
+  sv.addEventListener("pointercancel", svUp);
+  sv.addEventListener("wheel", e => { e.preventDefault(); const r = sv.getBoundingClientRect(); zoomBy(Math.exp(-e.deltaY * 0.0015), e.clientX - r.left, e.clientY - r.top); }, { passive:false });
+  document.addEventListener("keydown", e => {
+    if (/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
+    if ((e.key === "Delete" || e.key === "Backspace") && U.sel) { e.preventDefault(); removeObj(U.sel); }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); e.shiftKey ? redo() : undo(); }
+  });
+
+  /* ---------- Auswahl bearbeiten ---------- */
+  function renderSel() {
+    const B = $("selbox"), o = U.sel && byId(U.sel);
+    if (!o) { B.innerHTML = `<div class="small">Tippe einen Baustein auf der Fläche an, um ihn zu bearbeiten.</div>`; return; }
+    const btns = `<div class="btns">${o.kind ? "" : `<button id="sFlip">Umdrehen</button>`}<button id="sCopy">Kopie</button><button id="sDel">Löschen</button></div>`;
+    let h = "";
+    if (o.kind) {
+      h = `<div class="titel">${o.kind === "u" ? "Energieumlader" : KIND[o.kind]}</div>
+        <input type="text" id="sName" value="${esc(o.name)}" aria-label="Beschriftung">`;
+      if (opt().eta && o.kind === "u") { const e = effi(o); h += `<div class="small">Wirkungsgrad η = ${e == null ? "noch nicht berechenbar (Energiepfeile und Träger fehlen)" : fmtNum(Math.round(e * 100), 0) + " %"}</div>`; }
+    } else if (o.k === "e") {
+      h = `<div class="titel">Energiepfeil</div>
+        <div class="par"><div class="head"><span>Energiestromstärke P</span><output id="sPout">${fmtP(o.P)}</output></div>
+        <div class="line"><button id="sPm">−</button><input type="range" id="sP" min="0" max="8" step="0.05" value="${o.P / D.scale}"><button id="sPp">+</button></div></div>`;
+    } else if (o.k === "t") {
+      h = `<div class="titel">Trägerpfeil</div>
+        <select id="sCar" aria-label="Träger">${Object.keys(CAR).map(c => `<option value="${c}"${c === o.c ? " selected" : ""}>${esc(CAR[c].p || CAR[c].n)}</option>`).join("")}</select>
+        ${o.c === "eigen" ? `<input type="text" id="sCname" placeholder="Name des Trägers" value="${esc(o.cname || "")}"><label class="chk small"><input type="checkbox" id="sCerh"${o.cerh ? " checked" : ""}> hat eine Erhaltungsgröße</label>` : ""}
+        <label class="chk"><input type="checkbox" id="sRueck"${o.r ? " checked" : ""}> Rückweg (geschlossene Schleife)</label>`;
+    } else h = `<div class="titel">Abgase</div><div class="small">Stoffpfeil ohne Energie (CO<sub>2</sub>, Wasserdampf).</div>`;
+    B.innerHTML = h + btns;
+    const on = (id, ev, f) => { const el = $(id); if (el) el.addEventListener(ev, f); };
+    on("sDel", "click", () => removeObj(o.id));
+    on("sCopy", "click", () => copyObj(o.id));
+    on("sFlip", "click", () => { const t = o.a; o.a = o.b; o.b = t; changed(); mergeLoops(); render(); renderSel(); commit(); });
+    on("sName", "input", e => { o.name = e.target.value; render(); });
+    on("sName", "change", () => { changed(); commit(); });
+    const setP = v => { o.P = Math.max(0, Math.round(v * 20) / 20) * D.scale; $("sP").value = o.P / D.scale; $("sPout").textContent = fmtP(o.P); render(); };
+    on("sP", "input", e => { changed(); setP(+e.target.value); });
+    on("sP", "change", commit);
+    on("sPm", "click", () => { changed(); setP(o.P / D.scale - 0.1); commit(); });
+    on("sPp", "click", () => { changed(); setP(Math.min(8, o.P / D.scale + 0.1)); commit(); });
+    on("sCar", "change", e => { o.c = e.target.value; if (o.c === "eigen" && o.cname == null) { o.cname = ""; o.cerh = false; } changed(); mergeLoops(); render(); renderSel(); commit(); });
+    on("sCname", "input", e => { o.cname = e.target.value; render(); });
+    on("sCname", "change", () => { changed(); commit(); });
+    on("sCerh", "change", e => { o.cerh = e.target.checked; changed(); commit(); });
+    on("sRueck", "change", e => { o.r = e.target.checked; changed(); render(); commit(); });
+  }
+
+  /* ---------- Prüfen ---------- */
+  function nodeName(id) { const n = D.nodes.find(x => x.id === id); return n ? "„" + n.name + "“" : "?"; }
+  function check() {
+    layout();
+    const o = opt(), msgs = [], flags = new Set();
+    const err = (t, ids) => { msgs.push(["err", t]); (ids || []).forEach(i => flags.add(i)); };
+    const warn = (t, ids) => { msgs.push(["warn", t]); (ids || []).forEach(i => flags.add(i)); };
+    const E = D.arrows.filter(a => a.k === "e"), T = D.arrows.filter(a => a.k === "t");
+    if (!D.nodes.length && !D.arrows.length) { show([["warn", "Die Fläche ist noch leer."]], flags); return; }
+    for (const a of D.arrows) if (!a.a.n && !a.b.n) warn((a.k === "e" ? "Ein Energiepfeil" : a.k === "t" ? "Der Trägerpfeil " + carName(a) : "Der Abgas-Pfeil") + " hängt ganz frei. Dock mindestens ein Ende an ein Kästchen an.", [a.id]);
+    for (const e of E) if (!carrierFor(e)) err("Zu einem Energiepfeil" + (e.a.n ? " aus " + nodeName(e.a.n) : "") + (e.b.n ? " nach " + nodeName(e.b.n) : "") + " fehlt der Trägerpfeil. Energie fließt nie allein, sie braucht immer einen Träger (Trägerpfeil mit gleichem Anfang und gleichem Ende).", [e.id]);
+    for (const t of T) if (t.c === "eigen" && !(t.cname || "").trim()) warn("Ein eigener Trägerpfeil hat noch keinen Namen.", [t.id]);
+    let bilanzHinweis = false;
+    for (const n of D.nodes) {
+      const ins = E.filter(a => a.b.n === n.id), outs = E.filter(a => a.a.n === n.id);
+      const pin = ins.reduce((s, a) => s + a.P, 0), pout = outs.reduce((s, a) => s + a.P, 0), nm = nodeName(n.id);
+      // Erhaltungsgrößen
+      const keys = new Set(T.filter(t => (t.a.n === n.id || t.b.n === n.id) && carErh(t)).map(carKey));
+      for (const k of keys) {
+        const tin = T.filter(t => carKey(t) === k && t.b.n === n.id && !t.r), tout = T.filter(t => carKey(t) === k && t.a.n === n.id && !t.r);
+        if (tin.length && !tout.length) err(carName(tin[0]) + " fließt in " + nm + " hinein, aber nicht wieder heraus. " + carName(tin[0]) + " hat eine Erhaltungsgröße und geht nicht verloren: Zeichne eine geschlossene Schleife (Rückweg) oder führe den Träger wieder hinaus.", [n.id, ...tin.map(t => t.id)]);
+      }
+      // Passende Träger
+      const sp = SPEC[n.name.trim().toLowerCase()];
+      if (sp) {
+        const okIn = new Set([...sp.rein, ...sp.raus.filter(c => CAR[c].e)]), okOut = new Set([...sp.raus, ...sp.rein.filter(c => CAR[c].e), "ent"]);
+        for (const t of T) {
+          if (t.c === "eigen") continue;
+          if (t.b.n === n.id && !okIn.has(t.c) && !(t.r && okOut.has(t.c))) warn("Passt " + carName(t) + " als Träger, der in " + nm + " hineinfließt?", [t.id]);
+          if (t.a.n === n.id && !okOut.has(t.c) && !(t.r && okIn.has(t.c))) warn("Passt " + carName(t) + " als Träger, der aus " + nm + " herauskommt?", [t.id]);
+        }
+      }
+      // Energiebilanz
+      if (n.kind === "u") {
+        if (pin > 0 && !outs.length) err("In " + nm + " fließt Energie hinein, aber keine heraus. Ein Energieumlader speichert keine Energie.", [n.id]);
+        else if (pout > 0 && !ins.length) err("Aus " + nm + " fließt Energie heraus, aber keine hinein. Energie entsteht nicht aus dem Nichts.", [n.id]);
+        else if (ins.length && outs.length) {
+          const tol = Math.max(pin, pout) * 0.005 + D.scale * 0.01;
+          if (pout > pin + tol) err("Energiebilanz bei " + nm + ": Es fließt mehr heraus (" + fmtP(pout) + ") als hinein (" + fmtP(pin) + ").", [n.id]);
+          else if (pout < pin - tol) {
+            if (o.abw) err("Energiebilanz bei " + nm + ": Hinein fließen " + fmtP(pin) + ", heraus nur " + fmtP(pout) + ". Wo bleibt der Rest?", [n.id]);
+            else bilanzHinweis = true;
+          }
+        }
+        if (o.abw && (pin > 0 || ins.length) && !(sp && !sp.raus.includes("ent")) && !T.some(t => t.c === "ent" && t.a.n === n.id))
+          warn("Bei " + nm + " fehlt die Abwärme (Trägerpfeil Entropie, der herauskommt).", [n.id]);
+        if (o.gas && T.some(t => t.c === "brenn" && t.b.n === n.id) && !D.arrows.some(a => a.k === "g" && a.a.n === n.id))
+          warn("Bei " + nm + " fehlen die Abgase.", [n.id]);
+      }
+    }
+    if (bilanzHinweis) msgs.push(["warn", "Bei manchen Umladern fließt weniger Energie heraus als hinein. Das geht nur auf, wenn man die Abwärme mitzeichnet (Schalter „Abwärme verlangen“)."]);
+    const res = msgs.length ? msgs : [["ok", "Alles stimmig! Keine Fehler gefunden."]];
+    if (U.mode === "auf" && U.task != null) res.push(...compare());
+    show(res, flags);
+  }
+  function show(list, flags) {
+    U.flags = flags;
+    const B = $("pruef"); B.classList.remove("hidden");
+    const errs = list.filter(m => m[0] === "err").length;
+    B.innerHTML = `<div class="kopf">Prüfergebnis${errs ? ": " + errs + " Fehler" : ""}</div><ul>${list.map(([c, t]) => `<li class="${c}">${t}</li>`).join("")}</ul>`;
+    render();
+    if (innerWidth <= 640 || window.matchMedia("(max-width: 900px) and (orientation: portrait)").matches) B.scrollIntoView({ block:"nearest" });
+  }
+  // Vergleich mit der Musterlösung
+  function edgesOf(nodes, arrows, endName) {
+    const o = opt(), out = [];
+    for (const a of arrows) {
+      if (a.k === "g" && !o.gas) continue;
+      const fr = endName(a.a), to = endName(a.b), c = a.k === "t" ? carKey(a) : a.k;
+      out.push({ k:a.k, c, fr, to, a });
+      if (a.k === "t" && a.r) out.push({ k:a.k, c, fr:to, to:fr, a });
+    }
+    return out;
+  }
+  function solution(i) {
+    const T0 = TASKS[i], o = opt();
+    return T0.a.filter(x => (!x[5] || ((!x[5].abw || o.abw) && (!x[5].gas || o.gas))));
+  }
+  function compare() {
+    const T0 = TASKS[U.task], o = opt();
+    const sname = id => { const n = T0.n.find(x => x[0] === id); return n ? n[1].toLowerCase() : "*"; };
+    const solE = solution(U.task).map(x => {
+      const pe = v => typeof v === "string" ? sname(v.split(":")[0]) : "*";
+      return { k:x[0], c:x[0] === "t" ? x[1] : x[0], fr:pe(x[2]), to:pe(x[3]), r:x[5] && x[5].r, abw:x[5] && x[5].abw };
+    }).flatMap(e => e.r ? [e, { ...e, fr:e.to, to:e.fr }] : [e]);
+    const nm = end => { if (!end.n) return "*"; const n = D.nodes.find(x => x.id === end.n); return n ? n.name.trim().toLowerCase() : "*"; };
+    let stud = edgesOf(D.nodes, D.arrows, nm);
+    if (!o.abw) stud = stud.filter(e => !(e.k === "t" && e.c === "ent" && !solE.some(s => s.k === "t" && s.c === "ent" && s.fr === e.fr && s.to === e.to)));
+    const key = e => e.k + "|" + e.c + "|" + e.fr + "|" + e.to;
+    const count = list => list.reduce((m, e) => (m[key(e)] = (m[key(e)] || 0) + 1, m), {});
+    const res = [], cs = count(stud), cl = count(solE);
+    const disp = s => s === "*" ? "außen" : "„" + (T0.n.find(n => n[1].toLowerCase() === s) || [0, s])[1] + "“";
+    const lab = e => e.k === "t" ? (CAR[e.c] ? CAR[e.c].n : e.c.replace("eigen:", "")) : e.k === "e" ? "Energie" : "Abgase";
+    let right = 0, total = 0; const missing = [], extra = [];
+    for (const k of Object.keys(cl)) { const r = Math.min(cl[k], cs[k] || 0); right += r; total += cl[k]; if (cl[k] > r) missing.push(k); }
+    for (const k of Object.keys(cs)) { if (cs[k] > (cl[k] || 0)) extra.push(k); }
+    // Energiepfeile: Ziel ohne Abwärme-Energie, wenn Abwärme aus
+    const descr = k => { const [kk, c, fr, to] = k.split("|"); return lab({ k:kk, c }) + " von " + disp(fr) + " nach " + disp(to); };
+    const names = new Set(T0.n.map(n => n[1].toLowerCase())), have = new Set(D.nodes.map(n => n.name.trim().toLowerCase()));
+    const missN = [...names].filter(n => !have.has(n));
+    res.push([right === total && !extra.length && !missN.length ? "ok" : "warn",
+      `Vergleich mit der Musterlösung „${esc(T0.t)}“: ${right} von ${total} Pfeilen stimmen überein` + (missN.length ? `, es fehlen Kästchen: ${missN.map(n => disp(n)).join(", ")}` : "") + "."]);
+    if (missing.length || extra.length) res.push(["warn", `<details><summary>Tipp anzeigen</summary>${missing.length ? "Fehlt: " + missing.map(descr).join("; ") + ". " : ""}${extra.length ? "Nicht in der Musterlösung: " + extra.map(descr).join("; ") + "." : ""}<br>Hinweis: Die Musterlösung ist ein Vorschlag. Pfeile mit offenem Ende zählen als „außen“.</details>`]);
+    return res;
+  }
+
+  /* ---------- Aufgaben laden ---------- */
+  function loadTask(i, what) {
+    const T0 = TASKS[i], o = opt();
+    D = { nodes:[], arrows:[], scale:T0.scale, next:1 };
+    const map = {};
+    // Aufgaben etwas enger setzen, damit die Schrift beim Einpassen größer bleibt
+    for (const [id, name, kind, x, y] of T0.n) { const n = { id:nid(), name, kind, x:Math.round(x * 0.85), y }; map[id] = n.id; D.nodes.push(n); }
+    if (what !== "leer") {
+      const list = solution(i).filter(x => what === "lsg" || x[0] === "e");
+      const pend = [];
+      for (const x of list) {
+        const [k, c, fr, to, P, op] = x;
+        const parse = v => { if (typeof v !== "string") return null; const [id, s, t] = v.split(":"); return { n:map[id], s, t:+t }; };
+        const a = { id:nid(), k, a:parse(fr) || { x:0, y:0 }, b:parse(to) || { x:0, y:0 }, bend:0 };
+        if (k === "t") { a.c = c; a.r = !!(op && op.r); }
+        if (k === "e") a.P = P;
+        D.arrows.push(a); pend.push([a, fr, to]);
+      }
+      layout();
+      for (const [a, fr, to] of pend) {
+        if (Array.isArray(fr)) { const p = endPos(effEnds(a)[1]); a.a = { x:p.x + fr[0] * 0.8, y:p.y + fr[1] * 0.8 }; }
+        if (Array.isArray(to)) { const p = endPos(effEnds(a)[0]); a.b = { x:p.x + to[0] * 0.8, y:p.y + to[1] * 0.8 }; }
+      }
+    }
+    U.sel = null; changed(); syncScale(); render(); renderSel(); commit(); fit();
+  }
+  function buildTasks() {
+    $("aufListe").innerHTML = TASKS.map((t, i) => `<button data-i="${i}">${esc(t.t)}</button>`).join("");
+    $("aufListe").querySelectorAll("button").forEach(b => b.onclick = () => {
+      U.task = +b.dataset.i;
+      $("aufListe").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+      $("auftrag").innerHTML = `<b>Auftrag:</b> ${esc(TASKS[U.task].txt)}`;
+      $("auftrag").classList.remove("hidden"); $("aufBtns").classList.remove("hidden"); requestAnimationFrame(resize);
+      loadTask(U.task, "leer");
+    });
+  }
+  function setMode(m) {
+    U.mode = m;
+    $("tabFrei").classList.toggle("on", m === "frei"); $("tabAuf").classList.toggle("on", m === "auf");
+    $("aufSec").classList.toggle("hidden", m !== "auf");
+    $("auftrag").classList.toggle("hidden", m !== "auf" || U.task == null);
+    changed(); requestAnimationFrame(resize);
+  }
+
+  /* ---------- Maßstab ---------- */
+  function syncScale() {
+    const s = $("scaleSel");
+    if (!SCALES.includes(D.scale)) D.scale = 10;
+    s.value = String(D.scale);
+  }
+  $("scaleSel").innerHTML = SCALES.map(v => `<option value="${v}">≙ ${fmtP(v)}</option>`).join("");
+  $("scaleSel").addEventListener("change", e => {
+    // Leistungen bleiben gleich, nur die Breite ändert sich
+    D.scale = +e.target.value; changed(); render(); renderSel(); commit();
+  });
+
+  /* ---------- Bild und Datei ---------- */
+  function download(blob, name) {
+    const url = URL.createObjectURL(blob), a = document.createElement("a");
+    a.href = url; a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 2000);
+  }
+  function exportPng() {
+    const b = bbox(); if (!b) return;
+    const m = 40, legH = 50, x0 = b.x0 - m, y0 = b.y0 - m - legH, w = b.x1 - b.x0 + 2 * m, h = b.y1 - b.y0 + 2 * m + legH;
+    const leg = `<g font-family="${FONT}" font-size="${fsz()}"><text x="${x0 + 16}" y="${y0 + 30}" fill="#1d2733">Energiestromstärke</text>
+      <rect x="${x0 + 175 * U.fs}" y="${y0 + 22 - UNIT / 2}" width="40" height="${UNIT}" fill="#2E9A45"/><text x="${x0 + 175 * U.fs + 50}" y="${y0 + 30}" fill="#1d2733">≙ ${fmtP(D.scale)}</text></g>`;
+    const svgS = `<svg xmlns="http://www.w3.org/2000/svg" width="${w * 2}" height="${h * 2}" viewBox="${x0} ${y0} ${w} ${h}"><rect x="${x0}" y="${y0}" width="${w}" height="${h}" fill="#fff"/>${leg}${svgDoc(true)}</svg>`;
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement("canvas"); c.width = w * 2; c.height = h * 2;
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      c.toBlob(bl => bl && download(bl, "Energieflussdiagramm.png"), "image/png");
+    };
+    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgS);
+  }
+  $("pngBtn").onclick = exportPng;
+  $("saveBtn").onclick = () => download(new Blob([JSON.stringify({ kpkBaukasten:1, D }, null, 1)], { type:"application/json" }), "Energieflussdiagramm.json");
+  $("openBtn").onclick = () => $("fileIn").click();
+  $("fileIn").addEventListener("change", e => {
+    const f = e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try { const j = JSON.parse(r.result); if (!j.D || !Array.isArray(j.D.nodes)) throw 0; D = j.D; U.sel = null; changed(); syncScale(); render(); renderSel(); commit(); fit(); }
+      catch (er) { show([["err", "Diese Datei ist kein gespeichertes Energieflussdiagramm."]], new Set()); }
+    };
+    r.readAsText(f); e.target.value = "";
+  });
+  let clearArmed = null;
+  $("clearBtn").onclick = () => {
+    if (!clearArmed) { $("clearBtn").textContent = "Wirklich löschen?"; $("clearBtn").style.background = "#fde3df"; clearArmed = setTimeout(resetClear, 3000); return; }
+    resetClear(); D = { nodes:[], arrows:[], scale:D.scale, next:1 }; U.sel = null; changed(); render(); renderSel(); commit();
+  };
+  function resetClear() { clearTimeout(clearArmed); clearArmed = null; $("clearBtn").textContent = "Alles löschen"; $("clearBtn").style.background = ""; }
+
+  /* ---------- Knöpfe ---------- */
+  function undo() { if (U.hi > 0) { U.hi--; restore(U.hist[U.hi]); } }
+  function redo() { if (U.hi < U.hist.length - 1) { U.hi++; restore(U.hist[U.hi]); } }
+  $("undo").onclick = undo; $("redo").onclick = redo;
+  $("pruefBtn").onclick = check;
+  $("tabFrei").onclick = () => setMode("frei");
+  $("tabAuf").onclick = () => setMode("auf");
+  $("aufLeer").onclick = () => U.task != null && loadTask(U.task, "leer");
+  $("aufLuecke").onclick = () => U.task != null && loadTask(U.task, "luecke");
+  $("aufLsg").onclick = () => U.task != null && loadTask(U.task, "lsg");
+  for (const id of ["cbAbw", "cbGas", "cbEta", "cbAnim", "cbGrid"]) $(id).addEventListener("change", () => {
+    store.set("kpkbau_" + id, $(id).checked ? "1" : "0");
+    if (id === "cbGas") buildPalette();
+    changed(); render(); renderSel();
+  });
+  function setFs(v) {
+    U.fs = Math.max(0.8, Math.min(1.6, Math.round(v * 10) / 10));
+    document.documentElement.style.fontSize = (14 * U.fs) + "px";
+    store.set("kpkbau_fs", U.fs); render();
+  }
+  $("fsMinus").onclick = () => setFs(U.fs - 0.1);
+  $("fsPlus").onclick = () => setFs(U.fs + 0.1);
+  function setLook(v) { U.look = v; $("look").textContent = v === "3d" ? "Schlicht" : "Plastisch"; store.set("kpkbau_look", v); render(); }
+  $("look").onclick = () => setLook(U.look === "3d" ? "sym" : "3d");
+  $("zIn").onclick = () => zoomBy(1.25); $("zOut").onclick = () => zoomBy(0.8); $("zFit").onclick = fit;
+  $("panelBtn").onclick = () => { document.body.classList.toggle("nopanel"); requestAnimationFrame(render); };
+  const docEl = document.documentElement, reqFS = docEl.requestFullscreen || docEl.webkitRequestFullscreen;
+  if (!reqFS) $("full").classList.add("hidden");
+  $("full").onclick = () => {
+    const cur = document.fullscreenElement || document.webkitFullscreenElement;
+    if (cur) (document.exitFullscreen || document.webkitExitFullscreen).call(document); else reqFS.call(docEl);
+  };
+  $("rotGo").onclick = () => document.body.classList.add("quer");
+  let lastW = 0, lastH = 0;
+  function resize() {
+    const W = sv.clientWidth, H = sv.clientHeight;
+    if (lastW && W && H) { U.VX += (lastW - W) / 2 / U.Z; U.VY += (lastH - H) / 2 / U.Z; }
+    lastW = W; lastH = H; render();
+  }
+  window.addEventListener("resize", resize);
+  if (window.ResizeObserver) new ResizeObserver(resize).observe(sv);
+
+  /* ---------- Start ---------- */
+  for (const id of ["cbAbw", "cbGas", "cbEta", "cbAnim", "cbGrid"]) { const v = store.get("kpkbau_" + id); if (v != null) $(id).checked = v === "1"; }
+  U.look = store.get("kpkbau_look") === "sym" ? "sym" : "3d"; $("look").textContent = U.look === "3d" ? "Schlicht" : "Plastisch";
+  buildPalette(); buildTasks();
+  try { const s = store.get("kpkbau_diagramm"); if (s) { const j = JSON.parse(s); if (j && Array.isArray(j.nodes)) D = j; } } catch (e) {}
+  syncScale();
+  setFs(+store.get("kpkbau_fs") || 1);
+  lastW = sv.clientWidth; lastH = sv.clientHeight;
+  fit(); renderSel(); commit();
+})();
+</script>
+<!-- KI-Hinweis: einheitlich in allen Simulationen, immer sichtbar unten rechts -->
+<style>
+#ki-hinweis{position:fixed;right:0;bottom:0;z-index:2147483000;pointer-events:none;
+  font:10px/16px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  color:#5b6270;background:rgba(243,244,246,.92);border-top:1px solid rgba(0,0,0,.08);border-left:1px solid rgba(0,0,0,.08);
+  border-top-left-radius:6px;padding:0 max(7px,env(safe-area-inset-right)) env(safe-area-inset-bottom) 8px;white-space:nowrap}
+.ki-platz::after{content:"";display:block;height:20px;flex:none}
+@media print{#ki-hinweis{position:static;text-align:right;border:0;background:none}}
+</style>
+<div id="ki-hinweis" role="note">Mit KI erstellt · Physik nicht geprüft · Ergebnisse kritisch prüfen</div>
+<script>
+/* Scrollbereiche, die bis unter den Hinweis reichen, bekommen unten 20 px Luft,
+   damit ihr letzter Inhalt nicht dauerhaft vom Hinweis verdeckt wird. */
+(function(){
+  var hin=document.getElementById('ki-hinweis');
+  function platz(){
+    var alt=document.querySelectorAll('.ki-platz');
+    for(var i=0;i<alt.length;i++)alt[i].classList.remove('ki-platz');
+    var vw=innerWidth,vh=innerHeight,hb=hin.getBoundingClientRect();
+    var els=document.body.querySelectorAll('*');
+    function passt(el){
+      var cs=getComputedStyle(el);
+      if(cs.display==='block'||cs.display==='flow-root')return true;
+      return cs.display==='flex'&&/column/.test(cs.flexDirection);
+    }
+    for(var j=0;j<els.length;j++){
+      var el=els[j];if(el===hin||el.closest('svg'))continue;
+      var oy=getComputedStyle(el).overflowY;
+      if(oy!=='auto'&&oy!=='scroll')continue;
+      var r=el.getBoundingClientRect();
+      if(r.height<40||r.bottom<vh-hb.height-4||r.right<hb.left+20||r.left>vw)continue;
+      if(passt(el))el.classList.add('ki-platz');
+    }
+    var se=document.scrollingElement||document.documentElement;
+    if(se.scrollHeight>vh+2&&passt(document.body))document.body.classList.add('ki-platz');
+  }
+  var t;function spaeter(){clearTimeout(t);t=setTimeout(platz,150);}
+  addEventListener('resize',spaeter);addEventListener('load',spaeter);
+  document.addEventListener('click',spaeter,true);
+  platz();
+})();
+</script>
+</body>
+</html>
