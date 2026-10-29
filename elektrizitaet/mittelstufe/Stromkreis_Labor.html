@@ -177,7 +177,7 @@ body.big #title{font-size:17px}
       <div id="viewPop">
         <div class="vrow"><span>Potenzial als Farbe</span><button class="sw on" data-k="colors"></button></div>
         <div class="vrow"><span>Ladungsträger zeigen</span><button class="sw on" data-k="particles"></button></div>
-        <div class="vrow"><span>Ladungsträger</span><div class="seg" id="segDir"><button data-v="e" class="on">Elektronen</button><button data-v="t">techn. Richtung</button></div></div>
+        <div class="vrow"><span>Ladungsträger</span><div class="seg" id="segDir"><button data-v="t" class="on">positiv (techn.)</button><button data-v="e">Elektronen</button></div></div>
         <div class="vrow"><span>Lampen</span><div class="seg" id="segLamp"><button data-v="real" class="on">realistisch</button><button data-v="ohm">ohmsch</button></div></div>
         <div class="vrow"><span>Energiefluss in der Schaltung</span><button class="sw" data-k="energyOverlay"></button></div>
         <div class="vrow"><span>Potenzialwerte anschreiben</span><button class="sw" data-k="phiLabels"></button></div>
@@ -246,7 +246,7 @@ body.big #title{font-size:17px}
   <h3>Was man sieht</h3>
   <ul>
     <li><b>Farbe</b> = elektrisches Potenzial φ. Jede Farbe steht für genau ein Potenzial, 0 V (Erdung) ist grün. Die Skala ist fest und gilt in allen Schaltungen.</li>
-    <li><b>Punkte</b> = Ladungsträger. Kein Teilchen entsteht oder verschwindet. Die Dichte ist überall gleich, das Tempo ist proportional zur Stromstärke. An jedem Knoten fließen genau so viele Teilchen ab, wie zufließen.</li>
+    <li><b>Punkte</b> = Ladungsträger. Kein Teilchen entsteht oder verschwindet. Die Dichte ist überall gleich. In einem Kabel mit gleichem Querschnitt ist das Tempo (Driftgeschwindigkeit) proportional zur Stromstärke. Tippe ein Kabel an, um seinen Querschnitt zu ändern: Bei doppeltem Querschnitt driften doppelt so viele Ladungsträger nebeneinander, jeder nur halb so schnell, die Stromstärke bleibt gleich (I = n · e · A · v). An jedem Knoten fließen genau so viele Teilchen ab, wie zufließen.</li>
     <li><b>Lampen realistisch</b>: Der Glühdraht hat kalt etwa ein Zwölftel seines Betriebswiderstands, also gilt das ohmsche Gesetz für Lampen nicht.</li>
     <li><b>Wasserkreis</b> (nach Plappert): Druck ≙ Potenzial, Druckunterschied ≙ Spannung, Wasserstrom ≙ Stromstärke, Engstelle ≙ Widerstand, Turbine ≙ Lampe, Pumpe ≙ Netzgerät. Die Steigrohre zeigen den Druck.</li>
     <li><b>Höhenmodell</b>: Höhe ≙ Potenzial. Das Netzgerät hebt die Ladung an, in den Bauteilen geht es bergab. Gezeigt wird die technische Stromrichtung.</li>
@@ -264,7 +264,9 @@ body.big #title{font-size:17px}
 /* ===================== Konstanten ===================== */
 const LW = 1000, LH = 560;          // logisches Koordinatensystem der Schaltung
 const BB = {x:40, y:30, w:975, h:500}; // sichtbarer Ausschnitt
-const DSP = 16;                      // Abstand der Ladungsträger (logische px) -> überall gleiche Dichte
+const DSP = 16;                      // Abstand der Ladungsträger (logische px) -> überall gleiche Dichte (je Spur)
+const AQ = [0.5,1,1.5,2];            // wählbare Kabelquerschnitte in mm²; Spuren k = A / 0,5 mm²
+const LANE = 7.5;                    // Abstand der Spuren quer zum Kabel (logische px)
 const KV = 80;                       // Driftgeschwindigkeit der Darstellung: px/s pro Ampere bei Tempo 1
 const VCAP = 420;                    // maximale Darstellungsgeschwindigkeit
 const FUSE = 5;                      // Sicherung des Netzgeräts in A
@@ -316,7 +318,7 @@ const SCENES = {
 };
 
 /* ===================== Zustand ===================== */
-const st = {scene:'R', view:'sym', side:'off', dir:'e', lampReal:true, colors:true, particles:true,
+const st = {scene:'R', view:'sym', side:'off', dir:'t', lampReal:true, colors:true, particles:true,
   energyOverlay:false, phiLabels:false, tempo:1, U:6, Ri:0, cableR:0, tool:'select', sel:null, fuse:false, time:0};
 let S = null; // aktuelle Schaltung
 
@@ -362,7 +364,7 @@ function segNormal(a,b){ // Normale eines Segments, die nach außen zeigt
 /* ===================== Aufbau ===================== */
 function buildScene(id){
   const def=SCENES[id];
-  S={nodes:[],edges:[],meters:[],ground:0,cables:{},adj:[],cx:500,cy:280,nextCable:1,warnings:[],nm:null,dut:null};
+  S={nodes:[],edges:[],meters:[],ground:0,cables:{},cableA:{},adj:[],cx:500,cy:280,nextCable:1,warnings:[],nm:null,dut:null};
   const nm={};
   for(const k in def.nodes){ nm[k]=S.nodes.length; S.nodes.push({x:def.nodes[k][0],y:def.nodes[k][1],name:k}); }
   let sx=0, sy=0; S.nodes.forEach(n=>{sx+=n.x;sy+=n.y;}); S.cx=sx/S.nodes.length; S.cy=sy/S.nodes.length;
@@ -387,10 +389,18 @@ function fillParticles(){
   for(const e of S.edges){ fillEdge(e); }
 }
 function fillEdge(e){
-  const n=Math.max(1,Math.round(e.path.len/DSP));
-  e.ps=[]; e.pw=[];
-  for(let i=0;i<n;i++){ const s=(i+0.5)*e.path.len/n; e.ps.push(s); e.pw.push(s); }
+  const n=Math.max(1,Math.round(e.path.len/DSP)), m=n*kOf(e);
+  e.ps=[]; e.pw=[]; e.lo=0;
+  for(let i=0;i<m;i++) e.ps.push((i+0.5)*e.path.len/m);
+  for(let i=0;i<n;i++) e.pw.push((i+0.5)*e.path.len/n);
 }
+/* Querschnitt: Anzahl der Spuren k eines Kabelstücks (Bauteile und Zuleitungen: 1).
+   Gleiche Ladungsträgerdichte je Volumen -> k-mal so viele Träger je Länge, Driftgeschwindigkeit v = I/(n·e·A) nur 1/k. */
+function kOf(e){ return e.cable!=null&&(e.type==='wire'||e.type==='amm')?(S.cableA[e.cable]||1):1; }
+function setCableA(cab,k){ const old=S.cableA[cab]||1; if(old===k) return;
+  S.cableA[cab]=k; S.cables[cab]=S.cables[cab]*old/k; // R = ρ·l/A
+  for(const e of S.edges) if(e.cable===cab) fillEdge(e);
+  rebuildAdj(); solve(); }
 function rebuildAdj(){
   S.adj=S.nodes.map(()=>[]);
   for(const e of S.edges){ S.adj[e.a].push(e); S.adj[e.b].push(e); }
@@ -414,7 +424,7 @@ function splitWire(e,s){
   const f1=e.frac*pA.len/e.path.len, f2=e.frac-f1;
   const e2={type:e.type, a:ni, b:e.b, path:pB, ps:[], pw:[], cr:0, crw:0, I:0, cable:e.cable, frac:f2, meter:e.meter};
   e2.ps=e.ps.filter(v=>v>=s).map(v=>v-s); e2.pw=e.pw.filter(v=>v>=s).map(v=>v-s);
-  e.ps=e.ps.filter(v=>v<s); e.pw=e.pw.filter(v=>v<s);
+  e.ps=e.ps.filter(v=>v<s); e.pw=e.pw.filter(v=>v<s); e2.lo=(e.lo||0)-e.ps.length;
   e.b=ni; e.path=pA; e.frac=f1;
   S.edges.splice(S.edges.indexOf(e)+1,0,e2);
   rebuildAdj();
@@ -614,16 +624,17 @@ function phiAt(e,s){ return S.phi[e.a]+(S.phi[e.b]-S.phi[e.a])*s/e.path.len; }
    übergeben, nach "Guthaben" proportional zum Teilchenfluss. So gilt die Knotenregel Teilchen für Teilchen. */
 function stepParticles(dt, key, crKey, sign){
   let vmax=0;
-  for(const e of S.edges){ e._v=sign*KV*st.tempo*e.I; vmax=Math.max(vmax,Math.abs(e._v)); }
+  const kk=key==='ps'?kOf:()=>1; // Querschnitt nur bei den Ladungsträgern, nicht im Wassermodell
+  for(const e of S.edges){ e._v=sign*KV*st.tempo*e.I/kk(e); vmax=Math.max(vmax,Math.abs(e._v)); }
   const sc=vmax>VCAP?VCAP/vmax:1; S.limited=sc<1;
   for(const e of S.edges){ e._v*=sc; if(Math.abs(e._v)<2e-3) e._v=0; }
-  for(const e of S.edges){ if(e._v){ e[crKey]=Math.min(e[crKey]+Math.abs(e._v)*dt/DSP,4); } }
+  for(const e of S.edges){ if(e._v){ e[crKey]=Math.min(e[crKey]+Math.abs(e._v)*kk(e)*dt/DSP,4*kk(e)); } } // Teilchenfluss = Dichte · v
   const moving=[];
   for(const e of S.edges){
     const v=e._v; if(!v) continue; const arr=e[key], L=e.path.len, keep=[];
     for(const s0 of arr){ const s=s0+v*dt;
       if(s>L) moving.push({node:e.b, over:s-L, from:e, end:L});
-      else if(s<0) moving.push({node:e.a, over:-s, from:e, end:0});
+      else if(s<0){ moving.push({node:e.a, over:-s, from:e, end:0}); if(key==='ps') e.lo=(e.lo||0)-1; }
       else keep.push(s); }
     e[key]=keep;
   }
@@ -644,11 +655,11 @@ function place(node,over,from,end,key,crKey,depth){
     const leaves=(e._v>0&&e.a===node)||(e._v<0&&e.b===node);
     if(leaves&&(!best||e[crKey]>best[crKey])) best=e;
   }
-  if(!best){ from[key].push(end); return; }
+  if(!best){ from[key].push(end); if(key==='ps'&&end===0) from.lo=(from.lo||0)+1; return; }
   best[crKey]-=1;
   const L=best.path.len;
   if(over>L&&depth<8){ place(best._v>0?best.b:best.a, over-L, best, best._v>0?L:0, key, crKey, depth+1); return; }
-  best[key].push(best._v>0?Math.min(over,L):Math.max(L-over,0));
+  best[key].push(best._v>0?Math.min(over,L):Math.max(L-over,0)); if(key==='ps'&&best._v>0) best.lo=(best.lo||0)+1;
 }
 function countParticles(key){ return S.edges.reduce((n,e)=>n+e[key].length,0); }
 
@@ -717,7 +728,7 @@ function labelPos(e,dist){ const f=edgeFrame(e), sd=e.comp?e.comp.side:'left';
 
 /* Kabel/Leitung mit Potenzialfarbe (bei Kabelwiderstand: Farbverlauf) */
 function drawWire(c,e,w,mode){
-  const p=e.path; const water=mode==='water';
+  const p=e.path; const water=mode==='water'; if(!water) w+=(kOf(e)-1)*LANE;
   c.lineCap='round'; c.lineJoin='round';
   c.strokeStyle=water?'#33415c':(st.view==='icon'?'#222':'#20262f'); c.lineWidth=w+(water?6:3); strokePath(c,p);
   for(let i=1;i<p.pts.length;i++){
@@ -763,7 +774,7 @@ function tubeSeg(c,A,B,w,col){
   [a,b]=off(w*0.2); c.strokeStyle='rgba(255,255,255,.6)'; c.lineWidth=w*0.2; lineAB(c,a,b);
 }
 function drawWire3D(c,e,w){
-  const p=e.path;
+  const p=e.path; w+=(kOf(e)-1)*LANE;
   c.save(); shadowOn(c,7,3,5); c.lineCap='round'; c.lineJoin='round'; c.strokeStyle='#1f2937'; c.lineWidth=w+2; strokePath(c,p); c.restore();
   for(let i=1;i<p.pts.length;i++){ const A=p.pts[i-1], B=p.pts[i];
     let col; const v1=phiAt(e,p.cum[i-1]), v2=phiAt(e,p.cum[i]);
@@ -1149,7 +1160,11 @@ function drawParticles(c,water){
     if(!water&&icon&&inside) continue;
     if(!water&&e.type==='src') continue;
     const r=water?3.6:(e.type==='lead'?2.4:3.4);
-    for(const s of e[key]){ const q=pathAt(e.path,s);
+    const k=water?1:kOf(e), lo=e.lo||0, arr=e[key];
+    for(let i=0;i<arr.length;i++){ const q=pathAt(e.path,arr[i]);
+      if(k>1){ // k Träger einer Gruppe nebeneinander zeichnen (gleiche Stelle, verschiedene Spuren)
+        const j=((i-lo)%k+k)%k, d=(j-(k-1)/2)*LANE, q2=pathAt(e.path,arr[i]+((k-1)/2-j)*DSP/k);
+        q.x=q2.x-q2.dy*d; q.y=q2.y+q2.dx*d; }
       if(!water&&icon){ if(tech) sphere(c,q.x,q.y,r+0.6,'#fecaca','#991b1b'); else sphere(c,q.x,q.y,r+0.3,'#bcd3ff','#0b1d4d'); continue; }
       if(water){ c.fillStyle='rgba(255,255,255,.95)'; c.strokeStyle='#1e5aa8'; c.lineWidth=1.2; c.beginPath(); c.arc(q.x,q.y,r,0,7); c.fill(); c.stroke(); }
       else if(tech){ c.fillStyle='#fff'; c.strokeStyle='#7f1d1d'; c.lineWidth=1.3; c.beginPath(); c.arc(q.x,q.y,r+0.6,0,7); c.fill(); c.stroke();
@@ -1798,7 +1813,7 @@ function updateUI(){
   $('uInfo').innerHTML=st.fuse?'<b style="color:#b42318">Sicherung aus</b>':`I = ${fI(src.I)}<br>P = ${fP(powerOf(src))}`;
   $('riVal').textContent=nf(st.Ri,1)+' Ω';
   $('cabVal').textContent=nf(st.cableR,2)+' Ω';
-  $('cabInfo').textContent=st.cableR===0?'ideale Kabel':'gilt für jedes Kabel';
+  $('cabInfo').textContent=st.cableR===0?'ideale Kabel':'je Kabel bei 0,5 mm²';
   renderReadout();
 }
 const TOOLHINT={select:'Bauteil, Kabel oder Verzweigung antippen.',
@@ -1814,7 +1829,7 @@ function renderSel(){
     box.querySelectorAll('[data-m]').forEach(b=>b.addEventListener('click',()=>{ if(!n) return; st.meshI=(st.meshI+(+b.dataset.m)+n)%n; renderSel(); }));
     renderReadout(); return; }
   if(!s){ box.innerHTML='<div class="bh"><span>Auswahl</span></div><div class="small">Tippe auf ein Bauteil, ein Kabel, eine Verzweigung oder ein Messgerät.</div><div id="selRead" style="margin-top:6px"></div>'; renderReadout(); return; }
-  let h='', ctl='';
+  let h='', ctl='', wide=''; // wide: Zeile über die ganze Breite (unter Bedienung und Anzeige)
   if(s.kind==='edge'&&s.e.type==='comp'){ const c=s.e.comp;
     h=c.kind==='D'?'Draht':`${nameHTML(s.e)} · ${KINDNAME[c.kind]}`;
     const opt=(arr,cur)=>arr.map((t,i)=>`<option value="${i}" ${cur===i?'selected':''}>${t}</option>`).join('');
@@ -1829,7 +1844,8 @@ function renderSel(){
     h='Netzgerät'; ctl='<div class="small">Spannung und Innenwiderstand stellst du links ein. Der lange Strich im Schaltsymbol ist der Pluspol.</div><div class="chips"><button class="chip" data-a="pol">⇄ umpolen</button></div>';
   } else if(s.kind==='edge'&&s.e.type==='wire'){
     const R=S.cables[s.e.cable];
-    h='Kabel'; ctl=`<div class="row"><b style="min-width:62px">${nf(R,2)} Ω</b><input type="range" id="wSl" min="0" max="40" value="${Math.round(R*20)}"></div><div class="chips"><button class="chip" data-a="insA">Amperemeter hier einbauen</button><button class="chip" data-a="gnd">Erdung hierher</button></div>`;
+    const kA=S.cableA[s.e.cable]||1;
+    h='Kabel'; ctl=`<div class="row"><b style="min-width:62px">${nf(R,2)} Ω</b><input type="range" id="wSl" min="0" max="40" value="${Math.round(R*20)}"></div><div class="row" style="gap:4px;flex-wrap:nowrap"><span class="small" style="white-space:nowrap">A in mm²</span><div class="seg" style="flex:0 0 auto">${AQ.map((a,i)=>`<button class="${kA===i+1?'on':''}" data-a="qA" data-k="${i+1}" style="min-height:28px;padding:3px 7px">${nf(a,1)}</button>`).join('')}</div></div>`; wide=`<div class="chips"><button class="chip" data-a="insA">Amperemeter hier einbauen</button><button class="chip" data-a="gnd">Erdung hierher</button></div>`;
   } else if(s.kind==='node'){
     h='Verzweigung · Knotenregel'; ctl='<div class="small">Was zufließt, fließt auch wieder ab. Kein Ladungsträger geht verloren.</div>';
   } else if(s.kind==='meter'){ const m=s.m;
@@ -1838,8 +1854,8 @@ function renderSel(){
     ctl=`<div class="chips"><button class="chip red" data-a="del">Entfernen</button>${m.type==='W'?'<button class="chip" data-a="eRes">Energiezähler auf 0</button>':''}</div>`;
     if(m.type==='A') ctl+='<div class="small">Innenwiderstand ≈ 0 Ω</div>'; if(m.type==='V') ctl+='<div class="small">Innenwiderstand 10 MΩ</div>';
   }
-  box.innerHTML=`<div class="bh"><span>${h}</span></div><div id="selBody"><div id="selCtl">${ctl}</div><div id="selRead"></div></div>`;
-  box.querySelectorAll('[data-a]').forEach(b=>b.addEventListener('click',()=>selAction(b.dataset.a)));
+  box.innerHTML=`<div class="bh"><span>${h}</span></div><div id="selBody"><div id="selCtl">${ctl}</div><div id="selRead"></div></div>${wide}`;
+  box.querySelectorAll('[data-a]').forEach(b=>b.addEventListener('click',()=>selAction(b.dataset.a,b)));
   const rs=$('rSl'); if(rs) rs.addEventListener('input',()=>{ s.e.comp.R=RVALUES[+rs.value]; rs.previousElementSibling.textContent=fR(s.e.comp.R); solve(); });
   const on=(id,fn)=>{ const el=$(id); if(el) el.addEventListener(el.tagName==='SELECT'?'change':'input',()=>fn(el)); };
   on('kSel',el=>setKind(s.e,el.value));
@@ -1854,9 +1870,10 @@ function setKind(e,k){ const c=e.comp; c.kind=k; c.burned=false; c.Rl=null; c.T=
   if(k==='Di'&&S.rv&&S.rv!==e&&S.rv.comp.kind==='R'&&S.rv.comp.R<47){ S.rvOld=S.rv.comp.R; S.rv.comp.R=100; flash('Für die Diode ist der Schutzwiderstand jetzt 100 Ω. Ohne ihn wird der Strom schon bei etwa 1 V zu groß.'); }
   else if(k!=='Di'&&S.rvOld!=null&&S.rv&&S.rv.comp.R===100){ S.rv.comp.R=S.rvOld; S.rvOld=null; flash('Der Schutzwiderstand hat wieder '+fR(S.rv.comp.R)+'.'); }
   solve(); renderSel(); }
-function selAction(a){ const s=st.sel;
+function selAction(a,btn){ const s=st.sel;
   if(a==='open'){ s.e.comp.open=!s.e.comp.open; s.e.comp.burned=false; s.e.comp.T=20; solve(); renderSel(); }
   else if(a==='pol'){ flipSource(); }
+  else if(a==='qA'){ setCableA(s.e.cable,+btn.dataset.k); renderSel(); }
   else if(a==='rev'){ const c=s.e.comp; c.rev=!c.rev; c.run=0; c.vd=0.5; solve(); renderSel(); }
   else if(a==='block'){ const c=s.e.comp; c.block=!c.block; c.run=0; solve(); renderSel(); }
   else if(a==='cool'){ const c=s.e.comp; c.cool=!c.cool; c.burned=false; solve(); renderSel(); }
@@ -1907,7 +1924,7 @@ $('tempo').addEventListener('input',()=>{ const v=+$('tempo').value; st.tempo=+M
 $('btnPol').onclick=flipSource;
 $('uSlider').addEventListener('input',()=>{ st.U=+$('uSlider').value/10; solve(); });
 $('riSlider').addEventListener('input',()=>{ st.Ri=+$('riSlider').value/10; solve(); });
-$('cabSlider').addEventListener('input',()=>{ st.cableR=+$('cabSlider').value/20; for(const k in S.cables) S.cables[k]=st.cableR; solve(); if(st.sel&&st.sel.kind==='edge'&&st.sel.e.type==='wire') renderSel(); });
+$('cabSlider').addEventListener('input',()=>{ st.cableR=+$('cabSlider').value/20; for(const k in S.cables) S.cables[k]=st.cableR/(S.cableA[k]||1); solve(); if(st.sel&&st.sel.kind==='edge'&&st.sel.e.type==='wire') renderSel(); });
 function setTool(t){ st.tool=t; document.querySelectorAll('.tool').forEach(x=>x.classList.toggle('on',x.dataset.t===t)); $('toolHint').innerHTML=TOOLHINT[st.tool];
   if(st.tool==='M'){ st.meshI=0; findMeshes(); } else S.meshes=null; renderSel(); }
 document.querySelectorAll('.tool').forEach(b=>b.addEventListener('click',()=>setTool(b.dataset.t)));
