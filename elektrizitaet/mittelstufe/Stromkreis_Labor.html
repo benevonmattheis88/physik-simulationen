@@ -55,7 +55,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .chip{border:1px solid var(--line);background:#f6f8fb;border-radius:8px;padding:4px 8px;font-size:12.5px;min-height:30px}
 .chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .chip.red{border-color:var(--warn);color:var(--warn);background:#fff}
-#tools{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px}
+#tools{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
 .tool{overflow:hidden;white-space:nowrap;border:1px solid var(--line);background:#f6f8fb;border-radius:9px;min-height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10.5px;gap:1px;padding:2px}
 .tool b{font-size:17px;line-height:1}
 .tool.on{background:var(--accent);color:#fff;border-color:var(--accent)}
@@ -129,14 +129,14 @@ body.big #title{font-size:17px}
   #bottom .blk{border-bottom:1px solid var(--line)}
   #bottom .blk:nth-child(3),#bottom .blk:nth-child(4){grid-column:1 / span 2;border-right:0}
   #bottom .blk:nth-child(3){min-height:116px}
-  #tools{grid-template-columns:repeat(6,minmax(0,1fr))}
+  #tools{grid-template-columns:repeat(7,minmax(0,1fr))}
   body .tool{font-size:10px}
   #viewPop{right:6px;width:min(300px,calc(100vw - 12px))}
   #help .cols{grid-template-columns:1fr}
   body.nopanel #app{display:block}
   body.nopanel .scene{min-width:44px}
 }
-@media (max-width:1100px){#bottom{grid-template-columns:176px 108px minmax(0,1fr) 300px}.tool{font-size:9px}#selRead{min-width:100px}.seg button,.tbtn{padding:6px 8px;font-size:12.5px}}
+@media (max-width:1100px){#bottom{grid-template-columns:176px 108px minmax(0,1fr) 320px}.tool{font-size:8.5px;letter-spacing:-.2px;padding:2px 0}#tools{gap:3px}#selRead{min-width:100px}.seg button,.tbtn{padding:6px 8px;font-size:12.5px}}
 @media (orientation:portrait) and (max-width:900px){.seg button,.tbtn{padding:6px 6px;font-size:12px}} /* iPad hochkant: alle Knöpfe in einer Zeile */
 </style>
 </head>
@@ -207,6 +207,7 @@ body.big #title{font-size:17px}
           <button class="tool" data-t="W"><b>W</b>Leistung</button>
           <button class="tool" data-t="G"><b>⏚</b>Erdung</button>
           <button class="tool" data-t="M"><b>↻</b>Masche</button>
+          <button class="tool" data-t="K"><b>●</b>Knoten</button>
         </div>
         <div id="toolHint"></div>
       </div>
@@ -246,7 +247,7 @@ body.big #title{font-size:17px}
   <h3>Was man sieht</h3>
   <ul>
     <li><b>Farbe</b> = elektrisches Potenzial φ. Jede Farbe steht für genau ein Potenzial, 0 V (Erdung) ist grün. Die Skala ist fest und gilt in allen Schaltungen.</li>
-    <li><b>Punkte</b> = Ladungsträger. Kein Teilchen entsteht oder verschwindet. Die Dichte ist überall gleich. In einem Kabel mit gleichem Querschnitt ist das Tempo (Driftgeschwindigkeit) proportional zur Stromstärke. Tippe ein Kabel an, um seinen Querschnitt zu ändern: Bei doppeltem Querschnitt driften doppelt so viele Ladungsträger nebeneinander, jeder nur halb so schnell, die Stromstärke bleibt gleich (I = n · e · A · v). An jedem Knoten fließen genau so viele Teilchen ab, wie zufließen.</li>
+    <li><b>Punkte</b> = Ladungsträger. Kein Teilchen entsteht oder verschwindet. Die Dichte ist überall gleich. In einem Kabel mit gleichem Querschnitt ist das Tempo (Driftgeschwindigkeit) proportional zur Stromstärke. Tippe ein Kabel an, um seinen Querschnitt zu ändern (mit dem Werkzeug „Knoten“ teilst du ein Kabel vorher in zwei): Bei doppeltem Querschnitt driften doppelt so viele Ladungsträger nebeneinander, jeder nur halb so schnell, die Stromstärke bleibt gleich (I = n · e · A · v). An jedem Knoten fließen genau so viele Teilchen ab, wie zufließen.</li>
     <li><b>Lampen realistisch</b>: Der Glühdraht hat kalt etwa ein Zwölftel seines Betriebswiderstands, also gilt das ohmsche Gesetz für Lampen nicht.</li>
     <li><b>Wasserkreis</b> (nach Plappert): Druck ≙ Potenzial, Druckunterschied ≙ Spannung, Wasserstrom ≙ Stromstärke, Engstelle ≙ Widerstand, Turbine ≙ Lampe, Pumpe ≙ Netzgerät. Die Steigrohre zeigen den Druck.</li>
     <li><b>Höhenmodell</b>: Höhe ≙ Potenzial. Das Netzgerät hebt die Ladung an, in den Bauteilen geht es bergab. Gezeigt wird die technische Stromrichtung.</li>
@@ -396,7 +397,8 @@ function fillEdge(e){
 }
 /* Querschnitt: Anzahl der Spuren k eines Kabelstücks (Bauteile und Zuleitungen: 1).
    Gleiche Ladungsträgerdichte je Volumen -> k-mal so viele Träger je Länge, Driftgeschwindigkeit v = I/(n·e·A) nur 1/k. */
-function kOf(e){ return e.cable!=null&&(e.type==='wire'||e.type==='amm')?(S.cableA[e.cable]||1):1; }
+function kOf(e){ return e.cable!=null&&(e.type==='wire'||e.type==='amm'||e.type==='volt')?(S.cableA[e.cable]||1):1; }
+function cableFrac(cab){ return S.edges.reduce((a,e)=>a+(e.cable===cab?(e.frac||0):0),0); }
 function setCableA(cab,k){ const old=S.cableA[cab]||1; if(old===k) return;
   S.cableA[cab]=k; S.cables[cab]=S.cables[cab]*old/k; // R = ρ·l/A
   for(const e of S.edges) if(e.cable===cab) fillEdge(e);
@@ -412,6 +414,16 @@ function flipSource(){ const e=S.edges.find(x=>x.type==='src'); if(!e) return; c
   [e.a,e.b]=[e.b,e.a]; e.path=mkPath([...e.path.pts].reverse()); const L=e.path.len; e.ps=e.ps.map(v=>L-v); e.pw=e.pw.map(v=>L-v);
   if(S.ground===oldMinus) S.ground=e.a;
   rebuildAdj(); solve(); renderSel(); }
+/* Knoten setzen: Kabel an Stelle s teilen; der hintere Teil wird ein eigenes Kabel (gleicher Widerstand je Länge, gleicher Querschnitt) */
+function setKnot(e,s){
+  if(s<14||s>e.path.len-14) return false;
+  const old=e.cable, a0=e.a, b0=e.b, ni=splitWire(e,s); if(ni===a0||ni===b0) return false;
+  const nc=S.nextCable++; S.cables[nc]=S.cables[old]; S.cableA[nc]=S.cableA[old]||1; S.nodes[ni].knot=true;
+  // alle Stücke des alten Kabels hinter dem Knoten umhängen
+  let node=ni, prev=e;
+  for(let guard=0;guard<500;guard++){ const nx=S.adj[node].find(x=>x!==prev&&x.cable===old); if(!nx) break; nx.cable=nc; prev=nx; node=nx.a===node?nx.b:nx.a; }
+  solve(); return true;
+}
 function nodeDegree(i){ return S.adj[i].length; }
 
 /* Kabel an Stelle s teilen; gibt den Knotenindex zurück */
@@ -922,10 +934,10 @@ function drawCircuit(c,V,mode){
   for(const e of S.edges) if(e.type==='amm'||e.type==='volt'){ if(e.meter.mode==='series') D3?drawWire3D(c,e,WW):drawWire(c,e,WW,mode); }
   if(D3){ // Verteilerklemmen und Stecker
     for(let i=0;i<S.nodes.length;i++){ const adj=S.adj[i]; if(!adj.length) continue;
-      if(adj.length>=3) junction3D(c,S.nodes[i],S.phi[i]);
+      if(adj.length>=3||S.nodes[i].knot) junction3D(c,S.nodes[i],S.phi[i]);
       else if(adj.some(e=>e.type==='comp')&&adj.some(e=>e.type!=='comp')) plug3D(c,S.nodes[i],S.phi[i]); }
   } else if(!water){ // Verzweigungspunkte
-    for(let i=0;i<S.nodes.length;i++){ if(nodeDegree(i)>=3){ const n=S.nodes[i];
+    for(let i=0;i<S.nodes.length;i++){ if(nodeDegree(i)>=3||S.nodes[i].knot){ const n=S.nodes[i];
       c.fillStyle='#20262f'; c.beginPath(); c.arc(n.x,n.y,WW*0.95,0,7); c.fill();
       c.fillStyle=st.colors?potColor(S.phi[i]):'#3b4250'; c.beginPath(); c.arc(n.x,n.y,WW*0.95-2,0,7); c.fill(); } }
   }
@@ -1776,6 +1788,8 @@ function tap(x,y){
     if(hitComp(x,y)) flash('In ein Bauteil kann man nichts einbauen. Tippe auf ein Kabel oder ziehe von Punkt zu Punkt.'); return; }
   if(t==='W'){ const e=hitComp(x,y); if(e){ if(S.meters.some(m=>m.mode==='attach'&&m.edge===e)){ flash('Hier misst schon ein Leistungsmesser.'); return; }
       const m={type:'W',mode:'attach',edge:e,E:0,id:Math.random()}; S.meters.push(m); select({kind:'meter',m}); updateUI(); } else flash('Tippe auf ein Bauteil oder das Netzgerät.'); return; }
+  if(t==='K'){ const w=hitWire(x,y); if(w){ if(setKnot(w.edge,w.s)){ setTool('select'); flash('Knoten gesetzt. Tippe ein Kabelstück an, um seinen Querschnitt zu ändern.'); } else flash('Zu nah am Ende des Kabels. Tippe weiter in die Mitte.'); }
+    else flash('Tippe auf ein Kabel.'); return; }
   if(t==='G'){ const h=hitPoint(x,y); if(h){ S.ground=pointNode(h); solve(); } else flash('Tippe auf ein Kabel oder einen Anschluss.'); }
 }
 let flashT=null;
@@ -1797,8 +1811,8 @@ function collectWarnings(){
     if(c.kind==='D'&&c.T>250) w.push({h:`Der Draht ist ${nf(c.T,0)} °C heiß${c.T>500?' und glüht':''}. Sein Widerstand ist dadurch ${c.mat===2?'kaum':'deutlich'} größer.`});
     if(c.kind==='Mo'&&c.block&&powerOf(e)>2) w.push({h:`${nm} ist festgehalten: Ohne Drehung fehlt die Gegenspannung, der Strom ist groß und der Motor wird heiß.`}); }
   for(const m of S.meters){
-    if(m.type==='A'&&m.mode==='parallel') w.push({t:'Amperemeter parallel angeschlossen: Es überbrückt den Abschnitt fast ohne Widerstand.'});
-    if(m.type==='V'&&m.mode==='series') w.push({t:'Voltmeter in Reihe eingebaut: Sein großer Widerstand unterbricht den Stromkreis fast.'}); }
+    if(m.type==='A'&&m.mode==='parallel') w.push({t:'Amperemeter parallel angeschlossen: Es überbrückt den Abschnitt fast ohne Widerstand.',b:'Amperemeter entfernen',f:()=>removeMeter(m)});
+    if(m.type==='V'&&m.mode==='series') w.push({t:'Voltmeter in Reihe eingebaut: Sein großer Widerstand unterbricht den Stromkreis fast.',b:'Voltmeter entfernen',f:()=>removeMeter(m)}); }
   S.warnings=w; renderBanner();
 }
 function renderBanner(){
@@ -1821,7 +1835,8 @@ const TOOLHINT={select:'Bauteil, Kabel oder Verzweigung antippen.',
   V:'Von Punkt zu Punkt ziehen: parallel messen.<br>Kabel antippen: in Reihe.',
   W:'Bauteil oder Netzgerät antippen: Leistung und Energie messen.',
   G:'Punkt antippen: Dort ist φ = 0 V (grün).',
-  M:'Kabel oder Bauteil antippen: Masche wählen. Die Pfeile zeigen den Umlaufsinn.'};
+  M:'Kabel oder Bauteil antippen: Masche wählen. Die Pfeile zeigen den Umlaufsinn.',
+  K:'Kabel antippen: Knoten setzen. Das Kabel wird zu zwei Kabeln, z. B. für verschiedene Querschnitte.'};
 function renderSel(){
   const box=$('selBox'), s=st.sel;
   if(st.tool==='M'){ const n=(S.meshes||[]).length;
@@ -1845,7 +1860,7 @@ function renderSel(){
   } else if(s.kind==='edge'&&s.e.type==='wire'){
     const R=S.cables[s.e.cable];
     const kA=S.cableA[s.e.cable]||1;
-    h='Kabel'; ctl=`<div class="row"><b style="min-width:62px">${nf(R,2)} Ω</b><input type="range" id="wSl" min="0" max="40" value="${Math.round(R*20)}"></div><div class="row" style="gap:4px;flex-wrap:nowrap"><span class="small" style="white-space:nowrap">A in mm²</span><div class="seg" style="flex:0 0 auto">${AQ.map((a,i)=>`<button class="${kA===i+1?'on':''}" data-a="qA" data-k="${i+1}" style="min-height:28px;padding:3px 7px">${nf(a,1)}</button>`).join('')}</div></div>`; wide=`<div class="chips"><button class="chip" data-a="insA">Amperemeter hier einbauen</button><button class="chip" data-a="gnd">Erdung hierher</button></div>`;
+    h='Kabel'; ctl=`<div class="row"><span class="small">R = <b>${nf(R*cableFrac(s.e.cable),2)} Ω</b></span></div><div class="row" style="gap:4px;flex-wrap:nowrap"><span class="small" style="white-space:nowrap" title="Querschnitt A in mm²">A/mm²</span><div class="seg" style="flex:0 0 auto">${AQ.map((a,i)=>`<button class="${kA===i+1?'on':''}" data-a="qA" data-k="${i+1}" style="min-height:28px;padding:3px 5px">${nf(a,1)}</button>`).join('')}</div></div>`; wide=`<div class="chips"><button class="chip" data-a="insA">Amperemeter einbauen</button><button class="chip" data-a="gnd">Erdung hierher</button></div>`;
   } else if(s.kind==='node'){
     h='Verzweigung · Knotenregel'; ctl='<div class="small">Was zufließt, fließt auch wieder ab. Kein Ladungsträger geht verloren.</div>';
   } else if(s.kind==='meter'){ const m=s.m;
@@ -1863,7 +1878,6 @@ function renderSel(){
   on('matSel',el=>{ const c=s.e.comp; c.mat=+el.value; c.burned=false; c.T=20; solve(); renderSel(); });
   on('diSel',el=>{ const c=s.e.comp; c.di=+el.value; c.burned=false; c.T=20; solve(); renderSel(); });
   on('lSl',el=>{ const c=s.e.comp; c.l=+el.value/10; c.burned=false; c.T=20; el.previousElementSibling.textContent=nf(c.l,2)+' m'; solve(); });
-  const ws=$('wSl'); if(ws) ws.addEventListener('input',()=>{ S.cables[s.e.cable]=+ws.value/20; ws.previousElementSibling.textContent=nf(S.cables[s.e.cable],2)+' Ω'; solve(); });
   renderReadout();
 }
 function setKind(e,k){ const c=e.comp; c.kind=k; c.burned=false; c.Rl=null; c.T=20; c.run=0; c.vd=0.5; c.rev=false; c.block=false; c.pts=[];
