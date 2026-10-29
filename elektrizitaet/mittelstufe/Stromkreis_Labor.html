@@ -78,6 +78,11 @@ body.nopanel #meshBox{top:62px;right:auto;left:10px}
 #toolHint{font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.25}
 #viewPop{position:absolute;right:8px;top:4px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.15);padding:10px 12px;z-index:20;display:none;width:300px}
 #viewPop.open{display:block}
+#segSide{display:none} /* iPad quer und Handy: Zusatzansichten im Menü, damit der Titel ganz lesbar bleibt */
+#sidePop{position:absolute;top:4px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.15);padding:6px;z-index:21;display:none;flex-direction:column;gap:4px;min-width:190px}
+#sidePop.open{display:flex}
+#sidePop button{border:1px solid var(--line);background:#f6f8fb;border-radius:9px;min-height:42px;font-size:15px;text-align:left;padding:6px 12px}
+#sidePop button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 #viewPop .vrow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid #eef1f5}
 #viewPop .vrow:last-child{border-bottom:0}
 .sw{width:50px;height:30px;border-radius:15px;background:#cfd6e1;position:relative;border:0;flex:0 0 auto}
@@ -102,10 +107,10 @@ body.nopanel #btnHelp::before{content:"?";font-size:18px}
 body.nopanel #miniU{display:flex}
 #miniU input{width:200px}
 body.big{font-size:16px}
+.tbtn:disabled{opacity:.4}
 body.big .seg button,body.big .tbtn{font-size:15px}
 body.big .big{font-size:24px}
 body.big #title{font-size:17px}
-#portrait{position:fixed;inset:0;background:#1f2a3d;color:#fff;display:none;align-items:center;justify-content:center;text-align:center;font-size:20px;z-index:100;padding:30px}
 /* Hochformat (Smartphone, iPad hochkant): alles untereinander, die Seite scrollt */
 @media (orientation:portrait) and (max-width:900px){
   html,body{height:auto;overflow-x:hidden;overflow-y:auto}
@@ -137,7 +142,17 @@ body.big #title{font-size:17px}
   body.nopanel .scene{min-width:44px}
 }
 @media (max-width:1100px){#bottom{grid-template-columns:176px 108px minmax(0,1fr) 320px}.tool{font-size:8.5px;letter-spacing:-.2px;padding:2px 0}#tools{gap:3px}#selRead{min-width:100px}.seg button,.tbtn{padding:6px 8px;font-size:12.5px}}
-@media (orientation:portrait) and (max-width:900px){.seg button,.tbtn{padding:6px 6px;font-size:12px}} /* iPad hochkant: alle Knöpfe in einer Zeile */
+@media (orientation:portrait) and (max-width:900px){.seg button,.tbtn{padding:6px 5px;font-size:11.5px}#topbar{gap:5px}} /* iPad hochkant: alle Knöpfe in einer Zeile */
+@media (orientation:portrait) and (min-width:641px) and (max-width:900px){#segSide{display:inline-flex}#btnSide{display:none}} /* iPad hochkant wie bisher */
+@media (orientation:portrait) and (max-width:640px){ /* Handy hochkant: obere Leiste bricht um statt seitlich auszulaufen */
+  #topbar{flex-wrap:wrap;height:auto;overflow:visible;row-gap:6px}
+  .seg button,.tbtn{padding:6px 9px;font-size:13px;min-height:36px}
+}
+#rotHint{position:fixed;inset:0;z-index:100;background:rgba(29,39,51,.95);color:#fff;display:none;align-items:center;justify-content:center;text-align:center;padding:20px}
+#rotHint .box{max-width:420px;display:flex;flex-direction:column;align-items:center;gap:14px;font-size:18px}
+#rotHint svg{width:80px;height:80px;stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+#rotHint button{font-size:17px;background:#fff;color:#1d2433;border:0;border-radius:10px;padding:10px 18px;min-height:44px}
+@media (orientation:landscape) and (max-height:500px){body:not(.quer) #rotHint{display:flex}} /* Handy quer: Drehhinweis */
 </style>
 </head>
 <body>
@@ -162,8 +177,9 @@ body.big #title{font-size:17px}
       <div id="title">Stromkreis</div>
       <div class="seg" id="segView"><button data-v="sym" class="on">Symbole</button><button data-v="icon">Bauteile</button></div>
       <div class="seg" id="segSide"><button data-v="off" class="on">Schaltung</button><button data-v="water">+ Wasser</button><button data-v="height">+ Höhe</button><button data-v="energy">+ Energie</button><button data-v="kpk">+ KPK-Energie</button><button data-v="meas">+ Messreihe</button></div>
+      <button class="tbtn" id="btnSide" title="Zusatzansicht wählen">▣ <span id="sideLbl">Schaltung</span> ▾</button>
       <button class="tbtn" id="btnView">⚙ Ansicht</button>
-      <button class="tbtn" id="btnBig" title="Größere Schrift für Fernseher und Beamer">A+</button>
+      <button class="tbtn" id="btnSmall" title="Schrift kleiner">A−</button><button class="tbtn" id="btnBig" title="Schrift größer (Fernseher, Beamer)">A+</button>
       <button class="tbtn" id="btnPanel" title="Bedienfeld ein- oder ausblenden">▤</button>
       <button class="tbtn" id="btnFull" title="Vollbild">⛶</button>
     </div>
@@ -174,6 +190,7 @@ body.big #title{font-size:17px}
       <div id="measBar"><div class="seg" id="measMode"><button data-v="IU" class="on">I über U</button><button data-v="Rl">R über l</button><button data-v="RA">R über A</button></div><button class="chip go" id="mAdd">＋ Messpunkt</button><button class="chip" id="mUndo" title="Letzten Messpunkt löschen">↶</button><button class="chip" id="mClr">✕ alle</button></div>
       <div id="meshBox"></div>
       <div id="miniU"><b style="white-space:nowrap">U<sub>0</sub> = <span id="miniUVal">6,0 V</span></b><input type="range" id="miniUSlider" min="0" max="120" value="60" aria-label="Spannung"></div>
+      <div id="sidePop"></div>
       <div id="viewPop">
         <div class="vrow"><span>Potenzial als Farbe</span><button class="sw on" data-k="colors"></button></div>
         <div class="vrow"><span>Ladungsträger zeigen</span><button class="sw on" data-k="particles"></button></div>
@@ -259,7 +276,11 @@ body.big #title{font-size:17px}
   </div>
   <p style="text-align:right;margin:10px 0 0"><button class="tbtn on" id="helpClose">Schließen</button></p>
 </div></div>
-<div id="portrait">Bitte das iPad ins Querformat drehen.</div>
+<div id="rotHint"><div class="box">
+  <svg viewBox="0 0 64 64"><rect x="20" y="6" width="24" height="42" rx="4"/><path d="M29 42h6"/><path d="M50 30a20 20 0 0 1-12 22M38 52l1-6M38 52l-6-1"/></svg>
+  <div>Bitte das Handy hochkant halten.</div>
+  <button id="rotGo">Trotzdem quer weiter</button>
+</div></div>
 <script>
 'use strict';
 /* ===================== Konstanten ===================== */
@@ -319,7 +340,7 @@ const SCENES = {
 };
 
 /* ===================== Zustand ===================== */
-const st = {scene:'R', view:'sym', side:'off', dir:'t', lampReal:true, colors:true, particles:true,
+const st = {fs:1, scene:'R', view:'sym', side:'off', dir:'t', lampReal:true, colors:true, particles:true,
   energyOverlay:false, phiLabels:false, tempo:1, U:6, Ri:0, cableR:0, tool:'select', sel:null, fuse:false, time:0};
 let S = null; // aktuelle Schaltung
 
@@ -914,7 +935,7 @@ function wattmeter3D(c,F){
 /* ===================== Zeichnen: Schaltung ===================== */
 function drawCircuit(c,V,mode){
   c.setTransform(1,0,0,1,0,0); c.clearRect(0,0,c.canvas.width,c.canvas.height);
-  setT(c,V); FK=Math.min(PORTRAIT()?1.7:9,Math.max(1,0.78/V.sc))*(st.big?1.25:1);
+  setT(c,V); FK=Math.min(PORTRAIT()?1.7:9,Math.max(1,0.78/V.sc))*st.fs;
   const water=mode==='water', D3=is3D(mode);
   if(D3){ // Platte einmal pro Größe vorzeichnen, dann nur noch kopieren
     const key=c.canvas.width+'x'+c.canvas.height+':'+V.sc.toFixed(4);
@@ -1280,7 +1301,7 @@ function drawRubber(c){
 }
 /* Farblegende rechts */
 function drawLegend(c){
-  c.setTransform(DPR,0,0,DPR,0,0); FK=st.big?1.25:1;
+  c.setTransform(DPR,0,0,DPR,0,0); FK=st.fs;
   const W=cv._w, y=cv._h-30, x0=Math.max(70,W*0.12), x1=W-Math.max(30,W*0.06), L=x1-x0;
   const neg=S.phi.some(v=>v<-0.005);
   const vmin=neg?-12:0, vmax=12, xOf=v=>x0+(v-vmin)/(vmax-vmin)*L;
@@ -1377,7 +1398,7 @@ function drawWaterMeter(c,m){
 }
 function drawWaterPanel(){
   const c=sctx; drawCircuit(c,VS,'water');
-  c.setTransform(DPR,0,0,DPR,0,0); FK=st.big?1.25:1;
+  c.setTransform(DPR,0,0,DPR,0,0); FK=st.fs;
   c.fillStyle='#1d2433'; c.font=fnt('700',14,'-apple-system,Arial'); c.textAlign='left'; c.textBaseline='top';
   c.fillText('Wasserstromkreis (nach Plappert)',12,10);
   c.font=fnt('500',12,'-apple-system,Arial'); c.fillStyle='#5d6779';
@@ -1387,7 +1408,7 @@ function drawWaterPanel(){
 
 /* ===================== Energieflussdiagramm (Energie, Pfeilfarbe nach Träger) ===================== */
 function drawEnergyPanel(){
-  const c=sctx, W=side._w, H=side._h; c.setTransform(DPR,0,0,DPR,0,0); FK=st.big?1.25:1; c.clearRect(0,0,W,H);
+  const c=sctx, W=side._w, H=side._h; c.setTransform(DPR,0,0,DPR,0,0); FK=st.fs; c.clearRect(0,0,W,H);
   c.fillStyle='#1d2433'; c.font=fnt('700',14,'-apple-system,Arial'); c.textAlign='left'; c.textBaseline='top';
   c.fillText('Energieflussdiagramm',12,10);
   c.font=fnt('500',12,'-apple-system,Arial'); c.fillStyle='#5d6779'; c.fillText('Pfeilbreite ∝ Energiestromstärke P',12,28);
@@ -1456,7 +1477,7 @@ function flowStripes(c,x0,y0,x1,y1,w){ if(w<=3) return; c.save(); c.strokeStyle=
    erzeugte Träger (Entropie, Licht) verlassen den Umlader als einfacher Pfeil. */
 const KPK={E:'rgba(22,163,74,.88)', Etxt:'#166534', T:'#facc15', Tdash:'#a16207', Ttxt:'#854d0e', U:'#fecaca', Urand:'#dc2626'};
 function drawKpkPanel(){
-  const c=sctx, W=side._w, H=side._h; c.setTransform(DPR,0,0,DPR,0,0); FK=st.big?(W<520?1.12:1.25):1; c.clearRect(0,0,W,H); // schmale Spalte: Schrift etwas weniger vergrößern
+  const c=sctx, W=side._w, H=side._h; c.setTransform(DPR,0,0,DPR,0,0); FK=(W<520?Math.min(st.fs,1.12):st.fs); c.clearRect(0,0,W,H); // schmale Spalte: Schrift etwas weniger vergrößern
   c.fillStyle='#1d2433'; c.font=fnt('700',14,'-apple-system,Arial'); c.textAlign='left'; c.textBaseline='top';
   c.fillText('KPK-Energieflussdiagramm',12,10);
   c.font=fnt('500',12,'-apple-system,Arial'); c.fillStyle='#5d6779'; c.fillText('Pfeilbreite ∝ Energiestromstärke P',12,28);
@@ -1634,7 +1655,7 @@ function hPhi(e,s){ // Zuleitungen eben, das Potenzial ändert sich nur im Baute
   const L=e.path.len, h=e.type==='src'?16:compHalf(e,false), s0=L/2-h, s1=L/2+h, pa=S.phi[e.a], pb=S.phi[e.b];
   if(s<=s0) return pa; if(s>=s1) return pb; return pa+(pb-pa)*(s-s0)/(s1-s0); }
 function drawHeightPanel(){
-  const c=sctx, W=side._w, H=side._h; c.setTransform(DPR,0,0,DPR,0,0); FK=st.big?1.25:1; c.clearRect(0,0,W,H);
+  const c=sctx, W=side._w, H=side._h; c.setTransform(DPR,0,0,DPR,0,0); FK=st.fs; c.clearRect(0,0,W,H);
   c.fillStyle='#1d2433'; c.font=fnt('700',14,'-apple-system,Arial'); c.textAlign='left'; c.textBaseline='top'; c.fillText('Höhenmodell',12,10);
   c.font=fnt('500',12,'-apple-system,Arial'); c.fillStyle='#5d6779'; c.fillText('Höhe ≙ Potenzial φ, Höhenunterschied ≙ Spannung U',12,28);
   const neg=S.phi.some(v=>v<-0.005), vmax=12, vmin=neg?-12:0;
@@ -1695,7 +1716,7 @@ function addPoint(){ const e=measDut(); if(!e) return; const c=e.comp;
   const sg=c.rev?-1:1; c.pts.push({U:sg*uOf(e), I:sg*e.I, mat:c.mat, l:c.l, A:c.kind==='D'?drahtA(c):0}); }
 function niceStep(r,n){ const raw=r/n, p=Math.pow(10,Math.floor(Math.log10(raw))), m=raw/p; return (m<1.5?1:m<3?2:m<7?5:10)*p; }
 function drawMeasPanel(){
-  const c=sctx, W=side._w, H=side._h; c.setTransform(DPR,0,0,DPR,0,0); FK=st.big?1.25:1; c.clearRect(0,0,W,H);
+  const c=sctx, W=side._w, H=side._h; c.setTransform(DPR,0,0,DPR,0,0); FK=st.fs; c.clearRect(0,0,W,H);
   const e=measDut(); if(!e) return; const comp=e.comp, nm=compName(comp), mode=st.measMode, draht=comp.kind==='D';
   c.fillStyle='#1d2433'; richText(c,[[mode==='IU'?'Kennlinie von ':'Widerstand von '],[nm[0]],[nm[1],1]],12,19,14,'left',700);
   c.fillStyle='#5d6779'; richText(c,[[KINDNAME[comp.kind]+': '+compValue(e)]],12,38,11.5,'left',500);
@@ -1927,10 +1948,19 @@ $('help').addEventListener('click',e=>{ if(e.target.id==='help') $('help').class
 function segBind(id,fn){ const el=$(id); el.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{ el.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); fn(b.dataset.v); })); }
 segBind('segView',v=>{st.view=v;});
 function setSide(v){ st.side=v; $('segSide').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.v===v));
+  const sb=$('segSide').querySelector(`[data-v="${v}"]`); $('sideLbl').textContent=sb?sb.textContent.replace(/^\+\s*/,''):''; $('btnSide').classList.toggle('on',v!=='off');
+  $('sidePop').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.v===v));
   $('stage').classList.toggle('withside',v!=='off'); $('stage').classList.toggle('withmeas',v==='meas'); updateMeasBar(); resize(); }
 segBind('segSide',setSide);
 segBind('segDir',v=>{st.dir=v;});
 segBind('segLamp',v=>{st.lampReal=v==='real'; S.edges.forEach(e=>{if(e.comp) e.comp.Rl=null;}); solve();});
+// Menü der Zusatzansichten aus den Knöpfen von segSide aufbauen
+$('sidePop').innerHTML=[...$('segSide').querySelectorAll('button')].map(b=>`<button data-v="${b.dataset.v}" class="${b.classList.contains('on')?'on':''}">${b.textContent}</button>`).join('');
+$('sidePop').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{ setSide(b.dataset.v); $('sidePop').classList.remove('open'); }));
+$('btnSide').onclick=ev=>{ ev.stopPropagation(); const p=$('sidePop'), r=$('btnSide').getBoundingClientRect(), m=$('stage').getBoundingClientRect();
+  p.style.left=Math.max(4,Math.min(r.left-m.left,m.width-210))+'px'; p.style.top=Math.max(4,r.bottom-m.top+4)+'px'; p.classList.toggle('open'); };
+document.addEventListener('pointerdown',ev=>{ const p=$('sidePop'); if(p.classList.contains('open')&&!p.contains(ev.target)&&!$('btnSide').contains(ev.target)) p.classList.remove('open'); });
+$('rotGo').onclick=()=>{ document.body.classList.add('quer'); setTimeout(resize,0); };
 $('btnView').onclick=ev=>{ ev.stopPropagation(); $('viewPop').classList.toggle('open'); $('btnView').classList.toggle('on'); };
 document.addEventListener('pointerdown',ev=>{ const p=$('viewPop'); if(p.classList.contains('open')&&!p.contains(ev.target)&&ev.target.id!=='btnView'){ p.classList.remove('open'); $('btnView').classList.remove('on'); } });
 document.querySelectorAll('.sw').forEach(b=>b.addEventListener('click',()=>{ const k=b.dataset.k; st[k]=!st[k]; b.classList.toggle('on',st[k]); }));
@@ -1947,10 +1977,13 @@ $('mUndo').onclick=()=>{ const e=measDut(); if(e) e.comp.pts.pop(); };
 $('mClr').onclick=()=>{ const e=measDut(); if(e) e.comp.pts=[]; };
 segBind('measMode',v=>{ st.measMode=v; });
 $('btnClear').onclick=()=>{ while(S.meters.length) removeMeter(S.meters[0]); };
-function setBig(on){ st.big=on; document.body.classList.toggle('big',on); $('btnBig').classList.toggle('on',on); savePrefs(); setTimeout(resize,0); }
+const FS=[0.9,1,1.15,1.3,1.5]; // Schriftstufen (Faktor)
+function setFs(f){ st.fs=Math.max(FS[0],Math.min(FS[FS.length-1],f)); st.big=st.fs>1.05; document.body.classList.toggle('big',st.big);
+  $('btnBig').disabled=st.fs>=FS[FS.length-1]; $('btnSmall').disabled=st.fs<=FS[0]; savePrefs(); setTimeout(resize,0); }
+function stepFs(d){ const i=FS.findIndex(v=>Math.abs(v-st.fs)<1e-6); setFs(FS[Math.max(0,Math.min(FS.length-1,(i<0?1:i)+d))]); }
 function setPanel(show){ document.body.classList.toggle('nopanel',!show); $('btnPanel').classList.toggle('on',!show); savePrefs(); setTimeout(resize,0); }
-function savePrefs(){ try{ localStorage.setItem('stromkreislabor',JSON.stringify({big:st.big,nopanel:document.body.classList.contains('nopanel')})); }catch(e){} }
-$('btnBig').onclick=()=>setBig(!st.big);
+function savePrefs(){ try{ localStorage.setItem('stromkreislabor',JSON.stringify({fs:st.fs,nopanel:document.body.classList.contains('nopanel')})); }catch(e){} }
+$('btnBig').onclick=()=>stepFs(1); $('btnSmall').onclick=()=>stepFs(-1);
 $('btnPanel').onclick=()=>setPanel(document.body.classList.contains('nopanel'));
 const FULLHINT='Vollbild ist hier nicht möglich. Tipp: In Safari über „Teilen“ → „Zum Home-Bildschirm“ öffnen.';
 $('btnFull').onclick=()=>{ const d=document, el=d.documentElement;
@@ -1988,7 +2021,7 @@ function frame(now){
 }
 window.addEventListener('resize',resize);
 $('toolHint').innerHTML=TOOLHINT.select;
-try{ const pr=JSON.parse(localStorage.getItem('stromkreislabor')||'{}'); if(pr.big){ st.big=true; document.body.classList.add('big'); $('btnBig').classList.add('on'); } if(pr.nopanel){ document.body.classList.add('nopanel'); $('btnPanel').classList.add('on'); } }catch(e){}
+try{ const pr=JSON.parse(localStorage.getItem('stromkreislabor')||'{}'); if(pr.fs) setFs(+pr.fs); else if(pr.big) setFs(1.3); if(pr.nopanel){ document.body.classList.add('nopanel'); $('btnPanel').classList.add('on'); } }catch(e){}
 loadScene('R'); resize(); requestAnimationFrame(frame);
 
 /* Prüfhilfen (für Tests) */
