@@ -41,6 +41,11 @@
   button:disabled { opacity:.45; cursor:default; }
   select { padding:.35rem .4rem; background:#fff; min-height:2.3rem; max-width:100%; }
   input[type=text] { padding:.4rem .5rem; width:100%; min-height:2.3rem; }
+  input.num { padding:.3rem .4rem; width:6.5rem !important; min-height:2.3rem; font-variant-numeric:tabular-nums; }
+  .qrow { display:flex; align-items:center; gap:6px; }
+  .qrow span:first-child { min-width:0; flex:1 1 auto; font-size:.88rem; line-height:1.2; }
+  .qrow span:last-child { flex:none; }
+  .pfree { display:flex; flex-wrap:wrap; gap:6px; }
   .tabs, .btns { display:flex; gap:6px; }
   .tabs button, .btns button { flex:1; }
   .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
@@ -204,6 +209,8 @@
         <label><input id="cbEta" type="checkbox">Wirkungsgrad</label>
         <label><input id="cbAnim" type="checkbox" checked>Animation</label>
         <label><input id="cbGrid" type="checkbox" checked>Raster</label>
+        <label><input id="cbStrom" type="checkbox">Trägerstromstärke</label>
+        <label><input id="cbDock" type="checkbox">Energie dockt an Träger</label>
       </div>
       <div class="row"><span class="lbl">Maßstab: Pfeilbreite</span><select id="scaleSel" aria-label="Maßstab"></select></div>
     </div>
@@ -217,9 +224,9 @@
       <input type="file" id="fileIn" accept=".json,application/json" class="hidden">
       <details class="small"><summary>Bedienung, Hinweise und Vereinfachungen</summary>
         <div>
-        <b>Bedienung:</b> Bausteine aus der Liste links auf die Fläche ziehen oder antippen. Es wird immer eine Kopie entnommen. Pfeilenden ziehen und an einem Kästchen loslassen: Dann docken sie an und wandern mit. Den Pfeil selbst ziehen biegt ihn. Zwischen zwei Kästchen rastet ein Pfeil gerade ein, wenn das geht. Ein Hin- und ein Rückpfeil desselben Trägers zwischen zwei Kästchen werden automatisch zu einer geschlossenen Schleife. Leere Fläche ziehen verschiebt die Ansicht. Zum Löschen auf den Papierkorb unten links ziehen.<br><br>
+        <b>Bedienung:</b> Bausteine aus der Liste links auf die Fläche ziehen oder antippen. Es wird immer eine Kopie entnommen. Pfeilenden ziehen und an einem Kästchen loslassen: Dann docken sie an und wandern mit. Den Pfeil selbst ziehen biegt ihn. Mit dem Schalter „Energie dockt an Träger“ legt man Energiepfeile auf einen Trägerpfeil, sie laufen dann daneben mit. Zwischen zwei Kästchen rastet ein Pfeil gerade ein, wenn das geht. Ein Hin- und ein Rückpfeil desselben Trägers zwischen zwei Kästchen werden automatisch zu einer geschlossenen Schleife. Leere Fläche ziehen verschiebt die Ansicht. Zum Löschen auf den Papierkorb unten links ziehen.<br><br>
         <b>Farben nach KPK:</b> Energiepfeile grün, Trägerpfeile gelb, Energieumlader rot. Die Breite der Energiepfeile ist proportional zur Energiestromstärke (fester Maßstab, oben links angezeigt). Der Maßstab gilt für das ganze Diagramm.<br><br>
-        <b>Prüfen:</b> Geprüft wird erst auf Knopfdruck: Energiebilanz an jedem Umlader, ob zu jedem Energiepfeil ein Trägerpfeil gehört (gleicher Anfang, gleiches Ende), ob Träger mit Erhaltungsgröße (Elektrizität, Drehimpuls, Impuls, Wasser, Luft, Öl) geschlossen oder wieder hinausgeführt sind, und ob die Träger zum Umlader passen. Bei Aufgaben wird zusätzlich mit einer Musterlösung verglichen. Die Musterlösung ist ein Vorschlag, andere sinnvolle Lösungen sind möglich.<br><br>
+        <b>Prüfen:</b> Geprüft wird erst auf Knopfdruck: Energiebilanz an jedem Umlader, ob zu jedem Energiepfeil ein Trägerpfeil gehört (gleicher Anfang, gleiches Ende), ob Träger mit Erhaltungsgröße (Elektrizität, Drehimpuls, Impuls, Wasser, Luft, Öl) geschlossen oder wieder hinausgeführt sind, ob die Träger zum Umlader passen, ob die Energie in dieselbe Richtung fließt wie ihr Träger, ob ein Umlader wirklich umlädt (anderer Träger hinaus als hinein), ob Entropie nirgends verschwindet und ob Energie nicht ins Leere geht. Mit dem Schalter „Trägerstromstärke“ trägt man am Trägerpfeil Stromstärke und Antrieb ein (z. B. I und U), geprüft wird P = U·I, P = ω·M, P = v·F, P = T·I<sub>S</sub> bzw. P = Δp·I<sub>V</sub>. Bei Aufgaben wird zusätzlich mit einer Musterlösung verglichen. Die Musterlösung ist ein Vorschlag, andere sinnvolle Lösungen sind möglich.<br><br>
         <b>Vereinfachungen:</b> Schall und Funkwellen sind hier eigene Träger (genau genommen sind Schall Impuls und Funkwellen Licht). „Warmes Wasser“ als Träger ist eine Vereinfachung, nach KPK trägt die Entropie die Energie und das Wasser transportiert sie nur. Stoffliche Träger (Brennstoff, Nahrung, Wasserstoff) werden umgewandelt und deshalb offen gezeichnet. Beim Antriebsrad wird nicht gezeigt, woher der Impuls kommt (aus der Erde). Die Zahlenwerte in den Aufgaben sind gerundete Beispielwerte.
         </div>
       </details>
@@ -251,6 +258,17 @@
     oel:{n:"Hydrauliköl", e:1}, brenn:{n:"Brennstoff + Sauerstoff", e:0}, nahrung:{n:"Nahrung + Sauerstoff", e:0},
     h2:{n:"Wasserstoff + Sauerstoff", e:0}, kern:{n:"Kernbrennstoff", e:0}, eigen:{n:"eigener Träger", e:0}
   };
+  // Trägerstromstärke und zugehörige Größe, P = U · I · f (KPK); h: HTML, s: SVG
+  const sub = (b, i) => ({ h:`${b}<sub>${i}</sub>`, s:`${b}<tspan baseline-shift="sub" font-size="75%">${i}</tspan>` });
+  const plain = b => ({ h:b, s:b });
+  const QW = { I:{ n:"Volumenstromstärke", y:sub("I", "V"), u:"L/s" }, U:{ n:"Druckdifferenz", y:plain("Δp"), u:"bar" }, f:100 };
+  const CARQ = {
+    el:{ I:{ n:"Stromstärke", y:plain("I"), u:"A" }, U:{ n:"Spannung", y:plain("U"), u:"V" }, f:1 },
+    dreh:{ I:{ n:"Drehimpulsstromstärke", y:plain("M"), u:"N·m" }, U:{ n:"Winkelgeschwindigkeit", y:plain("ω"), u:"Hz" }, f:1 },
+    imp:{ I:{ n:"Impulsstromstärke", y:plain("F"), u:"N" }, U:{ n:"Geschwindigkeit", y:plain("v"), u:"m/s" }, f:1 },
+    ent:{ I:{ n:"Entropiestromstärke", y:sub("I", "S"), u:"Ct/s" }, U:{ n:"Temperatur", y:plain("T"), u:"K" }, f:1 },
+    wasser:QW, luft:QW, oel:QW
+  };
   // [Name, rein, raus, Beispiele]
   const UM = [
     ["Elektrizität hinein", [
@@ -276,7 +294,7 @@
       ["Druckluftmotor",["luft"],["imp","ent"],"Presslufthammer"], ["Hydraulikzylinder",["oel"],["imp","ent"],"Bagger, Hebebühne"], ["Heizkörper",["wwasser"],["ent"]]
     ]],
     ["Entropie hinein", [
-      ["Dampfturbine",["ent"],["dreh","ent"],"Dampfmaschine"], ["Stirlingmotor",["ent"],["dreh","ent"]], ["Thermogenerator",["ent"],["el","ent"]], ["Glut",["ent"],["licht","ent"],"glühende Herdplatte"]
+      ["Wärmepumpe",["el","ent"],["ent"],"holt Entropie aus der Umgebung"], ["Dampfturbine",["ent"],["dreh","ent"],"Dampfmaschine"], ["Stirlingmotor",["ent"],["dreh","ent"]], ["Thermogenerator",["ent"],["el","ent"]], ["Glut",["ent"],["licht","ent"],"glühende Herdplatte"]
     ]],
     ["Licht, Funkwellen oder Schall hinein", [
       ["Solarzelle",["licht"],["el","ent"]], ["Sonnenkollektor",["licht"],["ent"],"schwarze Fläche"], ["Pflanze",["licht"],["nahrung"],"Fotosynthese"],
@@ -295,7 +313,7 @@
     ["Sonne","quelle",["licht"]], ["Steckdose","quelle",["el"],"Elektrizitätswerk"], ["Batterie","quelle",["el"]],
     ["Akku","speicher",["el"]], ["Stausee","speicher",["wasser"],"Pumpspeicherwerk"], ["Schwungrad","speicher",["dreh"]],
     ["Feder","speicher",["imp"],"Gummiband"], ["Tank","speicher",["brenn"],"Benzin, Gas, Öl"], ["Druckluftflasche","speicher",["luft"]],
-    ["Wärmespeicher","speicher",["ent"]], ["Umgebung","empf",["ent"],"Luft, Erdboden"], ["Haushalte","empf",["el"],"Stadt"], ["Weltall","empf",["licht"]]
+    ["Wärmespeicher","speicher",["ent"]], ["Fahrzeug","speicher",["imp"],"speichert Impuls und Energie"], ["Umgebung","empf",["ent"],"Luft, Erdboden"], ["Haushalte","empf",["el"],"Stadt"], ["Weltall","empf",["licht"]]
   ];
   const KIND = { u:"", quelle:"Quelle", speicher:"Speicher", empf:"Empfänger" };
   const SPEC = {};
@@ -333,13 +351,13 @@
          ["e",0,"mo:b:0.7",[0,150],0.5,{abw:1}],["t","ent","mo:b:0.3",[0,150],0,{abw:1}],
          ["e",0,"v:r:0.3",[180,0],1.2],["t","luft","v:r:0.72",[180,0]],
          ["e",0,"v:b:0.7",[0,150],0.3,{abw:1}],["t","ent","v:b:0.3",[0,150],0,{abw:1}]] },
-    { t:"Auto", scale:50000, txt:"Ein Auto mit Verbrennungsmotor fährt. Baue das Energieflussdiagramm vom Tank bis zu den Antriebsrädern.",
-      n:[["ta","Tank","speicher",150,320],["mo","Verbrennungsmotor","u",470,320],["ra","Antriebsrad","u",800,320]],
+    { t:"Auto", scale:50000, txt:"Ein Auto mit Verbrennungsmotor fährt an. Baue das Energieflussdiagramm vom Tank bis zum Fahrzeug, das schneller wird.",
+      n:[["ta","Tank","speicher",150,320],["mo","Verbrennungsmotor","u",470,320],["ra","Antriebsrad","u",800,320],["fz","Fahrzeug","speicher",1110,320]],
       a:[["e",0,"ta:r:0.3","mo:l:0.3",100000],["t","brenn","ta:r:0.75","mo:l:0.75"],
          ["e",0,"mo:r:0.3","ra:l:0.3",30000],["t","dreh","mo:r:0.8","ra:l:0.8",0,{r:1}],
          ["e",0,"mo:b:0.7",[0,160],70000,{abw:1}],["t","ent","mo:b:0.3",[0,160],0,{abw:1}],
          ["g",0,"mo:t:0.5",[0,-130],0,{gas:1}],
-         ["e",0,"ra:r:0.3",[190,0],28000],["t","imp","ra:r:0.72",[190,0]],
+         ["e",0,"ra:r:0.3","fz:l:0.3",28000],["t","imp","ra:r:0.72","fz:l:0.72"],
          ["e",0,"ra:b:0.7",[0,150],2000,{abw:1}],["t","ent","ra:b:0.3",[0,150],0,{abw:1}]] },
     { t:"Wasserkraftwerk", scale:10, txt:"Ein Wasserkraftwerk am Stausee versorgt eine LED-Lampe (Zahlen pro Lampe). Baue das Energieflussdiagramm vom Stausee bis zum Licht.",
       n:[["st","Stausee","speicher",120,320],["tu","Wasserturbine","u",420,320],["g","Generator","u",720,320],["l","LED-Lampe","u",1010,320]],
@@ -375,7 +393,7 @@
   const U = { sel:null, Z:1, VX:0, VY:0, fs:1, look:"3d", mode:"frei", task:null, flags:new Set(), drag:null, dockPreview:null, hist:[], hi:-1 };
   const sv = $("sv");
   const byId = id => D.nodes.find(n => n.id === id) || D.arrows.find(a => a.id === id);
-  const opt = () => ({ abw:$("cbAbw").checked, gas:$("cbGas").checked, eta:$("cbEta").checked, anim:$("cbAnim").checked, grid:$("cbGrid").checked });
+  const opt = () => ({ abw:$("cbAbw").checked, gas:$("cbGas").checked, eta:$("cbEta").checked, anim:$("cbAnim").checked, grid:$("cbGrid").checked, strom:$("cbStrom").checked, dock:$("cbDock").checked });
 
   /* ---------- Hilfen ---------- */
   const fmtNum = (v, d) => v.toLocaleString("de-DE", { maximumFractionDigits:d });
@@ -409,7 +427,17 @@
   /* ---------- Geometrie ---------- */
   const aw = a => a.k === "e" ? Math.max(3, a.P / D.scale * UNIT) : a.k === "t" ? 10 : 8;
   let SZ = new Map();
+  // Energiepfeile, die an einem Trägerpfeil hängen, übernehmen dessen Anfang und Ende
+  function syncAttached() {
+    for (const e of D.arrows) {
+      if (e.k !== "e" || !e.on) continue;
+      const t = D.arrows.find(x => x.id === e.on && x.k === "t");
+      if (!t) { delete e.on; continue; }
+      e.a = { ...t.a }; e.b = { ...t.b };
+    }
+  }
   function layout() {
+    syncAttached();
     SZ = new Map();
     const o = opt();
     for (const n of D.nodes) {
@@ -468,6 +496,14 @@
     return [ea, eb];
   }
   function geom(a) {
+    if (a.k === "e" && a.on) {
+      const t = D.arrows.find(x => x.id === a.on);
+      if (t) {
+        const g = geom(t), w = aw(a), d = w / 2 + 9, off = p => ({ x:p.x - g.n.x * d, y:p.y - g.n.y * d });
+        const c = off(g.c);
+        return { p0:off(g.p0), p1:off(g.p1), c, cc:c, n:g.n, w };
+      }
+    }
     const [ea, eb] = effEnds(a);
     let p0 = endPos(ea), p1 = endPos(eb);
     const dx = p1.x - p0.x, dy = p1.y - p0.y, len = Math.hypot(dx, dy) || 1;
@@ -509,6 +545,7 @@
     return Math.hypot(x.x - y.x, x.y - y.y) < 150;
   }
   function carrierFor(e) {
+    if (e.on) { const t = D.arrows.find(x => x.id === e.on); if (t) return t; }
     return D.arrows.find(t => t.k === "t" && ((sameEnd(t.a, e.a) && sameEnd(t.b, e.b)) || (t.r && sameEnd(t.a, e.b) && sameEnd(t.b, e.a))));
   }
   function effi(n) {
@@ -577,6 +614,13 @@
       } else {
         const off = (a.r ? GAP / 2 : 0) + g.w / 2 + s * 0.85, x = m.x + g.n.x * off, y = m.y + g.n.y * off + s * 0.35;
         out.push(`<text class="lab" x="${x}" y="${y}" text-anchor="${anc(g.n.x)}" fill="${a.k === "t" ? "#6b5200" : "#4b535c"}">${esc(a.k === "t" ? carName(a) : "Abgase")}</text>`);
+        const Q = a.k === "t" && o.strom && CARQ[a.c];
+        if (Q && (a.qI != null || a.qU != null)) {
+          const parts = [];
+          if (a.qI != null) parts.push(`${Q.I.y.s} = ${fmtNum(a.qI, 3)} ${Q.I.u}`);
+          if (a.qU != null) parts.push(`${Q.U.y.s} = ${fmtNum(a.qU, 3)} ${Q.U.u}`);
+          out.push(`<text class="lab" x="${x}" y="${y + s * 1.15}" text-anchor="${anc(g.n.x)}" fill="#6b5200" style="font-weight:500">${parts.join(" · ")}</text>`);
+        }
       }
       out.push(`</g>`);
     }
@@ -594,7 +638,7 @@
       out.push(`</g>`);
     }
     // Griffe des gewählten Pfeils
-    const sa = !exp && U.sel && D.arrows.find(a => a.id === U.sel);
+    const sa = !exp && U.sel && D.arrows.find(a => a.id === U.sel && !a.on);
     if (sa) {
       const g = geom(sa), m = qpt(g.p0, g.cc, g.p1, 0.5), r = 12 / Math.max(.6, Math.min(U.Z, 1.4));
       for (const [part, p, col] of [["a", g.p0, "#fff"], ["b", g.p1, "#fff"], ["m", m, "#e8eef6"]]) {
@@ -643,6 +687,7 @@
   /* ---------- Verlauf, Speichern ---------- */
   const snapShot = () => JSON.stringify(D);
   function commit() {
+    autoAttach();
     const s = snapShot();
     if (U.hist[U.hi] === s) return;
     U.hist = U.hist.slice(0, U.hi + 1); U.hist.push(s);
@@ -662,10 +707,43 @@
     let merged = false;
     for (const x of D.arrows) {
       if (x.k !== "t" || x.r || !x.a.n || !x.b.n) continue;
-      const y = D.arrows.find(y => y !== x && y.k === "t" && !y.r && carKey(y) === carKey(x) && y.a.n === x.b.n && y.b.n === x.a.n);
-      if (y) { x.r = true; D.arrows = D.arrows.filter(z => z !== y); if (U.sel === y.id) U.sel = x.id; merged = true; break; }
+      let y = D.arrows.find(y => y !== x && y.k === "t" && !y.r && carKey(y) === carKey(x) && y.a.n === x.b.n && y.b.n === x.a.n);
+      if (y) {
+        const hasE = t => D.arrows.some(e => e.k === "e" && e.on === t.id);
+        let keep = x;
+        if (hasE(y) && !hasE(x)) { keep = y; y = x; }
+        for (const e of D.arrows) if (e.on === y.id) delete e.on;   // Energie am weggefallenen Pfeil wird wieder frei
+        keep.r = true; D.arrows = D.arrows.filter(z => z !== y); if (U.sel === y.id) U.sel = keep.id; merged = true; break;
+      }
     }
     return merged ? (mergeLoops(), true) : false;
+  }
+
+  // Schalter „Energie dockt an Träger“: passende Energiepfeile hängen sich an ihren Trägerpfeil
+  function nearCarrier(w) {
+    let best = null;
+    for (const t of D.arrows) {
+      if (t.k !== "t" || D.arrows.some(e => e.on === t.id)) continue;
+      const g = geom(t);
+      for (let i = 0; i <= 24; i++) {
+        const q = qpt(g.p0, g.cc, g.p1, i / 24), d = Math.hypot(q.x - w.x, q.y - w.y);
+        if (d < 45 && (!best || d < best.d)) best = { t, d };
+      }
+    }
+    return best && best.t;
+  }
+  function autoAttach() {
+    if (!opt().dock) return;
+    layout();
+    for (const e of D.arrows) {
+      if (e.k !== "e" || e.on) continue;
+      const t = D.arrows.find(t => t.k === "t" && !D.arrows.some(x => x.on === t.id) &&
+        ((sameEnd(t.a, e.a) && sameEnd(t.b, e.b)) || (t.r && sameEnd(t.a, e.b) && sameEnd(t.b, e.a))));
+      if (!t) continue;
+      if (!(sameEnd(t.a, e.a) && sameEnd(t.b, e.b))) { const h = t.a; t.a = t.b; t.b = h; }   // Schleife: Hinweg in Energierichtung
+      e.on = t.id;
+    }
+    syncAttached();
   }
 
   /* ---------- Bausteine anlegen ---------- */
@@ -681,6 +759,10 @@
     if (it.type === "node") {
       obj = { id:nid(), name:it.name, kind:it.kind, x:snap(wx), y:snap(wy) };
       D.nodes.push(obj);
+    } else if (it.k === "e" && opt().dock && (layout(), nearCarrier({ x:wx, y:wy }))) {
+      const t = nearCarrier({ x:wx, y:wy });
+      obj = { id:nid(), k:"e", a:{ ...t.a }, b:{ ...t.b }, bend:0, P:D.scale, on:t.id };
+      D.arrows.push(obj);
     } else {
       layout();
       const inside = D.nodes.find(n => { const z = SZ.get(n.id); return Math.abs(wx - n.x) < z.w / 2 && Math.abs(wy - n.y) < z.h / 2; });
@@ -700,6 +782,7 @@
     U.sel = obj.id; render(); renderSel(); commit();
   }
   function removeObj(id) {
+    for (const e of D.arrows) if (e.on === id) delete e.on;
     const n = D.nodes.find(x => x.id === id);
     if (n) {
       layout();
@@ -712,7 +795,7 @@
   function copyObj(id) {
     const o = byId(id); if (!o) return;
     layout();
-    const c = JSON.parse(JSON.stringify(o)); c.id = nid();
+    const c = JSON.parse(JSON.stringify(o)); c.id = nid(); delete c.on;
     if (c.kind) { c.x += 40; c.y += 40; D.nodes.push(c); }
     else { for (const k of ["a", "b"]) { const p = endPos(o[k]); c[k] = { x:p.x + 40, y:p.y + 40 }; } D.arrows.push(c); }
     U.sel = c.id; changed(); render(); renderSel(); commit();
@@ -724,8 +807,8 @@
     const grp = (title, open, inner) => `<details class="grp"${open ? " open" : ""}><summary>${title}</summary>${inner}</details>`;
     const items = arr => `<div class="items">${arr.join("")}</div>`;
     const tItems = Object.keys(CAR).map(c => `<div class="pi t" data-it='${JSON.stringify({ type:"arrow", k:"t", c })}'>${esc(CAR[c].p || CAR[c].n)}</div>`);
-    let html = grp("Trägerpfeile", true, items(tItems));
-    html += grp("Energiepfeil", true, items([`<div class="pi e" data-it='{"type":"arrow","k":"e"}'>Energie</div>`].concat(o.gas ? [`<div class="pi g" data-it='{"type":"arrow","k":"g"}'>Abgase</div>`] : [])));
+    let html = `<div class="pfree"><div class="pi e" data-it='{"type":"arrow","k":"e"}'>Energiepfeil</div>${o.gas ? `<div class="pi g" data-it='{"type":"arrow","k":"g"}'>Abgase</div>` : ""}</div>`;
+    html += grp("Trägerpfeile", true, items(tItems));
     const sub = UM.map(([t, list]) => `<details class="sub"><summary>${esc(t)}</summary><div class="items">${list.map(([n, , , h]) =>
       `<div class="pi u" data-it='${JSON.stringify({ type:"node", name:n, kind:"u" })}'>${esc(n)}${h ? `<small>${esc(h)}</small>` : ""}</div>`).join("")}</div></details>`).join("");
     html += grp("Energieumlader", false, `<div class="items">${sub}<div class="pi u" data-it='{"type":"node","name":"Eigener Umlader","kind":"u"}'>Eigener Umlader<small>Text selbst eingeben</small></div></div>`);
@@ -793,6 +876,7 @@
     if (part === "node") U.drag = { mode:"node", id, ox:o.x - w.x, oy:o.y - w.y };
     else if (part === "a" || part === "b") U.drag = { mode:"end", id, end:part };
     else if (part === "m") U.drag = { mode:"bend", id };
+    else if (o.on) U.drag = { mode:"sel", id };
     else {
       layout();
       const free = !o.a.n && !o.b.n;
@@ -814,7 +898,7 @@
     if (!d.moved) { d.moved = true; if (d.mode !== "pan") changed(); }
     const w = toWorld(e.clientX, e.clientY);
     if (d.mode === "pan") { U.VX = d.vx - (e.clientX - d.sx) / U.Z; U.VY = d.vy - (e.clientY - d.sy) / U.Z; render(); return; }
-    const o = byId(d.id); if (!o) return;
+    const o = byId(d.id); if (!o || d.mode === "sel") return;
     if (d.mode === "node") {
       const nx = snap(w.x + d.ox), ny = snap(w.y + d.oy), dx = nx - o.x, dy = ny - o.y;
       o.x = nx; o.y = ny;
@@ -852,6 +936,11 @@
     if (!d.moved) return;
     const o = byId(d.id);
     if ((d.mode === "node" || d.mode === "move") && overTrash(e)) { removeObj(d.id); return; }
+    if (d.mode === "move" && o && o.k === "e" && opt().dock) {
+      layout();
+      const t = nearCarrier(qpt(endPos(o.a), endPos(o.a), endPos(o.b), 0.5));
+      if (t) { o.on = t.id; syncAttached(); }
+    }
     if (d.mode === "end" && o) {
       if (d.dk) o[d.end] = { n:d.dk.n, s:d.dk.s, t:Math.round(d.dk.t * 100) / 100 };
       else {
@@ -877,24 +966,35 @@
   });
 
   /* ---------- Auswahl bearbeiten ---------- */
+  const num = t => { const v = parseFloat(String(t).trim().replace(/\.(?=\d{3}(\D|$))/g, "").replace(",", ".")); return isFinite(v) ? v : NaN; };
+  function pUnit() { const v = D.scale; return v >= 1e9 ? [1e9, "GW"] : v >= 1e6 ? [1e6, "MW"] : v >= 1e3 ? [1e3, "kW"] : [1, "W"]; }
   function renderSel() {
     const B = $("selbox"), o = U.sel && byId(U.sel);
     if (!o) { B.innerHTML = `<div class="small">Tippe einen Baustein auf der Fläche an, um ihn zu bearbeiten.</div>`; return; }
-    const btns = `<div class="btns">${o.kind ? "" : `<button id="sFlip">Umdrehen</button>`}<button id="sCopy">Kopie</button><button id="sDel">Löschen</button></div>`;
+    const btns = `<div class="btns">${o.kind || o.on ? "" : `<button id="sFlip">Umdrehen</button>`}<button id="sCopy">Kopie</button><button id="sDel">Löschen</button></div>`;
     let h = "";
     if (o.kind) {
       h = `<div class="titel">${o.kind === "u" ? "Energieumlader" : KIND[o.kind]}</div>
         <input type="text" id="sName" value="${esc(o.name)}" aria-label="Beschriftung">`;
       if (opt().eta && o.kind === "u") { const e = effi(o); h += `<div class="small">Wirkungsgrad η = ${e == null ? "noch nicht berechenbar (Energiepfeile und Träger fehlen)" : fmtNum(Math.round(e * 100), 0) + " %"}</div>`; }
     } else if (o.k === "e") {
+      const t = o.on && byId(o.on);
       h = `<div class="titel">Energiepfeil</div>
         <div class="par"><div class="head"><span>Energiestromstärke P</span><output id="sPout">${fmtP(o.P)}</output></div>
-        <div class="line"><button id="sPm">−</button><input type="range" id="sP" min="0" max="8" step="0.05" value="${o.P / D.scale}"><button id="sPp">+</button></div></div>`;
+        <div class="line"><button id="sPm">−</button><input type="range" id="sP" min="0" max="8" step="0.01" value="${o.P / D.scale}"><button id="sPp">+</button></div>
+        <div class="qrow"><span class="small">genau eintippen:</span><input type="text" class="num" id="sPnum" inputmode="decimal" value="${fmtNum(+(o.P / pUnit()[0]).toPrecision(6), 6)}"><span>${pUnit()[1]}</span></div></div>
+        ${t ? `<div class="small">Hängt am Trägerpfeil ${esc(carName(t))}.</div><button id="sLoes">Vom Trägerpfeil lösen</button>` : ""}`;
     } else if (o.k === "t") {
       h = `<div class="titel">Trägerpfeil</div>
         <select id="sCar" aria-label="Träger">${Object.keys(CAR).map(c => `<option value="${c}"${c === o.c ? " selected" : ""}>${esc(CAR[c].p || CAR[c].n)}</option>`).join("")}</select>
         ${o.c === "eigen" ? `<input type="text" id="sCname" placeholder="Name des Trägers" value="${esc(o.cname || "")}"><label class="chk small"><input type="checkbox" id="sCerh"${o.cerh ? " checked" : ""}> hat eine Erhaltungsgröße</label>` : ""}
         <label class="chk"><input type="checkbox" id="sRueck"${o.r ? " checked" : ""}> Rückweg (geschlossene Schleife)</label>`;
+      const Q = opt().strom && CARQ[o.c];
+      if (Q) {
+        const row = (k, q) => `<div class="qrow"><span>${q.n} ${q.y.h}</span><input type="text" class="num" id="sQ${k}" inputmode="decimal" value="${o["q" + k] == null ? "" : fmtNum(o["q" + k], 6)}"><span>${q.u}</span></div>`;
+        const P = o.qI != null && o.qU != null ? o.qI * o.qU * Q.f : null;
+        h += row("I", Q.I) + row("U", Q.U) + `<div class="small" id="sQP">P = ${Q.U.y.h} · ${Q.I.y.h}${P == null ? "" : " = " + fmtP(P)}</div>`;
+      }
     } else h = `<div class="titel">Abgase</div><div class="small">Stoffpfeil ohne Energie (CO<sub>2</sub>, Wasserdampf).</div>`;
     B.innerHTML = h + btns;
     const on = (id, ev, f) => { const el = $(id); if (el) el.addEventListener(ev, f); };
@@ -903,11 +1003,27 @@
     on("sFlip", "click", () => { const t = o.a; o.a = o.b; o.b = t; changed(); mergeLoops(); render(); renderSel(); commit(); });
     on("sName", "input", e => { o.name = e.target.value; render(); });
     on("sName", "change", () => { changed(); commit(); });
-    const setP = v => { o.P = Math.max(0, Math.round(v * 20) / 20) * D.scale; $("sP").value = o.P / D.scale; $("sPout").textContent = fmtP(o.P); render(); };
+    // Regler in Hundertstel-Einheiten, Knöpfe in Zwanzigstel (bei 10 W je Einheit: 0,5 W), Zahl beliebig genau
+    const setP = (v, fromNum) => {
+      o.P = fromNum ? Math.max(0, v) : Math.max(0, Math.round(v * 100) / 100) * D.scale;
+      $("sP").value = o.P / D.scale; $("sPout").textContent = fmtP(o.P);
+      if (!fromNum) $("sPnum").value = fmtNum(+(o.P / pUnit()[0]).toPrecision(6), 6);
+      render();
+    };
     on("sP", "input", e => { changed(); setP(+e.target.value); });
     on("sP", "change", commit);
-    on("sPm", "click", () => { changed(); setP(o.P / D.scale - 0.1); commit(); });
-    on("sPp", "click", () => { changed(); setP(Math.min(8, o.P / D.scale + 0.1)); commit(); });
+    on("sPm", "click", () => { changed(); setP(Math.round((o.P / D.scale - 0.05) * 20) / 20); commit(); });
+    on("sPp", "click", () => { changed(); setP(Math.round((o.P / D.scale + 0.05) * 20) / 20); commit(); });
+    on("sPnum", "input", e => { const v = num(e.target.value); if (isFinite(v)) { changed(); setP(v * pUnit()[0], true); } });
+    on("sPnum", "change", commit);
+    on("sLoes", "click", () => { delete o.on; changed(); render(); renderSel(); commit(); });
+    for (const k of ["I", "U"]) on("sQ" + k, "input", e => {
+      const v = num(e.target.value);
+      o["q" + k] = isFinite(v) ? v : null; changed(); render();
+      const Q = CARQ[o.c], P = o.qI != null && o.qU != null ? o.qI * o.qU * Q.f : null;
+      $("sQP").innerHTML = `P = ${Q.U.y.h} · ${Q.I.y.h}${P == null ? "" : " = " + fmtP(P)}`;
+    });
+    for (const k of ["I", "U"]) on("sQ" + k, "change", commit);
     on("sCar", "change", e => { o.c = e.target.value; if (o.c === "eigen" && o.cname == null) { o.cname = ""; o.cerh = false; } changed(); mergeLoops(); render(); renderSel(); commit(); });
     on("sCname", "input", e => { o.cname = e.target.value; render(); });
     on("sCname", "change", () => { changed(); commit(); });
@@ -925,14 +1041,32 @@
     const E = D.arrows.filter(a => a.k === "e"), T = D.arrows.filter(a => a.k === "t");
     if (!D.nodes.length && !D.arrows.length) { show([["warn", "Die Fläche ist noch leer."]], flags); return; }
     for (const a of D.arrows) if (!a.a.n && !a.b.n) warn((a.k === "e" ? "Ein Energiepfeil" : a.k === "t" ? "Der Trägerpfeil " + carName(a) : "Der Abgas-Pfeil") + " hängt ganz frei. Dock mindestens ein Ende an ein Kästchen an.", [a.id]);
-    for (const e of E) if (!carrierFor(e)) err("Zu einem Energiepfeil" + (e.a.n ? " aus " + nodeName(e.a.n) : "") + (e.b.n ? " nach " + nodeName(e.b.n) : "") + " fehlt der Trägerpfeil. Energie fließt nie allein, sie braucht immer einen Träger (Trägerpfeil mit gleichem Anfang und gleichem Ende).", [e.id]);
+    for (const e of E) if (!carrierFor(e) && D.arrows.some(t => t.k === "t" && !t.r && sameEnd(t.a, e.b) && sameEnd(t.b, e.a)))
+      err("Ein Energiepfeil" + (e.a.n ? " aus " + nodeName(e.a.n) : "") + " zeigt in die andere Richtung als sein Trägerpfeil. Die Energie fließt immer in dieselbe Richtung wie ihr Träger.", [e.id]);
+    else if (!carrierFor(e)) err("Zu einem Energiepfeil" + (e.a.n ? " aus " + nodeName(e.a.n) : "") + (e.b.n ? " nach " + nodeName(e.b.n) : "") + " fehlt der Trägerpfeil. Energie fließt nie allein, sie braucht immer einen Träger (Trägerpfeil mit gleichem Anfang und gleichem Ende).", [e.id]);
     for (const t of T) if (t.c === "eigen" && !(t.cname || "").trim()) warn("Ein eigener Trägerpfeil hat noch keinen Namen.", [t.id]);
+    // Energie geht nicht ins Leere: offen enden darf sie nur mit Trägern, die in die Umgebung gehen
+    const OFFEN = ["ent", "licht", "funk", "schall", "luft", "wasser", "eigen"];
+    for (const e of E) {
+      if (e.b.n) continue;
+      const t = carrierFor(e);
+      if (t && !OFFEN.includes(t.c)) err("Energie mit " + carName(t) + (e.a.n ? " aus " + nodeName(e.a.n) : "") + " geht ins Leere. Wer bekommt sie? Zeichne einen Energieumlader, Speicher oder Empfänger ans Ende.", [e.id]);
+    }
+    // Trägerstromstärke: P = U · I (bzw. ω · M, v · F, T · I_S, Δp · I_V)
+    if (o.strom) for (const e of E) {
+      const t = carrierFor(e), Q = t && CARQ[t.c];
+      if (!Q) continue;
+      if (t.qI == null || t.qU == null) { warn("Beim Trägerpfeil " + carName(t) + (t.a.n ? " aus " + nodeName(t.a.n) : "") + " fehlen noch " + Q.I.n + " " + Q.I.y.h + " und " + Q.U.n + " " + Q.U.y.h + ".", [t.id]); continue; }
+      const Pc = t.qI * t.qU * Q.f;
+      if (Math.abs(Pc - e.P) > Math.max(e.P * 0.02, D.scale * 0.01))
+        err("Energiestromstärke und Trägerstrom passen nicht zusammen: " + Q.U.y.h + " · " + Q.I.y.h + " = " + fmtNum(t.qU, 3) + " " + Q.U.u + " · " + fmtNum(t.qI, 3) + " " + Q.I.u + " = " + fmtP(Pc) + ", am Energiepfeil stehen " + fmtP(e.P) + ".", [e.id, t.id]);
+    }
     let bilanzHinweis = false;
     for (const n of D.nodes) {
       const ins = E.filter(a => a.b.n === n.id), outs = E.filter(a => a.a.n === n.id);
       const pin = ins.reduce((s, a) => s + a.P, 0), pout = outs.reduce((s, a) => s + a.P, 0), nm = nodeName(n.id);
       // Erhaltungsgrößen
-      const keys = new Set(T.filter(t => (t.a.n === n.id || t.b.n === n.id) && carErh(t)).map(carKey));
+      const keys = new Set(n.kind === "speicher" ? [] : T.filter(t => (t.a.n === n.id || t.b.n === n.id) && carErh(t)).map(carKey));
       for (const k of keys) {
         const tin = T.filter(t => carKey(t) === k && t.b.n === n.id && !t.r), tout = T.filter(t => carKey(t) === k && t.a.n === n.id && !t.r);
         if (tin.length && !tout.length) err(carName(tin[0]) + " fließt in " + nm + " hinein, aber nicht wieder heraus. " + carName(tin[0]) + " hat eine Erhaltungsgröße und geht nicht verloren: Zeichne eine geschlossene Schleife (Rückweg) oder führe den Träger wieder hinaus.", [n.id, ...tin.map(t => t.id)]);
@@ -959,6 +1093,14 @@
             else bilanzHinweis = true;
           }
         }
+        // Entropie kann erzeugt, aber nie vernichtet werden
+        if (T.some(t => t.c === "ent" && t.b.n === n.id) && !T.some(t => t.c === "ent" && t.a.n === n.id))
+          err("Entropie fließt in " + nm + " hinein, aber keine heraus. Entropie kann erzeugt, aber nie vernichtet werden.", [n.id]);
+        // Ein Energieumlader lädt Energie auf einen anderen Träger um
+        const cin = new Set(T.filter(t => t.b.n === n.id).map(carKey)), cout = new Set(T.filter(t => t.a.n === n.id).map(carKey).filter(c => c !== "ent"));
+        const gleich = sp && sp.raus.some(c => c !== "ent" && sp.rein.includes(c));
+        if (cin.size && cout.size && [...cout].every(c => cin.has(c)) && !gleich)
+          warn(nm + " gibt die Energie mit demselben Träger weiter, mit dem sie ankommt. Ein Energieumlader lädt die Energie auf einen anderen Träger um (Ausnahmen: Transformator, Getriebe).", [n.id]);
         if (o.abw && (pin > 0 || ins.length) && !(sp && !sp.raus.includes("ent")) && !T.some(t => t.c === "ent" && t.a.n === n.id))
           warn("Bei " + nm + " fehlt die Abwärme (Trägerpfeil Entropie, der herauskommt).", [n.id]);
         if (o.gas && T.some(t => t.c === "brenn" && t.b.n === n.id) && !D.arrows.some(a => a.k === "g" && a.a.n === n.id))
@@ -1126,9 +1268,10 @@
   $("aufLeer").onclick = () => U.task != null && loadTask(U.task, "leer");
   $("aufLuecke").onclick = () => U.task != null && loadTask(U.task, "luecke");
   $("aufLsg").onclick = () => U.task != null && loadTask(U.task, "lsg");
-  for (const id of ["cbAbw", "cbGas", "cbEta", "cbAnim", "cbGrid"]) $(id).addEventListener("change", () => {
+  for (const id of ["cbAbw", "cbGas", "cbEta", "cbAnim", "cbGrid", "cbStrom", "cbDock"]) $(id).addEventListener("change", () => {
     store.set("kpkbau_" + id, $(id).checked ? "1" : "0");
     if (id === "cbGas") buildPalette();
+    if (id === "cbDock" && $(id).checked) { autoAttach(); commit(); }
     changed(); render(); renderSel();
   });
   function setFs(v) {
@@ -1159,7 +1302,7 @@
   if (window.ResizeObserver) new ResizeObserver(resize).observe(sv);
 
   /* ---------- Start ---------- */
-  for (const id of ["cbAbw", "cbGas", "cbEta", "cbAnim", "cbGrid"]) { const v = store.get("kpkbau_" + id); if (v != null) $(id).checked = v === "1"; }
+  for (const id of ["cbAbw", "cbGas", "cbEta", "cbAnim", "cbGrid", "cbStrom", "cbDock"]) { const v = store.get("kpkbau_" + id); if (v != null) $(id).checked = v === "1"; }
   U.look = store.get("kpkbau_look") === "sym" ? "sym" : "3d"; $("look").textContent = U.look === "3d" ? "Schlicht" : "Plastisch";
   buildPalette(); buildTasks();
   try { const s = store.get("kpkbau_diagramm"); if (s) { const j = JSON.parse(s); if (j && Array.isArray(j.nodes)) D = j; } } catch (e) {}
