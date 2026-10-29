@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Bewegungsdiagramme: t-s, t-v und t-a</title>
+<style>
+  :root { --bg:#f4f6f9; --panel:#ffffff; --ink:#1d2733; --muted:#5b6675; --line:#d5dbe3;
+          --blue:#1F4E79; --red:#C0392B; --green:#2E7D32; --orange:#E67E22; }
+  * { box-sizing:border-box; }
+  html { font-size:14px; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--ink);
+               font-family:-apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow:hidden;
+               -webkit-text-size-adjust:100%; }
+  #app { display:flex; height:100vh; height:100dvh; width:100vw; }
+  #stage { flex:1 1 auto; position:relative; min-width:0; min-height:0; background:#eef1f5; }
+  #cv { position:absolute; inset:0; display:block; width:100%; height:100%; touch-action:none; }
+  #panel { flex:0 0 23rem; max-width:50vw; background:var(--panel); border-left:1px solid var(--line);
+           padding:.6rem .85rem; display:flex; flex-direction:column; gap:.45rem; overflow-y:auto; }
+  body.nopanel #panel { display:none; }
+  #ctrl, #info { display:flex; flex-direction:column; gap:.45rem; min-width:0; }
+  h1 { font-size:1.2rem; margin:0; color:var(--blue); }
+  .tabs { display:flex; gap:6px; }
+  .tabs button { flex:1; padding-left:.3rem; padding-right:.3rem; }
+  button { font:inherit; font-size:1rem; padding:.5rem .6rem; border-radius:8px; border:1px solid var(--line);
+           background:#eef2f7; color:var(--ink); cursor:pointer; touch-action:manipulation; min-height:2.6rem; }
+  button.on { background:var(--blue); color:#fff; border-color:var(--blue); }
+  button:disabled { opacity:.5; cursor:default; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+  .grid2 button { font-size:.93rem; padding:.35rem .4rem; line-height:1.15; }
+  .lbl { font-size:.86rem; color:var(--muted); font-weight:600; margin-top:.1rem; }
+  .par { display:flex; flex-direction:column; gap:.15rem; }
+  .par .head { display:flex; justify-content:space-between; align-items:baseline; font-size:1rem; }
+  .par .head output { font-weight:600; font-variant-numeric:tabular-nums; }
+  .par .line { display:flex; align-items:center; gap:6px; }
+  .par .line button { flex:0 0 2.7rem; padding:0; font-size:1.3rem; font-weight:600; }
+  .par input[type=range] { flex:1; min-width:0; height:2rem; }
+  .checks { display:flex; flex-wrap:wrap; gap:.3rem .9rem; font-size:1rem; }
+  .checks label { display:flex; align-items:center; gap:5px; min-height:1.9rem; }
+  .checks input { width:1.3rem; height:1.3rem; }
+  .btns { display:flex; gap:6px; }
+  .btns button { flex:1; }
+  #runBtn { background:var(--green); color:#fff; border-color:var(--green); font-weight:600; }
+  #runBtn.pause { background:var(--orange); border-color:var(--orange); }
+  #expl { font-size:.95rem; background:#f1f6fc; border:1px solid #d3e2f3; border-radius:8px; padding:.4rem .55rem; line-height:1.35; }
+  #expl.good { background:#eaf6ea; border-color:#bfe0c1; }
+  #notes table { border-collapse:collapse; width:100%; font-size:.95rem; font-variant-numeric:tabular-nums; }
+  #notes td, #notes th { border-bottom:1px solid var(--line); padding:.2rem .3rem; text-align:right; white-space:nowrap; }
+  #notes th { color:var(--muted); font-weight:600; font-size:.85rem; vertical-align:bottom; white-space:normal; }
+  #notes td:first-child, #notes th:first-child { text-align:left; color:var(--muted); }
+  #notes .empty { font-size:.9rem; color:var(--muted); }
+  #noteBtn { background:var(--blue); color:#fff; border-color:var(--blue); font-weight:600; }
+  details.small summary { cursor:pointer; min-height:1.9rem; display:flex; align-items:center; }
+  .small { font-size:.86rem; color:var(--muted); line-height:1.35; }
+  .hidden { display:none !important; }
+
+  /* Werkzeugleiste auf der Simulation */
+  #tools { position:absolute; top:8px; right:8px; display:flex; gap:6px; z-index:5; }
+  #tools button { min-width:44px; height:44px; min-height:44px; padding:0 10px; font-size:16px; font-weight:600;
+                  background:rgba(255,255,255,.88); border:1px solid #c3ccd8; border-radius:10px;
+                  box-shadow:0 2px 6px rgba(0,0,0,.25); display:flex; align-items:center; justify-content:center; }
+  #tools button svg { width:22px; height:22px; stroke:var(--ink); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  #tools button:active { background:#dde5ef; }
+
+  @media (max-height: 800px) {
+    h1 { display:none; }
+    button { padding:.35rem .6rem; min-height:2.4rem; }
+    .par input[type=range] { height:1.7rem; }
+    .checks label { min-height:1.6rem; }
+  }
+  @media (max-width: 900px) and (orientation: landscape) { #panel { flex-basis:20rem; } }
+
+  /* iPad hochkant: Simulation oben, Bedienfeld zweispaltig darunter */
+  @media (min-width: 641px) and (max-width: 900px) and (orientation: portrait) {
+    #app { flex-direction:column; }
+    #panel { flex:0 0 auto; max-width:none; max-height:40vh; width:100%; border-left:0; border-top:1px solid var(--line);
+             display:grid; grid-template-columns:1fr 1fr; gap:.4rem 1.1rem; align-items:start; }
+    h1 { display:none; }
+  }
+
+  /* Handy hochkant: Simulation oben, Bedienfeld darunter, Seite darf scrollen */
+  @media (max-width: 640px) {
+    html, body { height:auto; overflow:auto; }
+    #app { flex-direction:column; height:auto; min-height:100vh; }
+    #stage { flex:none; height:min(150vw, 78vh); }
+    body.nopanel #stage { height:100vh; height:100dvh; }
+    #panel { flex:none; width:100%; max-width:none; border-left:0; border-top:1px solid var(--line); overflow:visible; }
+    h1 { display:block; }
+    #tools button { min-width:40px; height:40px; min-height:40px; padding:0 8px; }
+  }
+
+  /* Drehhinweis, wenn das Handy quer gehalten wird */
+  #rotate { display:none; position:fixed; inset:0; z-index:50; background:rgba(29,39,51,.94); color:#fff;
+            align-items:center; justify-content:center; text-align:center; padding:20px; }
+  #rotate .box { max-width:420px; display:flex; flex-direction:column; align-items:center; gap:14px; font-size:18px; }
+  #rotate svg { width:80px; height:80px; stroke:#fff; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+  #rotate button { font-size:17px; background:#fff; color:var(--ink); padding:10px 18px; }
+  @media (orientation: landscape) and (max-height: 500px) {
+    body:not(.quer) #rotate { display:flex; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <canvas id="cv"></canvas>
+    <div id="tools">
+      <button id="fsMinus" title="Schrift kleiner">A−</button>
+      <button id="fsPlus" title="Schrift größer">A+</button>
+      <button id="view" title="Darstellung umschalten">Symbol</button>
+      <button id="full" title="Vollbild"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      <button id="panelBtn" title="Bedienfeld aus-/einblenden"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg></button>
+    </div>
+  </div>
+  <div id="panel">
+    <div id="ctrl">
+      <h1>Bewegungsdiagramme</h1>
+      <div class="tabs">
+        <button id="tab_bew" class="on">Bewegungen</button>
+        <button id="tab_steu">Selbst steuern</button>
+        <button id="tab_ziel">Nachfahren</button>
+      </div>
+
+      <div class="sec bew">
+        <div class="lbl">Beispiele</div>
+        <div class="grid2" id="presets"></div>
+        <div class="par" data-k="s0">
+          <div class="head"><span>Startort s<sub>0</sub></span><output></output></div>
+          <div class="line"><button class="minus">−</button><input type="range" id="r_s0"><button class="plus">+</button></div>
+        </div>
+        <div class="par" data-k="v0">
+          <div class="head"><span>Anfangsgeschwindigkeit v<sub>0</sub></span><output></output></div>
+          <div class="line"><button class="minus">−</button><input type="range" id="r_v0"><button class="plus">+</button></div>
+        </div>
+        <div class="par" data-k="a">
+          <div class="head"><span>Beschleunigung a (konstant)</span><output></output></div>
+          <div class="line"><button class="minus">−</button><input type="range" id="r_a"><button class="plus">+</button></div>
+        </div>
+      </div>
+
+      <div class="sec steu hidden">
+        <div class="lbl">Womit steuerst du das Auto?</div>
+        <div class="grid2" id="modes">
+          <button data-m="s" class="on">Mit dem Finger<br>(Ort)</button>
+          <button data-m="v">Geschwindigkeit<br>regeln</button>
+          <button data-m="a">Beschleunigung<br>regeln</button>
+        </div>
+      </div>
+
+      <div class="sec ziel hidden">
+        <div class="lbl">Welchen Graphen fährst du nach?</div>
+        <div class="grid2" id="targets"></div>
+      </div>
+
+      <div class="btns">
+        <button id="runBtn">Start</button>
+        <button id="resetBtn">Zurück auf Start</button>
+      </div>
+    </div>
+    <div id="info">
+      <div class="checks">
+        <label><input id="cb_s" type="checkbox" checked>t-s</label>
+        <label><input id="cb_v" type="checkbox" checked>t-v</label>
+        <label><input id="cb_a" type="checkbox" checked>t-a</label>
+        <label><input id="cbSlow" type="checkbox">Zeitlupe</label>
+      </div>
+      <div class="checks">
+        <label><input id="cbArrows" type="checkbox" checked>Pfeile v und a</label>
+        <label><input id="cbTrace" type="checkbox" checked>Spur jede Sekunde</label>
+        <label><input id="cbTan" type="checkbox">Steigungsdreieck</label>
+        <label><input id="cbArea" type="checkbox">Fläche unter dem Graphen</label>
+      </div>
+      <div id="expl"></div>
+      <div class="btns">
+        <button id="noteBtn">Messwert notieren</button>
+        <button id="noteUndo" title="Letzte Zeile löschen">Letzten löschen</button>
+        <button id="noteClear" title="Alle Messwerte löschen">Alle löschen</button>
+      </div>
+      <div id="notes"></div>
+      <details class="small"><summary>Hinweise und Vereinfachungen</summary>
+        <div>Tippe in ein Diagramm, um einen Zeitpunkt zu wählen. Dort werden die Werte angezeigt, das Steigungsdreieck gezeichnet und „Messwert notieren“ schreibt t, s, v und a in die Tabelle.
+        <br><br>Vereinfachungen: Das Auto ist ein Punkt auf einer geraden Strecke (Bezugspunkt: Mitte des Autos, gezeichnet maßstabsgetreu mit 4,2 m Länge). Fester Maßstab: Strecke 0 bis 50 m, Zeit 0 bis 10 s.
+        Beim Regeln der Geschwindigkeit folgt das Auto dem Regler mit höchstens 4 m/s² (ein echtes Auto kann nicht sprunghaft schneller werden). Beim Regeln der Beschleunigung ist die Geschwindigkeit auf 10 m/s begrenzt.
+        Mit dem Finger werden v und a aus der Fingerbewegung berechnet und geglättet; ruckartige Bewegungen geben deshalb Zacken im t-a-Diagramm.
+        Bei „Bewegungen“ ist a die ganze Zeit konstant: Nach dem Stillstand fährt das Auto deshalb rückwärts weiter. Beim echten Bremsen bleibt es stehen.</div>
+      </details>
+    </div>
+  </div>
+</div>
+<div id="rotate">
+  <div class="box">
+    <svg viewBox="0 0 64 64"><rect x="20" y="6" width="24" height="42" rx="4"/><path d="M29 42h6"/><path d="M50 30a20 20 0 0 1-12 22M38 52l1-6M38 52l-6-1"/></svg>
+    <div>Bitte das Handy hochkant halten.</div>
+    <button id="rotGo">Trotzdem quer weiter</button>
+  </div>
+</div>
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const cv = $("cv"), ctx = cv.getContext("2d");
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  };
+  const FONT = "-apple-system, 'Segoe UI', Roboto, Arial, sans-serif";
+  const de = (x, d) => (Math.abs(x) < 0.5 * Math.pow(10, -d) ? 0 : x).toFixed(d).replace(".", ",").replace("-", "−");
+
+  // ---------- Feste Maßstäbe ----------
+  const SMAX = 50, TMAX = 10, VMAX = 10, AMAX = 4;    // m, s, m/s, m/s²
+  const CAR = 4.2;                                     // Autolänge in m
+  const AXIS = {
+    s: { min:0, max:SMAX, grid:5, lab:10, unit:"m", name:"s", title:"s in m", col:"#1F4E79" },
+    v: { min:-VMAX, max:VMAX, grid:1, lab:5, unit:"m/s", name:"v", title:"v in m/s", col:"#2E7D32" },
+    a: { min:-AMAX, max:AMAX, grid:0.5, lab:2, unit:"m/s²", name:"a", title:"a in m/s²", col:"#C0392B" }
+  };
+
+  // ---------- Beispiele (Reiter Bewegungen) ----------
+  const PRESETS = [
+    { n:"Stillstand", s0:20, v0:0, a:0 },
+    { n:"Gleichförmig vorwärts", s0:5, v0:4, a:0 },
+    { n:"Gleichförmig rückwärts", s0:45, v0:-4, a:0 },
+    { n:"Anfahren", s0:0, v0:0, a:0.8 },
+    { n:"Bremsen", s0:2, v0:8, a:-0.8 },
+    { n:"Umkehren", s0:10, v0:8, a:-1.6 }
+  ];
+  const PAR = { s0:{ min:0, max:SMAX, step:1, u:"m", d:0 }, v0:{ min:-VMAX, max:VMAX, step:0.5, u:"m/s", d:1 }, a:{ min:-AMAX, max:AMAX, step:0.1, u:"m/s²", d:1 } };
+
+  // ---------- Zielgraphen (Reiter Nachfahren) ----------
+  // diag: in welchem Diagramm der Zielgraph steht; ctrl: womit gesteuert wird
+  const pw = (t, pts) => {   // stückweise linear durch Punkte [t, wert]
+    for (let i = 1; i < pts.length; i++) if (t <= pts[i][0]) { const [t0, y0] = pts[i - 1], [t1, y1] = pts[i]; return y0 + (y1 - y0) * (t - t0) / (t1 - t0); }
+    return pts[pts.length - 1][1];
+  };
+  const TARGETS = [
+    { n:"Ort: Warten, dann fahren", diag:"s", ctrl:"s", s0:10, f:t => t < 3 ? 10 : 10 + 4 * (t - 3) },
+    { n:"Ort: Hin und zurück", diag:"s", ctrl:"s", s0:10, f:t => t < 5 ? 10 + 6 * t : 40 - 5 * (t - 5) },
+    { n:"Ort: Anfahren", diag:"s", ctrl:"s", s0:5, f:t => 5 + 0.4 * t * t },
+    { n:"Ort: Bremsen bis zum Halt", diag:"s", ctrl:"s", s0:5, f:t => { const q = Math.min(t, 8); return 5 + 8 * q - 0.5 * q * q; } },
+    { n:"Geschwindigkeit: Vor, Halt, zurück", diag:"v", ctrl:"v", s0:15, f:t => pw(t, [[0,0],[1,4],[3,4],[4,0],[6,0],[7,-4],[9,-4],[10,0]]) },
+    { n:"Geschwindigkeit: immer schneller", diag:"v", ctrl:"v", s0:5, f:t => 0.8 * t },
+    { n:"Ort: Anfahren mit dem v-Regler", diag:"s", ctrl:"v", s0:5, f:t => 5 + 0.4 * t * t },
+    { n:"Geschwindigkeit mit dem a-Regler", diag:"v", ctrl:"a", s0:4, f:t => pw(t, [[0,0],[3,6],[7,6],[10,0]]) }
+  ];
+  const CTRLNAME = { s:"mit dem Finger am Auto", v:"mit dem Geschwindigkeitsregler", a:"mit dem Beschleunigungsregler" };
+
+  // ---------- Zustand ----------
+  const S = {
+    tab:"bew", view:"3d", fs:1, mode:"s", target:0,
+    bew:{ s0:5, v0:4, a:0 },
+    phase:"idle",            // idle, armed (wartet auf Finger), run, pause, end
+    t:0, s:5, v:0, a:0, data:[], cur:null, ctl:0, endMsg:"",
+    finger:null, fingerS:0, dragCar:false, dragCtl:false, last:0, L:null, score:null
+  };
+  const ctrlMode = () => S.tab === "steu" ? S.mode : S.tab === "ziel" ? TARGETS[S.target].ctrl : "bew";
+
+  // ---------- Bewegung ----------
+  function bewAt(t) { const p = S.bew; return { s:p.s0 + p.v0 * t + 0.5 * p.a * t * t, v:p.v0 + p.a * t, a:p.a }; }
+  function startS() {
+    if (S.tab === "bew") return S.bew.s0;
+    if (S.tab === "ziel") return TARGETS[S.target].s0;
+    return S.s0steu;
+  }
+  S.s0steu = 10;
+  function resetRun() {
+    S.phase = "idle"; S.t = 0; S.data = []; S.cur = null; S.endMsg = ""; S.score = null;
+    S.s = startS(); S.v = S.tab === "bew" ? S.bew.v0 : 0; S.a = S.tab === "bew" ? S.bew.a : 0;
+    if (ctrlMode() === "v") S.ctl = 0;
+    if (ctrlMode() === "a") S.ctl = 0;
+    if (ctrlMode() !== "a" && ctrlMode() !== "bew") S.a = 0;
+    S.fingerS = S.s;
+    S.data.push({ t:0, s:S.s, v:S.v, a:S.a });
+    updateRunBtn(); showExpl(); draw();
+  }
+  // Steigung einer Ausgleichsgeraden durch die letzten Messpunkte (Glättung für Fingersteuerung)
+  function slope(key, win) {
+    const d = S.data; let n = 0, st = 0, sy = 0, stt = 0, sty = 0;
+    for (let i = d.length - 1; i >= 0 && d[i].t >= S.t - win; i--) { const t = d[i].t, y = d[i][key]; n++; st += t; sy += y; stt += t * t; sty += t * y; }
+    const den = n * stt - st * st; return n < 3 || den === 0 ? 0 : (n * sty - st * sy) / den;
+  }
+  function step(dt) {
+    const m = ctrlMode();
+    let t = S.t + dt;
+    if (t >= TMAX) { dt -= t - TMAX; t = TMAX; }
+    if (m === "bew") { const q = bewAt(t); S.s = q.s; S.v = q.v; S.a = q.a; }
+    else if (m === "v") {
+      const dv = Math.max(-AMAX * dt, Math.min(AMAX * dt, S.ctl - S.v));
+      S.a = dt > 0 ? dv / dt : 0; S.v += dv; S.s += S.v * dt;
+    } else if (m === "a") {
+      S.a = S.ctl; S.v += S.a * dt;
+      if (Math.abs(S.v) > VMAX) { S.v = Math.sign(S.v) * VMAX; S.a = 0; }
+      S.s += S.v * dt;
+    } else {   // Finger: Ort folgt dem Finger leicht gedämpft, v und a werden berechnet
+      S.s += (S.fingerS - S.s) * Math.min(1, dt / 0.06);
+    }
+    S.t = t;
+    // Ende der Strecke
+    let out = false;
+    if (S.s < 0) { S.s = 0; out = true; } else if (S.s > SMAX) { S.s = SMAX; out = true; }
+    const pt = { t:S.t, s:S.s, v:S.v, a:S.a };
+    S.data.push(pt);
+    if (m === "s") { pt.v = S.v = slope("s", 0.3); pt.a = S.a = slope("v", 0.45); }
+    if (out && m !== "s") { pt.v = S.v = 0; finish("Das Auto hat das Ende der Strecke erreicht."); return; }
+    if (S.t >= TMAX - 1e-9) finish("");
+  }
+  function finish(msg) {
+    S.phase = "end"; S.endMsg = msg;
+    if (S.tab === "ziel") S.score = score();
+    updateRunBtn(); showExpl();
+  }
+  function score() {
+    const T = TARGETS[S.target], k = T.diag; let sum = 0, n = 0;
+    for (const p of S.data) { sum += Math.abs(p[k] - T.f(p.t)); n++; }
+    const full = S.t >= TMAX - 1e-6;
+    return { dev: n ? sum / n : 0, k, full };
+  }
+  function frame(ts) {
+    if (S.phase !== "run") return;
+    const dtR = Math.min(0.05, (ts - S.last) / 1000); S.last = ts;
+    let dt = dtR * ($("cbSlow").checked ? 0.5 : 1);
+    while (dt > 1e-6 && S.phase === "run") { const h = Math.min(dt, 1 / 120); step(h); dt -= h; }
+    draw();
+    if (S.phase === "run") requestAnimationFrame(frame);
+  }
+  function go() { S.phase = "run"; S.last = performance.now(); updateRunBtn(); showExpl(); requestAnimationFrame(frame); }
+
+  // Wert zu einem Zeitpunkt aus den Messdaten (lineare Interpolation)
+  function at(t) {
+    const d = S.data; if (!d.length) return null;
+    if (t <= d[0].t) return d[0];
+    if (t >= d[d.length - 1].t) return t > d[d.length - 1].t + 1e-6 ? null : d[d.length - 1];
+    let lo = 0, hi = d.length - 1;
+    while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (d[mid].t <= t) lo = mid; else hi = mid; }
+    const p = d[lo], q = d[hi], f = (t - p.t) / (q.t - p.t || 1);
+    return { t, s:p.s + (q.s - p.s) * f, v:p.v + (q.v - p.v) * f, a:p.a + (q.a - p.a) * f };
+  }
+  // Fläche unter dem Graphen von 0 bis t (Trapezregel)
+  function area(key, t) {
+    const d = S.data; let A = 0;
+    for (let i = 1; i < d.length && d[i - 1].t < t; i++) {
+      const t1 = Math.min(d[i].t, t), f = (t1 - d[i - 1].t) / (d[i].t - d[i - 1].t || 1);
+      const y1 = d[i - 1][key] + (d[i][key] - d[i - 1][key]) * f;
+      A += (d[i - 1][key] + y1) / 2 * (t1 - d[i - 1].t);
+    }
+    return A;
+  }
+
+  // ---------- Zeichenhilfen ----------
+  function resize() {
+    const dpr = window.devicePixelRatio || 1, r = cv.getBoundingClientRect();
+    cv.width = Math.max(1, Math.round(r.width * dpr)); cv.height = Math.max(1, Math.round(r.height * dpr));
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    draw();
+  }
+  function txt(s, x, y, size, col, align, bold) {   // Text mit echten Indizes: "v_0"
+    const parts = [];
+    s.split(/(_\{[^}]*\}|_[0-9A-Za-z])/).forEach(q => { if (q) parts.push(q[0] === "_" ? [q.replace(/^_\{?|\}$/g, ""), true] : [q, false]); });
+    const font = q => (bold ? "600 " : "") + Math.round(q[1] ? size * 0.7 : size) + "px " + FONT;
+    let w = 0; for (const q of parts) { ctx.font = font(q); w += ctx.measureText(q[0]).width; }
+    let cx = align === "center" ? x - w / 2 : align === "right" ? x - w : x;
+    ctx.fillStyle = col; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    for (const q of parts) { ctx.font = font(q); ctx.fillText(q[0], cx, q[1] ? y + size * 0.28 : y); cx += ctx.measureText(q[0]).width; }
+    return w;
+  }
+  function tbox(s, x, y, size, col, align, bg) {   // Text auf hellem Kästchen
+    ctx.font = "600 " + Math.round(size) + "px " + FONT;
+    const w = ctx.measureText(s.replace(/_/g, "")).width + 10, h = size * 1.45;
+    const x0 = align === "right" ? x - w : align === "center" ? x - w / 2 : x;
+    ctx.fillStyle = bg || "rgba(255,255,255,.9)"; rrect(x0, y - h / 2, w, h, 5); ctx.fill();
+    txt(s, x0 + 5, y, size, col, "left", true);
+    return w;
+  }
+  function rrect(x, y, w, h, r) {
+    ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+  function arrow(x1, y, x2, col, lw, outline) {
+    const dir = Math.sign(x2 - x1) || 1, len = Math.abs(x2 - x1), head = Math.min(len, lw * 3.2);
+    if (len < 1) return;
+    const draw1 = (c, w) => {
+      ctx.strokeStyle = c; ctx.fillStyle = c; ctx.lineWidth = w; ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2 - dir * head * 0.8, y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x2, y); ctx.lineTo(x2 - dir * head, y - head * 0.6); ctx.lineTo(x2 - dir * head, y + head * 0.6); ctx.closePath(); ctx.fill();
+      if (w > lw) ctx.stroke();
+    };
+    if (outline) draw1(outline, lw + 3);
+    draw1(col, lw);
+  }
+
+  // Auto in Seitenansicht; x = Mitte, yb = Fahrbahn, k = px pro m
+  function car(x, yb, k, d3, wheelAng, ghost) {
+    const L = CAR * k, H = 1.45 * k, r = 0.33 * k;
+    const xl = x - L / 2;
+    if (!d3) {
+      ctx.strokeStyle = ghost ? "rgba(29,39,51,.25)" : "#1d2733"; ctx.lineWidth = 2;
+      ctx.fillStyle = ghost ? "rgba(255,255,255,0)" : "#e4ecf6";
+      rrect(xl, yb - H, L, H - r, 4); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#ffffff";
+      for (const wx of [xl + L * 0.22, xl + L * 0.78]) { ctx.beginPath(); ctx.arc(wx, yb - r, r, 0, 7); ctx.fill(); ctx.stroke(); }
+      return;
+    }
+    // Schatten
+    ctx.fillStyle = "rgba(0,0,0,.28)"; ctx.beginPath(); ctx.ellipse(x, yb + 1, L * 0.55, Math.max(2, k * 0.18), 0, 0, 7); ctx.fill();
+    // Karosserie
+    const g = ctx.createLinearGradient(0, yb - H, 0, yb);
+    g.addColorStop(0, "#5aa0e6"); g.addColorStop(0.45, "#1f63b5"); g.addColorStop(1, "#123d70");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(xl + L * 0.02, yb - r * 0.9);
+    ctx.lineTo(xl + L * 0.02, yb - H * 0.52);
+    ctx.quadraticCurveTo(xl + L * 0.04, yb - H * 0.62, xl + L * 0.16, yb - H * 0.62);
+    ctx.lineTo(xl + L * 0.3, yb - H * 0.64);
+    ctx.quadraticCurveTo(xl + L * 0.4, yb - H, xl + L * 0.55, yb - H);
+    ctx.lineTo(xl + L * 0.68, yb - H);
+    ctx.quadraticCurveTo(xl + L * 0.76, yb - H * 0.98, xl + L * 0.83, yb - H * 0.62);
+    ctx.quadraticCurveTo(xl + L * 0.99, yb - H * 0.58, xl + L * 0.99, yb - H * 0.42);
+    ctx.lineTo(xl + L * 0.99, yb - r * 0.9);
+    ctx.closePath(); ctx.fill();
+    // Glanzlinie
+    ctx.strokeStyle = "rgba(255,255,255,.45)"; ctx.lineWidth = Math.max(1, k * 0.06);
+    ctx.beginPath(); ctx.moveTo(xl + L * 0.06, yb - H * 0.5); ctx.lineTo(xl + L * 0.95, yb - H * 0.47); ctx.stroke();
+    // Fenster
+    const gw = ctx.createLinearGradient(0, yb - H, 0, yb - H * 0.6);
+    gw.addColorStop(0, "#dff1ff"); gw.addColorStop(1, "#7fa7c9");
+    ctx.fillStyle = gw;
+    ctx.beginPath();
+    ctx.moveTo(xl + L * 0.34, yb - H * 0.64); ctx.quadraticCurveTo(xl + L * 0.42, yb - H * 0.93, xl + L * 0.55, yb - H * 0.93);
+    ctx.lineTo(xl + L * 0.67, yb - H * 0.93); ctx.quadraticCurveTo(xl + L * 0.73, yb - H * 0.9, xl + L * 0.78, yb - H * 0.64); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#123d70"; ctx.fillRect(xl + L * 0.555, yb - H * 0.94, Math.max(1.5, k * 0.08), H * 0.3);
+    // Lichter
+    ctx.fillStyle = "#ffe9a6"; ctx.fillRect(xl + L * 0.965, yb - H * 0.55, Math.max(2, L * 0.025), H * 0.1);
+    ctx.fillStyle = "#e0453a"; ctx.fillRect(xl + L * 0.015, yb - H * 0.55, Math.max(2, L * 0.02), H * 0.1);
+    // Räder mit Speichen (drehen sich mit)
+    for (const wx of [xl + L * 0.22, xl + L * 0.78]) {
+      ctx.fillStyle = "#1b1b1b"; ctx.beginPath(); ctx.arc(wx, yb - r, r, 0, 7); ctx.fill();
+      const gr = ctx.createRadialGradient(wx - r * 0.2, yb - r * 1.2, r * 0.1, wx, yb - r, r * 0.6);
+      gr.addColorStop(0, "#f2f4f6"); gr.addColorStop(1, "#8b939c");
+      ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(wx, yb - r, r * 0.58, 0, 7); ctx.fill();
+      ctx.strokeStyle = "#5d656e"; ctx.lineWidth = Math.max(1, r * 0.12);
+      for (let i = 0; i < 5; i++) {
+        const ph = wheelAng + i * 2 * Math.PI / 5;
+        ctx.beginPath(); ctx.moveTo(wx, yb - r); ctx.lineTo(wx + Math.cos(ph) * r * 0.55, yb - r + Math.sin(ph) * r * 0.55); ctx.stroke();
+      }
+    }
+  }
+
+  // ---------- Hauptzeichnung ----------
+  function draw() {
+    const W = cv.clientWidth, H = cv.clientHeight; if (!W || !H) return;
+    const d3 = S.view === "3d", fz = Math.max(12, Math.min(16.5, W / 52)) * S.fs;
+    const m = ctrlMode(), hasCtl = (m === "v" || m === "a");
+    const shown = ["s", "v", "a"].filter(k => $("cb_" + k).checked);
+    ctx.fillStyle = "#eef1f5"; ctx.fillRect(0, 0, W, H);
+
+    // Aufteilung: oben die Strecke, darunter die Diagramme (ausgeblendete geben Platz ab)
+    const trackH = Math.max(fz * 9.6, Math.min(H * 0.3, fz * 12)) + (hasCtl ? fz * 3 : 0);
+    const L = { W, H, fz, trackH };
+    S.L = L;
+    drawTrack(L, d3, m, hasCtl);
+    const top = trackH + fz * 0.5, bottom = H - fz * 2.6;
+    const gap = fz * 0.7, n = shown.length;
+    const ml = fz * 3.4, mr = Math.max(fz * 0.9, 10);
+    L.diag = []; L.ml = ml; L.mr = mr;
+    if (n) {
+      const h = (bottom - top - gap * (n - 1)) / n;
+      shown.forEach((k, i) => { const y = top + i * (h + gap); L.diag.push({ k, x:ml, y, w:W - ml - mr, h }); });
+      for (const D of L.diag) drawDiag(D, L, D === L.diag[L.diag.length - 1]);
+    } else {
+      txt("Kein Diagramm ausgewählt", W / 2, (top + bottom) / 2, fz, "#5b6675", "center", true);
+    }
+  }
+
+  function drawTrack(L, d3, m, hasCtl) {
+    const { W, fz } = L, H0 = L.trackH;
+    const pad = fz * 1.6, k = (W - 2 * pad) / (SMAX + CAR);   // px pro m, fester Maßstab
+    const x0 = pad + CAR / 2 * k;                               // x von s = 0
+    const X = s => x0 + s * k;
+    L.k = k; L.X = X;
+    const ctlH = hasCtl ? fz * 3 : 0;
+    const yRoad = H0 - ctlH - fz * 2.9;          // Fahrbahnoberkante
+    L.yRoad = yRoad;
+    // Hintergrund
+    if (d3) {
+      const g = ctx.createLinearGradient(0, 0, 0, yRoad); g.addColorStop(0, "#9fc8ec"); g.addColorStop(1, "#e3f0fa");
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, yRoad);
+      // Hügel in der Ferne
+      ctx.fillStyle = "#b9d6a4";
+      ctx.beginPath(); ctx.moveTo(0, yRoad);
+      for (let x = 0; x <= W; x += 20) ctx.lineTo(x, yRoad - fz * 1.2 - Math.sin(x / 90) * fz * 0.6 - Math.sin(x / 37) * fz * 0.25);
+      ctx.lineTo(W, yRoad); ctx.closePath(); ctx.fill();
+      // Straße
+      const gr = ctx.createLinearGradient(0, yRoad, 0, yRoad + fz * 1.3);
+      gr.addColorStop(0, "#5b6068"); gr.addColorStop(1, "#3b3f45");
+      ctx.fillStyle = gr; ctx.fillRect(0, yRoad, W, fz * 1.3);
+      ctx.strokeStyle = "#f4f4f4"; ctx.lineWidth = 2; ctx.setLineDash([3 * k, 3 * k]);
+      ctx.beginPath(); ctx.moveTo(0, yRoad + fz * 0.65); ctx.lineTo(W, yRoad + fz * 0.65); ctx.stroke(); ctx.setLineDash([]);
+      // Bereich unten (Maßband und ggf. Regler)
+      ctx.fillStyle = "#e9edf2"; ctx.fillRect(0, yRoad + fz * 1.3, W, H0 - yRoad - fz * 1.3);
+      // Leitpfosten alle 10 m
+      for (let s = 0; s <= SMAX; s += 10) {
+        const x = X(s), ph = 1.0 * k, pw = Math.max(3, 0.12 * k);
+        ctx.fillStyle = "#fafafa"; ctx.fillRect(x - pw / 2, yRoad - ph, pw, ph);
+        ctx.fillStyle = "#222"; ctx.fillRect(x - pw / 2, yRoad - ph, pw, ph * 0.18);
+        ctx.fillStyle = "rgba(0,0,0,.2)"; ctx.fillRect(x + pw / 2, yRoad - ph, 1, ph);
+      }
+    } else {
+      ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, W, H0);
+      ctx.strokeStyle = "#1d2733"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X(0) - 6, yRoad); ctx.lineTo(X(SMAX) + 6, yRoad); ctx.stroke();
+    }
+    // Maßband
+    const ry = yRoad + (d3 ? fz * 1.45 : fz * 0.3), rh = fz * 1.25;
+    if (d3) {
+      const g = ctx.createLinearGradient(0, ry, 0, ry + rh); g.addColorStop(0, "#ffe27a"); g.addColorStop(1, "#f2c230");
+      ctx.fillStyle = g; ctx.fillRect(X(0) - 4, ry, X(SMAX) - X(0) + 8, rh);
+      ctx.fillStyle = "rgba(0,0,0,.2)"; ctx.fillRect(X(0) - 4, ry + rh, X(SMAX) - X(0) + 8, 2);
+    }
+    ctx.strokeStyle = "#2b2b2b"; ctx.lineWidth = 1;
+    for (let s = 0; s <= SMAX; s++) {
+      const x = X(s), long = s % 10 === 0, mid = s % 5 === 0;
+      ctx.beginPath(); ctx.moveTo(x, ry); ctx.lineTo(x, ry + (long ? rh * 0.5 : mid ? rh * 0.35 : rh * 0.2)); ctx.stroke();
+      if (long) { ctx.font = "600 " + Math.round(fz * 0.72) + "px " + FONT; ctx.fillStyle = "#2b2b2b"; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic"; ctx.fillText(String(s), x, ry + rh - 1); }
+    }
+    ctx.font = Math.round(fz * 0.72) + "px " + FONT; ctx.fillStyle = "#2b2b2b"; ctx.textAlign = "right"; ctx.textBaseline = "alphabetic";
+    if (X(0) - 6 > fz * 3) ctx.fillText("s in m", X(0) - 6, ry + rh - 1);
+    else { ctx.textAlign = "left"; ctx.fillText("m", X(SMAX) + 8, ry + rh - 1); }
+
+    // Spur: Ort zu jeder vollen Sekunde
+    if ($("cbTrace").checked) {
+      for (let t = 0; t <= Math.floor(S.t + 1e-9); t++) {
+        const p = at(t); if (!p) continue;
+        const x = X(p.s);
+        ctx.fillStyle = "#C0392B"; ctx.beginPath(); ctx.arc(x, ry - 3, 3.2, 0, 7); ctx.fill();
+        ctx.strokeStyle = "rgba(192,57,43,.55)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x, ry - 3); ctx.lineTo(x, yRoad + (d3 ? 2 : 0)); ctx.stroke();
+      }
+    }
+    // Cursor-Position auf der Strecke
+    let cp = S.cur != null ? at(S.cur) : null;
+    if (cp) {
+      ctx.strokeStyle = "#E67E22"; ctx.lineWidth = 2; ctx.setLineDash([4, 3]);
+      const x = X(cp.s); ctx.beginPath(); ctx.moveTo(x, yRoad - 1.9 * k - fz * 0.4); ctx.lineTo(x, ry + rh); ctx.stroke(); ctx.setLineDash([]);
+    }
+    // Auto
+    const xc = X(S.s);
+    car(xc, yRoad + (d3 ? fz * 0.35 : 0), k, d3, S.s / 0.33);
+    // Bezugspunkt
+    ctx.fillStyle = "#1d2733"; ctx.beginPath(); ctx.moveTo(xc, ry); ctx.lineTo(xc - 5, ry - 7); ctx.lineTo(xc + 5, ry - 7); ctx.closePath(); ctx.fill();
+
+    // Pfeile v und a über dem Auto, fester Pfeilmaßstab: 1 m/s ≙ 1 m, 1 m/s² ≙ 2 m
+    const yCar = yRoad - 1.45 * k;
+    if ($("cbArrows").checked) {
+      const lw = Math.max(3, fz * 0.22), ol = d3 ? "rgba(255,255,255,.85)" : "#fff";
+      const yv = yCar - fz * 0.9, ya = yCar - fz * 2.2;
+      const xe = v => Math.max(4, Math.min(W - 4, v));
+      arrow(xc, yv, xe(xc + S.v * 1 * k), "#2E7D32", lw, ol);
+      arrow(xc, ya, xe(xc + S.a * 2 * k), "#C0392B", lw, ol);
+      if (Math.abs(S.v) > 0.3) txt("v", xc + S.v * k / 2, yv - fz * 0.7, fz * 0.9, "#2E7D32", "center", true);
+      if (Math.abs(S.a) > 0.15) txt("a", xc + S.a * k, ya - fz * 0.7, fz * 0.9, "#C0392B", "center", true);
+    }
+
+    // Uhr und Status oben links
+    // Uhr, Status und Pfeilmaßstab oben links (nebeneinander, bei wenig Platz untereinander)
+    const tStr = "t = " + de(S.t, 1) + " s";
+    const yr = fz * 1.1 + 4;
+    let xr = 8 + tbox(tStr, 8, yr, fz * 1.15, "#1d2733") + 6;
+    const st = { idle:"bereit", armed:"Auto anfassen, dann geht es los", run:"läuft", pause:"Pause", end:"fertig" }[S.phase];
+    xr += tbox(st + ($("cbSlow").checked && S.phase === "run" ? " (Zeitlupe)" : ""), xr, yr, fz * 0.85, S.phase === "armed" ? "#C0392B" : "#5b6675") + 8;
+    if ($("cbArrows").checked) {
+      const bw = 2 * k + fz * 5.2, toolsL = W - (W <= 640 ? 5 * 46 : 5 * 50) - 12;
+      const row1 = xr + bw < toolsL, sx = row1 ? xr : 8, sy = row1 ? yr - fz * 0.35 : yr + fz * 1.75;
+      ctx.fillStyle = "rgba(255,255,255,.85)"; rrect(sx, sy - fz * 0.75, bw, fz * 2.6, 5); ctx.fill();
+      arrow(sx + 5, sy, sx + 5 + 2 * k, "#2E7D32", 2.5); txt("≙ 2 m/s", sx + 10 + 2 * k, sy, fz * 0.75, "#2E7D32", "left", true);
+      arrow(sx + 5, sy + fz * 1.1, sx + 5 + 2 * k, "#C0392B", 2.5); txt("≙ 1 m/s²", sx + 10 + 2 * k, sy + fz * 1.1, fz * 0.75, "#C0392B", "left", true);
+    }
+    // Regler auf der Simulation (bei v- und a-Steuerung), auch bei ausgeblendetem Bedienfeld bedienbar
+    if (hasCtl) {
+      const yc = H0 - ctlH / 2 - fz * 0.2, max = m === "v" ? VMAX : AMAX;
+      const rx0 = X(0) + fz * 9, rx1 = X(SMAX);
+      L.ctl = { x0:rx0, x1:rx1, y:yc, max };
+      ctx.fillStyle = d3 ? "#dfe5ec" : "#f3f5f8"; ctx.fillRect(0, H0 - ctlH - fz * 0.2, W, ctlH + fz * 0.2);
+      txt(m === "v" ? "Regler v:" : "Regler a:", X(0) - CAR / 2 * k, yc, fz * 0.95, m === "v" ? "#2E7D32" : "#C0392B", "left", true);
+      ctx.fillStyle = "#c7d0db"; rrect(rx0, yc - 4, rx1 - rx0, 8, 4); ctx.fill();
+      const xm = (rx0 + rx1) / 2;
+      ctx.strokeStyle = "#5b6675"; ctx.lineWidth = 1; ctx.font = Math.round(fz * 0.68) + "px " + FONT; ctx.fillStyle = "#5b6675"; ctx.textAlign = "center"; ctx.textBaseline = "top";
+      const stepL = m === "v" ? 5 : 2;
+      for (let q = -max; q <= max + 1e-9; q += stepL) {
+        const x = xm + q / max * (rx1 - rx0) / 2;
+        ctx.beginPath(); ctx.moveTo(x, yc + 5); ctx.lineTo(x, yc + 10); ctx.stroke();
+        ctx.fillText(de(q, 0), x, yc + 11);
+      }
+      const xk = xm + S.ctl / max * (rx1 - rx0) / 2, col = m === "v" ? "#2E7D32" : "#C0392B";
+      const gk = ctx.createRadialGradient(xk - 4, yc - 5, 2, xk, yc, fz * 0.95);
+      gk.addColorStop(0, "#fff"); gk.addColorStop(0.35, col); gk.addColorStop(1, "#1d2733");
+      ctx.fillStyle = gk; ctx.beginPath(); ctx.arc(xk, yc, fz * 0.95, 0, 7); ctx.fill();
+      tbox((m === "v" ? "v = " + de(S.ctl, 1) + " m/s" : "a = " + de(S.ctl, 1) + " m/s²"), rx0 - fz * 0.6, yc - fz * 0.05, fz * 0.85, col, "right", "rgba(255,255,255,0)");
+    } else L.ctl = null;
+    // Trennlinie zu den Diagrammen
+    ctx.fillStyle = "#c9d1dc"; ctx.fillRect(0, H0, W, 1);
+  }
+
+  function drawDiag(D, L, last) {
+    const A = AXIS[D.k], fz = L.fz;
+    const X = t => D.x + t / TMAX * D.w;
+    const Y = y => D.y + D.h - (y - A.min) / (A.max - A.min) * D.h;
+    const clampY = y => Math.max(D.y, Math.min(D.y + D.h, Y(y)));
+    // Papier
+    ctx.fillStyle = "#ffffff"; ctx.fillRect(D.x, D.y, D.w, D.h);
+    ctx.lineWidth = 1;
+    // Gitter
+    ctx.strokeStyle = "#eef1f5";
+    const gridT = D.w / TMAX < fz * 2.2 ? 1 : 0.5;
+    for (let t = 0; t <= TMAX + 1e-9; t += gridT) { ctx.beginPath(); ctx.moveTo(X(t) + .5, D.y); ctx.lineTo(X(t) + .5, D.y + D.h); ctx.stroke(); }
+    const gy = (D.h / ((A.max - A.min) / A.grid) < 5) ? A.grid * 2 : A.grid;
+    for (let y = A.min; y <= A.max + 1e-9; y += gy) { ctx.beginPath(); ctx.moveTo(D.x, Y(y) + .5); ctx.lineTo(D.x + D.w, Y(y) + .5); ctx.stroke(); }
+    ctx.strokeStyle = "#d3d9e1";
+    for (let t = 0; t <= TMAX; t++) { ctx.beginPath(); ctx.moveTo(X(t) + .5, D.y); ctx.lineTo(X(t) + .5, D.y + D.h); ctx.stroke(); }
+    for (let y = A.min; y <= A.max + 1e-9; y += A.lab) { ctx.beginPath(); ctx.moveTo(D.x, Y(y) + .5); ctx.lineTo(D.x + D.w, Y(y) + .5); ctx.stroke(); }
+    // Achsen
+    ctx.strokeStyle = "#1d2733"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(D.x, D.y); ctx.lineTo(D.x, D.y + D.h); ctx.stroke();
+    const y0 = Y(Math.max(A.min, 0));
+    ctx.beginPath(); ctx.moveTo(D.x, y0); ctx.lineTo(D.x + D.w, y0); ctx.stroke();
+    // Beschriftung y
+    const ls = fz * 0.78;
+    let labStep = A.lab; if (D.h / ((A.max - A.min) / labStep) < ls * 1.25) labStep *= 2;
+    for (let y = A.min; y <= A.max + 1e-9; y += labStep) {
+      const yy = Math.max(D.y + ls * 0.5, Math.min(D.y + D.h - ls * 0.5, Y(y)));   // Randwerte nicht ins Nachbardiagramm
+      txt(de(y, 0), D.x - 5, yy, ls, "#5b6675", "right");
+    }
+    // Beschriftung t (nur unter dem untersten Diagramm, sonst nur Striche)
+    const tStep = D.w / TMAX < fz * 1.6 ? 2 : 1;
+    if (last) {
+      for (let t = 0; t <= TMAX; t += tStep) txt(String(t), X(t), D.y + D.h + fz * 0.7, ls, "#5b6675", "center");
+      txt("t in s", D.x + D.w, D.y + D.h + fz * 1.75, ls, "#5b6675", "right", true);
+    }
+    // Titel
+    tbox(A.title, D.x + 4, D.y + fz * 0.8, fz * 0.9, A.col);
+
+    ctx.save(); ctx.beginPath(); ctx.rect(D.x, D.y, D.w, D.h); ctx.clip();
+    // Zielgraph
+    if (S.tab === "ziel" && TARGETS[S.target].diag === D.k) {
+      const T = TARGETS[S.target];
+      ctx.strokeStyle = "rgba(230,126,34,.35)"; ctx.lineWidth = Math.max(10, fz * 0.9); ctx.lineCap = "round"; ctx.lineJoin = "round";
+      ctx.beginPath(); for (let t = 0; t <= TMAX + 1e-9; t += 0.05) { const x = X(t), y = Y(T.f(t)); t ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke();
+      ctx.strokeStyle = "#E67E22"; ctx.lineWidth = 1.5; ctx.setLineDash([6, 5]); ctx.stroke(); ctx.setLineDash([]);
+    }
+    const cur = S.cur != null ? at(S.cur) : null;
+    // Fläche unter dem Graphen bis zum Cursor (bei v und a)
+    if ($("cbArea").checked && cur && D.k !== "s") {
+      const d = S.data, z = Y(0);
+      ctx.beginPath(); ctx.moveTo(X(0), z);
+      for (const p of d) { if (p.t > S.cur) break; ctx.lineTo(X(p.t), clampY(p[D.k])); }
+      ctx.lineTo(X(S.cur), clampY(cur[D.k])); ctx.lineTo(X(S.cur), z); ctx.closePath();
+      ctx.fillStyle = D.k === "v" ? "rgba(31,78,121,.22)" : "rgba(46,125,50,.22)"; ctx.fill();
+    }
+    // Messkurve
+    if (S.data.length > 1) {
+      ctx.strokeStyle = A.col; ctx.lineWidth = Math.max(2.5, fz * 0.2); ctx.lineJoin = "round"; ctx.lineCap = "round";
+      ctx.beginPath(); S.data.forEach((p, i) => { const x = X(p.t), y = clampY(p[D.k]); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke();
+    }
+    // Aktueller Punkt
+    const pn = S.data[S.data.length - 1];
+    if (pn) { ctx.fillStyle = A.col; ctx.beginPath(); ctx.arc(X(pn.t), clampY(pn[D.k]), Math.max(3.5, fz * 0.28), 0, 7); ctx.fill(); }
+    // Steigungsdreieck am Cursor (bei s und v): Steigung = v bzw. a
+    if ($("cbTan").checked && cur && D.k !== "a") {
+      const m = D.k === "s" ? cur.v : cur.a, dT = 2;
+      const ta = S.cur - dT / 2, tb = S.cur + dT / 2, ya = cur[D.k] - m * dT / 2, yb = cur[D.k] + m * dT / 2;
+      ctx.strokeStyle = "#E67E22"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(X(S.cur - 1.6), Y(cur[D.k] - m * 1.6)); ctx.lineTo(X(S.cur + 1.6), Y(cur[D.k] + m * 1.6)); ctx.stroke();
+      ctx.lineWidth = 1.5; ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(X(ta), Y(ya)); ctx.lineTo(X(tb), Y(ya)); ctx.lineTo(X(tb), Y(yb)); ctx.stroke();
+      const nm = D.k === "s" ? "Δs" : "Δv", un = D.k === "s" ? " m" : " m/s";
+      txt("Δt = 2 s", (X(ta) + X(S.cur)) / 2, Y(ya) + (m >= 0 ? fz * 0.75 : -fz * 0.75), fz * 0.75, "#B35A0E", "center", true);
+      txt(nm + " = " + de(m * dT, 1) + un, X(tb) + 5, (Y(ya) + Y(yb)) / 2, fz * 0.75, "#B35A0E", "left", true);
+    }
+    ctx.restore();
+
+    // Cursor
+    if (cur) {
+      ctx.strokeStyle = "#E67E22"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(X(S.cur), D.y); ctx.lineTo(X(S.cur), D.y + D.h); ctx.stroke();
+      ctx.fillStyle = "#E67E22"; ctx.beginPath(); ctx.arc(X(S.cur), clampY(cur[D.k]), 5, 0, 7); ctx.fill();
+      let s = A.name + " = " + de(cur[D.k], D.k === "s" ? 1 : 1) + " " + A.unit;
+      if ($("cbTan").checked && D.k !== "a") s += "   Steigung: " + (D.k === "s" ? "v = " + de(cur.v, 1) + " m/s" : "a = " + de(cur.a, 1) + " m/s²");
+      if ($("cbArea").checked && D.k !== "s") s += "   Fläche: " + (D.k === "v" ? "Δs = " + de(area("v", S.cur), 1) + " m" : "Δv = " + de(area("a", S.cur), 1) + " m/s");
+      tbox(s, D.x + D.w - 4, D.y + fz * 0.8, fz * 0.82, A.col, "right");
+      if (last) tbox("t = " + de(S.cur, 2) + " s", Math.min(D.x + D.w, Math.max(D.x + fz * 3, X(S.cur))), D.y + D.h + fz * 1.75, fz * 0.8, "#B35A0E", "center", "#fdebd7");
+    }
+  }
+
+  // ---------- Bedienung ----------
+  const pars = [...document.querySelectorAll(".par")];
+  function syncInputs() {
+    for (const el of pars) {
+      const key = el.dataset.k, d = PAR[key], inp = el.querySelector("input");
+      inp.min = d.min; inp.max = d.max; inp.step = d.step; inp.value = S.bew[key];
+      el.querySelector("output").textContent = de(S.bew[key], d.d) + " " + d.u;
+    }
+  }
+  function setPar(key, v) {
+    const d = PAR[key];
+    v = Math.round(v / d.step) * d.step;
+    S.bew[key] = Math.max(d.min, Math.min(d.max, +v.toFixed(2)));
+    markPreset(); syncInputs(); resetRun();
+  }
+  for (const el of pars) {
+    const key = el.dataset.k, inp = el.querySelector("input");
+    inp.addEventListener("input", () => setPar(key, +inp.value));
+    el.querySelector(".minus").onclick = () => setPar(key, S.bew[key] - PAR[key].step);
+    el.querySelector(".plus").onclick = () => setPar(key, S.bew[key] + PAR[key].step);
+  }
+  $("presets").innerHTML = PRESETS.map((p, i) => "<button data-i='" + i + "'>" + p.n + "</button>").join("");
+  function markPreset() {
+    $("presets").querySelectorAll("button").forEach(b => { const p = PRESETS[+b.dataset.i]; b.classList.toggle("on", p.s0 === S.bew.s0 && p.v0 === S.bew.v0 && p.a === S.bew.a); });
+  }
+  $("presets").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const p = PRESETS[+b.dataset.i]; Object.assign(S.bew, { s0:p.s0, v0:p.v0, a:p.a }); markPreset(); syncInputs(); resetRun();
+  });
+  $("targets").innerHTML = TARGETS.map((p, i) => "<button data-i='" + i + "'>" + p.n + "</button>").join("");
+  function markTarget() { $("targets").querySelectorAll("button").forEach(b => b.classList.toggle("on", +b.dataset.i === S.target)); }
+  $("targets").querySelectorAll("button").forEach(b => b.onclick = () => {
+    S.target = +b.dataset.i; markTarget();
+    const k = TARGETS[S.target].diag; if (!$("cb_" + k).checked) $("cb_" + k).checked = true;
+    resetRun();
+  });
+  $("modes").querySelectorAll("button").forEach(b => b.onclick = () => {
+    S.mode = b.dataset.m; $("modes").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); resetRun();
+  });
+
+  function updateRunBtn() {
+    const b = $("runBtn");
+    b.classList.toggle("pause", S.phase === "run");
+    b.textContent = { idle:"Start", armed:"Warte auf Finger …", run:"Pause", pause:"Weiter", end:"Fertig" }[S.phase];
+    b.disabled = S.phase === "end";
+  }
+  $("runBtn").onclick = () => {
+    if (S.phase === "idle") {
+      S.cur = null;
+      if (ctrlMode() === "s") { S.phase = "armed"; updateRunBtn(); showExpl(); draw(); }
+      else go();
+    } else if (S.phase === "armed") { S.phase = "idle"; updateRunBtn(); showExpl(); draw(); }
+    else if (S.phase === "run") { S.phase = "pause"; updateRunBtn(); showExpl(); draw(); }
+    else if (S.phase === "pause") go();
+  };
+  $("resetBtn").onclick = () => resetRun();
+
+  const EXPL = {
+    bew: "<b>Auftrag:</b> Wähle ein Beispiel oder stelle s<sub>0</sub>, v<sub>0</sub> und a ein, starte und beobachte, wie die drei Diagramme gleichzeitig entstehen. " +
+         "Beschreibe für jedes Beispiel die Form der Graphen. Danach: Tippe in ein Diagramm und vergleiche die Werte.",
+    steu: { s: "<b>Auftrag:</b> Drücke Start und fahre das Auto mit dem Finger. Probiere: langsam vorwärts, schnell vorwärts, anhalten, rückwärts. Wie sehen die Graphen dazu aus? " +
+               "Vor dem Start kannst du das Auto an einen anderen Startort schieben.",
+            v: "<b>Auftrag:</b> Drücke Start und stelle mit dem Regler unter der Straße die Geschwindigkeit ein. Wie hängen t-v- und t-s-Diagramm zusammen?",
+            a: "<b>Auftrag:</b> Drücke Start und stelle mit dem Regler unter der Straße die Beschleunigung ein. Was passiert mit v, wenn a konstant bleibt? Was, wenn a = 0 ist?" }
+  };
+  function showExpl() {
+    const e = $("expl"); e.classList.remove("good");
+    if (S.tab === "bew") { e.innerHTML = EXPL.bew + (S.endMsg ? "<br><b>" + S.endMsg + "</b>" : ""); return; }
+    if (S.tab === "steu") { e.innerHTML = EXPL.steu[S.mode] + (S.endMsg ? "<br><b>" + S.endMsg + "</b>" : ""); return; }
+    const T = TARGETS[S.target], nm = T.diag === "s" ? "t-s" : "t-v";
+    let h = "<b>Auftrag:</b> Fahre den orangen Graphen im " + nm + "-Diagramm nach, und zwar " + CTRLNAME[T.ctrl] + ". ";
+    h += T.ctrl === "s" ? "Drücke Start, dann fasse das Auto an: Die Zeit läuft los, sobald du es berührst." : "Drücke Start, dann bediene den Regler unter der Straße.";
+    if (S.score) {
+      const u = S.score.k === "s" ? " m" : " m/s", lim = S.score.k === "s" ? [1.5, 3] : [0.6, 1.2];
+      const r = S.score.dev < lim[0] ? "Sehr gut!" : S.score.dev < lim[1] ? "Gut, das geht noch genauer." : "Noch einmal versuchen.";
+      h = "<b>" + r + "</b> Mittlere Abweichung vom Zielgraphen: " + de(S.score.dev, 1) + u + "." +
+          (S.score.full ? "" : " (Abgebrochen: " + S.endMsg + ")") + " Mit „Zurück auf Start“ geht es noch einmal.";
+      if (S.score.dev < lim[1]) e.classList.add("good");
+    }
+    e.innerHTML = h;
+  }
+
+  // Messwerte notieren
+  const NOTES = [];
+  function showNotes() {
+    $("notes").innerHTML = NOTES.length
+      ? "<table><tr><th>Nr.</th><th>t in s</th><th>s in m</th><th>v in m/s</th><th>a in m/s²</th></tr>" +
+        NOTES.map((q, i) => "<tr><td>" + (i + 1) + "</td><td>" + q.join("</td><td>") + "</td></tr>").join("") + "</table>"
+      : "<div class='empty'>Noch keine Messwerte notiert. Tippe in ein Diagramm, um einen Zeitpunkt zu wählen.</div>";
+    $("noteUndo").disabled = $("noteClear").disabled = !NOTES.length;
+  }
+  $("noteBtn").onclick = () => {
+    const p = S.cur != null ? at(S.cur) : S.data[S.data.length - 1]; if (!p) return;
+    NOTES.push([de(p.t, 2), de(p.s, 1), de(p.v, 1), de(p.a, 1)]);
+    showNotes();
+    const t = $("notes").querySelector("tr:last-child"); if (t && t.scrollIntoView) t.scrollIntoView({ block:"nearest" });
+  };
+  $("noteUndo").onclick = () => { NOTES.pop(); showNotes(); };
+  $("noteClear").onclick = () => { if (confirm("Alle notierten Messwerte löschen?")) { NOTES.length = 0; showNotes(); } };
+
+  function setTab(t) {
+    S.tab = t;
+    for (const k of ["bew", "steu", "ziel"]) {
+      $("tab_" + k).classList.toggle("on", k === t);
+      document.querySelectorAll(".sec." + k).forEach(e => e.classList.toggle("hidden", k !== t));
+    }
+    if (t === "ziel") { const k = TARGETS[S.target].diag; $("cb_" + k).checked = true; }
+    resetRun();
+  }
+  function setFs(v) {
+    S.fs = Math.max(0.8, Math.min(1.6, Math.round(v * 10) / 10));
+    document.documentElement.style.fontSize = (14 * S.fs) + "px";
+    store.set("bewdia_fs", S.fs); resize();
+  }
+  function setView(v) {
+    S.view = v; $("view").textContent = v === "3d" ? "Symbol" : "3D";
+    $("view").title = v === "3d" ? "Zur Symbolansicht wechseln" : "Zur 3D-Ansicht wechseln";
+    store.set("bewdia_view", v); draw();
+  }
+  $("fsMinus").onclick = () => setFs(S.fs - 0.1);
+  $("fsPlus").onclick = () => setFs(S.fs + 0.1);
+  $("view").onclick = () => setView(S.view === "3d" ? "sym" : "3d");
+  $("panelBtn").onclick = () => { document.body.classList.toggle("nopanel"); resize(); };
+  const docEl = document.documentElement, reqFS = docEl.requestFullscreen || docEl.webkitRequestFullscreen;
+  if (!reqFS) $("full").classList.add("hidden");
+  $("full").onclick = () => {
+    const cur = document.fullscreenElement || document.webkitFullscreenElement;
+    if (cur) (document.exitFullscreen || document.webkitExitFullscreen).call(document); else reqFS.call(docEl);
+  };
+  $("rotGo").onclick = () => document.body.classList.add("quer");
+  $("tab_bew").onclick = () => setTab("bew");
+  $("tab_steu").onclick = () => setTab("steu");
+  $("tab_ziel").onclick = () => setTab("ziel");
+  for (const id of ["cb_s", "cb_v", "cb_a", "cbArrows", "cbTrace", "cbTan", "cbArea", "cbSlow"]) $(id).addEventListener("change", draw);
+
+  // ---------- Finger auf der Simulation ----------
+  function px(ev) { const r = cv.getBoundingClientRect(); return { x:ev.clientX - r.left, y:ev.clientY - r.top }; }
+  function setCtl(x) {
+    const c = S.L.ctl; let v = ((x - c.x0) / (c.x1 - c.x0) * 2 - 1) * c.max;
+    const st = c.max === VMAX ? 0.5 : 0.1;
+    S.ctl = Math.max(-c.max, Math.min(c.max, Math.round(v / st) * st));
+    if (ctrlMode() === "a" && S.phase !== "run") S.a = S.ctl;
+    draw();
+  }
+  cv.addEventListener("pointerdown", ev => {
+    const q = px(ev), L = S.L; if (!L) return;
+    // Regler
+    if (L.ctl && Math.abs(q.y - L.ctl.y) < L.fz * 1.4 && q.x > L.ctl.x0 - L.fz && q.x < L.ctl.x1 + L.fz) {
+      S.dragCtl = true; cv.setPointerCapture(ev.pointerId); setCtl(q.x); ev.preventDefault(); return;
+    }
+    // Auto anfassen
+    if (q.y < L.trackH) {
+      const m = ctrlMode(), xc = L.X(S.s);
+      const near = Math.abs(q.x - xc) < CAR / 2 * L.k + 28 && q.y > L.yRoad - 2.6 * L.k - L.fz * 2 && q.y < L.yRoad + L.fz * 3;
+      if (!near) return;
+      const canMove = (m === "s" && (S.phase === "armed" || S.phase === "run")) ||
+                      (S.phase === "idle" && (S.tab === "bew" || (S.tab === "steu")));
+      if (!canMove) return;
+      S.dragCar = true; S.dx = q.x - xc; cv.setPointerCapture(ev.pointerId); ev.preventDefault();
+      if (S.phase === "armed") { S.fingerS = S.s; go(); }
+      return;
+    }
+    // Zeitpunkt in einem Diagramm wählen
+    for (const D of L.diag || []) {
+      if (q.x >= D.x - 10 && q.x <= D.x + D.w + 10 && q.y >= D.y && q.y <= D.y + D.h + L.fz * 2.4) {
+        S.dragCur = { D }; cv.setPointerCapture(ev.pointerId); setCur(q.x, D); ev.preventDefault(); return;
+      }
+    }
+  });
+  function setCur(x, D) {
+    if (S.phase === "run" || S.phase === "armed") return;
+    const tEnd = S.data.length ? S.data[S.data.length - 1].t : 0;
+    if (tEnd <= 0) { S.cur = null; draw(); return; }
+    S.cur = Math.max(0, Math.min(tEnd, (x - D.x) / D.w * TMAX));
+    S.cur = Math.round(S.cur * 20) / 20;
+    draw();
+  }
+  cv.addEventListener("pointermove", ev => {
+    const q = px(ev), L = S.L;
+    if (S.dragCtl) { setCtl(q.x); return; }
+    if (S.dragCur) { setCur(q.x, S.dragCur.D); return; }
+    if (!S.dragCar) return;
+    const s = Math.max(0, Math.min(SMAX, (q.x - S.dx - L.X(0)) / L.k));
+    if (S.phase === "run" || S.phase === "pause") { S.fingerS = s; return; }
+    if (S.phase === "idle") {
+      if (S.tab === "bew") { S.bew.s0 = Math.round(s); markPreset(); syncInputs(); resetRun(); }
+      else { S.s0steu = Math.round(s * 2) / 2; resetRun(); }
+    }
+  });
+  const up = () => { S.dragCar = false; S.dragCtl = false; S.dragCur = null; };
+  cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
+
+  window.addEventListener("resize", resize);
+  if (window.ResizeObserver) new ResizeObserver(resize).observe(cv);
+  S.view = store.get("bewdia_view") === "sym" ? "sym" : "3d"; $("view").textContent = S.view === "3d" ? "Symbol" : "3D";
+  syncInputs(); markPreset(); markTarget(); showNotes();
+  setTab("bew");
+  setFs(+store.get("bewdia_fs") || 1);
+})();
+</script>
+<!-- KI-Hinweis: einheitlich in allen Simulationen, immer sichtbar unten rechts -->
+<style>
+#ki-hinweis{position:fixed;right:0;bottom:0;z-index:2147483000;pointer-events:none;
+  font:10px/16px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  color:#5b6270;background:rgba(243,244,246,.92);border-top:1px solid rgba(0,0,0,.08);border-left:1px solid rgba(0,0,0,.08);
+  border-top-left-radius:6px;padding:0 max(7px,env(safe-area-inset-right)) env(safe-area-inset-bottom) 8px;white-space:nowrap}
+.ki-platz::after{content:"";display:block;height:20px;flex:none}
+@media print{#ki-hinweis{position:static;text-align:right;border:0;background:none}}
+</style>
+<div id="ki-hinweis" role="note">Mit KI erstellt · Physik nicht geprüft · Ergebnisse kritisch prüfen</div>
+<script>
+/* Scrollbereiche, die bis unter den Hinweis reichen, bekommen unten 20 px Luft,
+   damit ihr letzter Inhalt nicht dauerhaft vom Hinweis verdeckt wird. */
+(function(){
+  var hin=document.getElementById('ki-hinweis');
+  function platz(){
+    var alt=document.querySelectorAll('.ki-platz');
+    for(var i=0;i<alt.length;i++)alt[i].classList.remove('ki-platz');
+    var vw=innerWidth,vh=innerHeight,hb=hin.getBoundingClientRect();
+    var els=document.body.querySelectorAll('*');
+    function passt(el){
+      var cs=getComputedStyle(el);
+      if(cs.display==='block'||cs.display==='flow-root')return true;
+      return cs.display==='flex'&&/column/.test(cs.flexDirection);
+    }
+    for(var j=0;j<els.length;j++){
+      var el=els[j];if(el===hin||el.closest('svg'))continue;
+      var oy=getComputedStyle(el).overflowY;
+      if(oy!=='auto'&&oy!=='scroll')continue;
+      var r=el.getBoundingClientRect();
+      if(r.height<40||r.bottom<vh-hb.height-4||r.right<hb.left+20||r.left>vw)continue;
+      if(passt(el))el.classList.add('ki-platz');
+    }
+    var se=document.scrollingElement||document.documentElement;
+    if(se.scrollHeight>vh+2&&passt(document.body))document.body.classList.add('ki-platz');
+  }
+  var t;function spaeter(){clearTimeout(t);t=setTimeout(platz,150);}
+  addEventListener('resize',spaeter);addEventListener('load',spaeter);
+  document.addEventListener('click',spaeter,true);
+  platz();
+})();
+</script>
+</body>
+</html>
