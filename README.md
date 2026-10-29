@@ -2,7 +2,7 @@
 
 Physik-Simulationen für den Schulunterricht, erstellt mit Claude. In HTML, passend für die Nutzung am iPad und in Moodle.
 
-> **Hinweis:** Die Simulationen wurden mit Hilfe von KI (Claude) erstellt. Ihre physikalische Korrektheit wurde nicht systematisch geprüft. Bitte vor dem Einsatz im Unterricht selbst kontrollieren.
+> **Hinweis:** Die Simulationen wurden mit Hilfe von KI (Claude) erstellt. Ihre physikalische Korrektheit wurde nicht systematisch geprüft. Bitte vor dem Einsatz im Unterricht selbst kontrollieren. Jede Simulation zeigt dazu unten rechts dauerhaft die Zeile „Mit KI erstellt · Physik nicht geprüft · Ergebnisse kritisch prüfen“.
 
 **Startseite mit allen Simulationen:** https://simulationen.familiemueller.space/
 
