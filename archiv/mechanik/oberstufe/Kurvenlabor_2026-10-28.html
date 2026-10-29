@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Kurvenlabor (Archiv 28.10.2026)</title>
+<style>
+  :root { --bg:#f4f6f9; --panel:#ffffff; --ink:#1d2733; --muted:#5b6675; --line:#d5dbe3; --blue:#1F4E79; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--ink);
+               font-family:-apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow:hidden; }
+  #app { display:flex; height:100vh; width:100vw; }
+  #stage { flex:1 1 auto; position:relative; min-width:0; }
+  canvas { display:block; width:100%; height:100%; touch-action:none; }
+  #panel { flex:0 0 360px; background:var(--panel); border-left:1px solid var(--line); padding:8px 12px;
+           display:flex; flex-direction:column; gap:6px; overflow-y:auto; }
+  h1 { font-size:17px; margin:0; color:var(--blue); }
+  .tabs { display:flex; gap:5px; }
+  .tabs button { flex:1; padding:7px 4px; }
+  button { font:inherit; font-size:14px; padding:7px 8px; border-radius:8px; border:1px solid var(--line);
+           background:#eef2f7; color:var(--ink); cursor:pointer; touch-action:manipulation; }
+  button.on { background:var(--blue); color:#fff; border-color:var(--blue); }
+  .row { display:flex; align-items:center; gap:8px; font-size:14px; }
+  .row label { flex:0 0 92px; }
+  .row input[type=range] { flex:1; height:26px; }
+  .row output { flex:0 0 92px; text-align:right; font-variant-numeric:tabular-nums; }
+  .seg { display:flex; gap:5px; } .seg button { flex:1; padding:6px 4px; font-size:13px; }
+  .btns { display:flex; gap:6px; } .btns button { flex:1; }
+  table { border-collapse:collapse; width:100%; font-size:13.5px; font-variant-numeric:tabular-nums; }
+  td { border-bottom:1px solid var(--line); padding:3px 4px; }
+  td:last-child { text-align:right; }
+  .bar { height:16px; background:#e8ecf1; border-radius:4px; position:relative; overflow:hidden; }
+  .bar > div { position:absolute; left:0; top:0; bottom:0; border-radius:4px; }
+  .small { font-size:12px; color:var(--muted); }
+  .chk { font-size:14px; display:flex; align-items:center; gap:6px; } .chk input { width:18px; height:18px; }
+  .pane { display:none; flex-direction:column; gap:6px; } .pane.on { display:flex; }
+  @media (max-height: 800px) { h1 { display:none; } button { padding:5px 8px; } td { padding:2px 4px; } .row input[type=range] { height:22px; } }
+  @media (max-width: 900px) { #panel { flex-basis:315px; } .row label { flex-basis:80px; } .row output { flex-basis:84px; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage"><canvas id="cv"></canvas></div>
+  <div id="panel">
+    <h1>Kurvenlabor</h1>
+    <div class="tabs">
+      <button data-tab="kurve" class="on">Kurve</button>
+      <button data-tab="kette">Kettenkarussell</button>
+      <button data-tab="loop">Looping</button>
+    </div>
+
+    <div class="pane on" id="p-kurve">
+      <div class="row"><label>Radius r</label><input id="k_r" type="range" min="15" max="100" step="1" value="50"><output id="k_ro"></output></div>
+      <div class="row"><label>Tempo v</label><input id="k_v" type="range" min="10" max="130" step="1" value="54"><output id="k_vo"></output></div>
+      <div class="row"><label>Masse m</label><input id="k_m" type="range" min="800" max="3000" step="50" value="1200"><output id="k_mo"></output></div>
+      <div class="seg" id="k_mu">
+        <button data-mu="0.8" class="on">trocken μ = 0,8</button><button data-mu="0.4">nass μ = 0,4</button><button data-mu="0.1">Eis μ = 0,1</button>
+      </div>
+      <div class="btns"><button id="k_go" class="on">Losfahren</button><button id="k_reset">Zurück</button></div>
+      <table id="k_tab"></table>
+      <div class="small">Zum Vergleich: Kreisverkehr r ≈ 15–25 m, enge Landstraßenkurve r ≈ 50–100 m. Pkw-Masse 800–3000 kg.</div>
+      <div class="small">nötige Zentripetalkraft</div><div class="bar"><div id="k_bar1" style="background:#C0392B"></div></div>
+      <div class="small">höchstens mögliche Haftreibung</div><div class="bar"><div id="k_bar2" style="background:#2E7D32"></div></div>
+    </div>
+
+    <div class="pane" id="p-kette">
+      <div class="row"><label>ω</label><input id="c_w" type="range" min="0" max="2" step="0.01" value="1.07"><output id="c_wo"></output></div>
+      <div class="row"><label>Abstand d</label><input id="c_d" type="range" min="1" max="8" step="0.5" value="4"><output id="c_do"></output></div>
+      <div class="row"><label>Kette l</label><input id="c_l" type="range" min="2" max="8" step="0.5" value="5"><output id="c_lo"></output></div>
+      <div class="row"><label>Masse m</label><input id="c_m" type="range" min="10" max="150" step="5" value="70"><output id="c_mo"></output></div>
+      <label class="chk"><input id="c_par" type="checkbox" checked>Kräfteplan (Parallelogramm)</label>
+      <table id="c_tab"></table>
+      <div class="small">Seitenansicht in dem Moment, in dem der Sitz rechts von der Achse ist. Oben rechts: Draufsicht.</div>
+    </div>
+
+    <div class="pane" id="p-loop">
+      <div class="row"><label>Starthöhe h</label><input id="l_h" type="range" min="0.5" max="40" step="0.1" value="5"><output id="l_ho"></output></div>
+      <div class="row"><label>Radius r</label><input id="l_r" type="range" min="0.5" max="12" step="0.1" value="2"><output id="l_ro"></output></div>
+      <div class="row"><label>Masse m</label><input id="l_m" type="range" min="20" max="1000" step="10" value="60"><output id="l_mo"></output></div>
+      <div class="btns"><button id="l_go" class="on">Start</button><button id="l_reset">Zurück</button></div>
+      <label class="chk"><input id="l_slow" type="checkbox">Zeitlupe (¼)</label>
+      <table id="l_tab"></table>
+      <div class="small">Reibungsfrei, Wagen als Massenpunkt. Die Schiene kann nur drücken, nicht ziehen.</div>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const cv = $("cv"), ctx = cv.getContext("2d");
+  const g = 9.81;
+  const C = { blue:"#1F4E79", red:"#C0392B", green:"#2E7D32", orange:"#E67E22", grey:"#8a95a3", road:"#5d6670" };
+
+  const SUB_RE = /(^|[^A-Za-z])([FavhTE])_(H,max|Seil|res|max|min|oben|Z|G|N|H)(?![A-Za-z])/g;
+  function subParts(t) {           // zerlegt Text in normale und tiefgestellte Teile
+    const out = []; let pos = 0, m;
+    SUB_RE.lastIndex = 0;
+    while ((m = SUB_RE.exec(t))) {
+      out.push([t.slice(pos, m.index) + m[1] + m[2], false]); out.push([m[3], true]); pos = m.index + m[0].length;
+    }
+    out.push([t.slice(pos), false]);
+    return out.filter(q => q[0]);
+  }
+  function drawSub(c, t, x, y, size, font, align) {   // Canvas-Text mit echten Indizes
+    const parts = subParts(t), fs = q => (q[1] ? Math.round(size * 0.7) : size) + "px " + font;
+    let w = 0; for (const q of parts) { c.font = fs(q); w += c.measureText(q[0]).width; }
+    let cx = align === "center" ? x - w / 2 : align === "right" ? x - w : x;
+    c.textAlign = "left";
+    for (const q of parts) { c.font = fs(q); c.fillText(q[0], cx, q[1] ? y + size * 0.25 : y); cx += c.measureText(q[0]).width; }
+  }
+  const fmt = (x, d) => (isFinite(x) ? x.toFixed(d).replace(".", ",") : "–");
+  let tab = "kurve";
+
+  function resize() {
+    const dpr = window.devicePixelRatio || 1, r = cv.getBoundingClientRect();
+    cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  window.addEventListener("resize", resize);
+
+  function arrow(x0, y0, x1, y1, col, lw) {
+    const dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy);
+    if (L < 2) return;
+    const ux = dx / L, uy = dy / L, h = Math.min(14, L * 0.45);
+    ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = lw || 3;
+    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1 - ux * h * 0.8, y1 - uy * h * 0.8); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x1, y1);
+    ctx.lineTo(x1 - ux * h - uy * h * 0.45, y1 - uy * h + ux * h * 0.45);
+    ctx.lineTo(x1 - ux * h + uy * h * 0.45, y1 - uy * h - ux * h * 0.45); ctx.closePath(); ctx.fill();
+  }
+  function text(t, x, y, col, size, align, bold) {
+    ctx.fillStyle = col; drawSub(ctx, t, x, y, size || 15, (bold ? "600 " : "") + "-apple-system, Segoe UI, Arial", align || "left");
+  }
+  const subHTML = t => subParts(t).map(q => q[1] ? "<sub>" + q[0] + "</sub>" : q[0]).join("");
+  const rows = arr => arr.map(r => `<tr><td>${subHTML(r[0])}</td><td>${r[1]}</td></tr>`).join("");
+
+  // ------------------------------------------------------------ Kurve
+  const K = { mu:0.8, state:"idle", x:0, y:0, vx:0, vy:0, msg:"" };
+  document.querySelectorAll("#k_mu button").forEach(b => b.onclick = () => {
+    document.querySelectorAll("#k_mu button").forEach(c => c.classList.remove("on")); b.classList.add("on"); K.mu = +b.dataset.mu; kReset();
+  });
+  function kP() { return { r:+$("k_r").value, v:+$("k_v").value / 3.6, kmh:+$("k_v").value, m:+$("k_m").value }; }
+  function kReset() { const p = kP(); K.state = "idle"; K.x = p.r; K.y = 0; K.vx = 0; K.vy = p.v; K.msg = ""; }
+  $("k_go").onclick = () => { kReset(); K.state = "run"; };
+  $("k_reset").onclick = kReset;
+  ["k_r", "k_v", "k_m"].forEach(id => $(id).addEventListener("input", kReset));
+  function kStep(dt) {
+    const p = kP();
+    if (K.state !== "run" && K.state !== "slide") return;
+    const n = 20, h = dt / n;
+    for (let i = 0; i < n; i++) {
+      const v = Math.hypot(K.vx, K.vy), d = Math.hypot(K.x, K.y);
+      const need = v * v / d, have = K.mu * g;
+      if (K.state === "run" && need > have + 1e-9) { K.state = "slide"; K.msg = "Die Haftreibung reicht nicht: Das Auto rutscht aus der Kurve."; }
+      const a = K.state === "run" ? need : have;
+      // Seitenkraft senkrecht zur Geschwindigkeit, zur Kurveninnenseite
+      const tx = K.vx / v, ty = K.vy / v; let nx = -ty, ny = tx;
+      if (nx * -K.x + ny * -K.y < 0) { nx = -nx; ny = -ny; }
+      K.vx += nx * a * h; K.vy += ny * a * h;
+      const s = v / Math.hypot(K.vx, K.vy); K.vx *= s; K.vy *= s;
+      K.x += K.vx * h; K.y += K.vy * h;
+      if (K.state === "run") { const dd = Math.hypot(K.x, K.y); K.x *= p.r / dd; K.y *= p.r / dd; }
+    }
+    if (Math.hypot(K.x, K.y) > p.r + 30 || Math.hypot(K.x, K.y) > 125) { K.state = "off"; }
+  }
+  function kDraw() {
+    const p = kP(), W = cv.clientWidth, H = cv.clientHeight, cx = W / 2, cy = H / 2;
+    // fester Maßstab: 110 m vom Mittelpunkt bis zum Rand, Fahrbahn 7 m breit, Auto 4,5 m × 1,8 m
+    const sc = Math.min(W, H) * 0.46 / 110, lane = 7 * sc;
+    const carL = Math.max(4.5 * sc, 16), carW = Math.max(1.8 * sc, 7);
+    ctx.fillStyle = "#cfe3c4"; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = C.road; ctx.lineWidth = lane; ctx.beginPath(); ctx.arc(cx, cy, p.r * sc, 0, 2 * Math.PI); ctx.stroke();
+    ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.setLineDash([12, 12]); ctx.beginPath(); ctx.arc(cx, cy, p.r * sc, 0, 2 * Math.PI); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = "#333"; ctx.beginPath(); ctx.arc(cx, cy, 4, 0, 2 * Math.PI); ctx.fill();
+    text("Kurvenmittelpunkt", cx, cy + 20, "#333", 13, "center");
+    const X = cx + K.x * sc, Y = cy - K.y * sc, ang = Math.atan2(-K.vy, K.vx);
+    ctx.save(); ctx.translate(X, Y); ctx.rotate(ang);
+    ctx.fillStyle = C.orange; ctx.strokeStyle = "#222"; ctx.lineWidth = 1.5;
+    ctx.fillRect(-carL / 2, -carW / 2, carL, carW); ctx.strokeRect(-carL / 2, -carW / 2, carL, carW);
+    ctx.fillStyle = "#9ec9f0"; ctx.fillRect(carL * 0.1, -carW * 0.38, carL * 0.22, carW * 0.76); ctx.restore();
+    const v = Math.hypot(K.vx, K.vy) || p.v, F = p.m * v * v / Math.hypot(K.x, K.y), Fmax = K.mu * p.m * g;
+    const k = 70 / Math.max(F, Fmax);
+    const d = Math.hypot(K.x, K.y), ux = -K.x / d, uy = K.y / d;
+    if (K.state !== "off") {
+      arrow(X, Y, X + ux * Math.min(F, Fmax) * k, Y + uy * Math.min(F, Fmax) * k, C.green, 3);
+      text("F_H", X + ux * Math.min(F, Fmax) * k * 0.5 + 8, Y + uy * Math.min(F, Fmax) * k * 0.5 - 8, C.green, 14);
+    }
+    const vk = 3.5;
+    arrow(X, Y, X + K.vx * vk, Y - K.vy * vk, C.red, 2.5);
+    text("v", X + K.vx * vk + 6, Y - K.vy * vk, C.red, 14);
+    if (K.msg) text(K.msg, W / 2, 28, C.red, 16, "center", true);
+    if (K.state === "off") text("Von der Fahrbahn abgekommen. „Zurück“ drücken.", W / 2, 52, C.red, 15, "center");
+    // Maßstabsbalken 20 m
+    ctx.strokeStyle = "#222"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(14, H - 30); ctx.lineTo(14 + 20 * sc, H - 30); ctx.stroke();
+    text("20 m", 14 + 10 * sc, H - 38, "#222", 13, "center");
+    text("Draufsicht · Fahrbahn 7 m breit" + (4.5 * sc < 16 ? " · Auto zur besseren Sichtbarkeit vergrößert" : ""), 12, H - 10, "#41505f", 13);
+  }
+  function kPanel() {
+    const p = kP(), F = p.m * p.v * p.v / p.r, Fmax = K.mu * p.m * g, vmax = Math.sqrt(K.mu * g * p.r);
+    $("k_ro").textContent = fmt(p.r, 0) + " m"; $("k_vo").textContent = fmt(p.kmh, 0) + " km/h"; $("k_mo").textContent = fmt(p.m, 0) + " kg";
+    $("k_tab").innerHTML = rows([["v", fmt(p.v, 1) + " m/s"], ["nötige Zentripetalkraft m·v²/r", fmt(F, 0) + " N"],
+      ["höchste Haftreibung μ·m·g", fmt(Fmax, 0) + " N"], ["Grenzgeschwindigkeit √(μ·g·r)", fmt(vmax, 1) + " m/s = " + fmt(vmax * 3.6, 0) + " km/h"]]);
+    const mx = Math.max(F, Fmax) * 1.05;
+    $("k_bar1").style.width = (100 * F / mx) + "%"; $("k_bar2").style.width = (100 * Fmax / mx) + "%";
+  }
+
+  // ------------------------------------------------------------ Kettenkarussell
+  let cPhase = 0;
+  function cP() { return { w:+$("c_w").value, d:+$("c_d").value, l:+$("c_l").value, m:+$("c_m").value, par:$("c_par").checked }; }
+  function cSolve(p) {
+    if (p.w <= 0) return 0;
+    let lo = 0, hi = Math.PI / 2 - 1e-6;
+    for (let i = 0; i < 80; i++) {
+      const a = (lo + hi) / 2, f = Math.tan(a) - p.w * p.w * (p.d + p.l * Math.sin(a)) / g;
+      if (f > 0) hi = a; else lo = a;
+    }
+    return (lo + hi) / 2;
+  }
+  function cDraw(dt) {
+    const p = cP(), W = cv.clientWidth, H = cv.clientHeight, a = cSolve(p);
+    cPhase += p.w * dt;
+    const sc = Math.min(W * 0.75 / (p.d + p.l + 1.5), H * 0.7 / (p.l + 4));
+    const ax = W * 0.18, top = H * 0.16;
+    ctx.fillStyle = "#eaf1f8"; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "#c9d6c0"; ctx.fillRect(0, H * 0.9, W, H * 0.1);
+    ctx.fillStyle = "#9aa4b1"; ctx.fillRect(ax - 7, top - 20, 14, H * 0.9 - top + 20);
+    ctx.strokeStyle = "#222"; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(ax, top); ctx.lineTo(ax + p.d * sc, top); ctx.stroke();
+    const px = ax + p.d * sc, py = top, sx = px + p.l * Math.sin(a) * sc, sy = py + p.l * Math.cos(a) * sc;
+    ctx.strokeStyle = "#444"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(sx, sy); ctx.stroke();
+    ctx.setLineDash([4, 4]); ctx.strokeStyle = C.grey; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, py + p.l * sc * 0.75); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ax, sy); ctx.lineTo(sx, sy); ctx.stroke(); ctx.setLineDash([]);
+    text("R = " + fmt(p.d + p.l * Math.sin(a), 2) + " m", (ax + sx) / 2, sy + 18, "#41505f", 13, "center");
+    if (a > 0.02) { ctx.strokeStyle = "#222"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(px, py, 34, Math.PI / 2 - a, Math.PI / 2); ctx.stroke(); text("α", px + 10, py + 50, "#222", 15); }
+    ctx.fillStyle = C.orange; ctx.strokeStyle = "#222"; ctx.beginPath(); ctx.arc(sx, sy, 10, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
+    // Kräfte (Pfeillänge: F_G = 90 px)
+    const FG = p.m * g, k = 90 / FG, FZ = FG * Math.tan(a), FS = FG / Math.cos(a);
+    arrow(sx, sy, sx, sy + FG * k, C.blue, 3); text("F_G", sx + 8, sy + FG * k, C.blue, 14);
+    arrow(sx, sy, sx - FS * k * Math.sin(a), sy - FS * k * Math.cos(a), C.green, 3); text("F_Seil", sx - FS * k * Math.sin(a) + 8, sy - FS * k * Math.cos(a), C.green, 14);
+    if (FZ * k > 3) { arrow(sx, sy, sx - FZ * k, sy, C.red, 3.5); text("F_Z (Resultierende)", sx - FZ * k, sy - 10, C.red, 14); }
+    if (p.par && FZ * k > 3) {
+      ctx.setLineDash([5, 4]); ctx.strokeStyle = C.grey; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(sx, sy + FG * k); ctx.lineTo(sx - FS * k * Math.sin(a), sy - FS * k * Math.cos(a) + FG * k); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(sx - FS * k * Math.sin(a), sy - FS * k * Math.cos(a)); ctx.lineTo(sx - FZ * k, sy); ctx.stroke(); ctx.setLineDash([]);
+    }
+    // Draufsicht
+    const ox = W - 80, oy = 80, rr = 55, R = p.d + p.l * Math.sin(a), rs = rr * R / (p.d + p.l);
+    ctx.fillStyle = "#fff"; ctx.strokeStyle = "#c4cfdc"; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(ox, oy, rr + 10, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = C.grey; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.arc(ox, oy, rs, 0, 2 * Math.PI); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = "#333"; ctx.beginPath(); ctx.arc(ox, oy, 3, 0, 2 * Math.PI); ctx.fill();
+    ctx.fillStyle = C.orange; ctx.beginPath(); ctx.arc(ox + rs * Math.cos(cPhase), oy - rs * Math.sin(cPhase), 6, 0, 2 * Math.PI); ctx.fill();
+    text("Draufsicht", ox, oy + rr + 26, "#41505f", 12, "center");
+    return { a, FZ, FS, FG, R: p.d + p.l * Math.sin(a) };
+  }
+  function cPanel(res) {
+    const p = cP();
+    $("c_wo").textContent = fmt(p.w, 2) + " Hz"; $("c_do").textContent = fmt(p.d, 1) + " m"; $("c_lo").textContent = fmt(p.l, 1) + " m"; $("c_mo").textContent = fmt(p.m, 0) + " kg";
+    const T = p.w > 0 ? 2 * Math.PI / p.w : Infinity;
+    $("c_tab").innerHTML = rows([["Auslenkwinkel α", fmt(res.a * 180 / Math.PI, 1) + "°"], ["Bahnradius R", fmt(res.R, 2) + " m"],
+      ["Umlaufdauer T", isFinite(T) ? fmt(T, 2) + " s" : "–"], ["Bahngeschwindigkeit v", fmt(p.w * res.R, 2) + " m/s"],
+      ["Gewichtskraft F_G", fmt(res.FG, 0) + " N"], ["Seilkraft F_Seil", fmt(res.FS, 0) + " N"], ["Zentripetalkraft F_Z", fmt(res.FZ, 0) + " N"]]);
+  }
+
+  // ------------------------------------------------------------ Looping
+  const L = { pts:null, cum:null, state:"idle", s:0, dir:1, x:0, y:0, vx:0, vy:0, msg:"", t:0, loopStart:0, loopEnd:0, minN:Infinity };
+  function lP() { return { h:+$("l_h").value, r:+$("l_r").value, m:+$("l_m").value, slow:$("l_slow").checked }; }
+  function lBuild() {
+    const p = lP(), pts = [];
+    const Lr = Math.max(2.2 * p.h, 3 * p.r), flat = 1.2 * p.r;
+    const N1 = 120;
+    for (let i = 0; i <= N1; i++) { const u = i / N1; pts.push([-Lr - flat + u * Lr, p.h * (0.5 + 0.5 * Math.cos(Math.PI * u))]); }
+    pts.push([0, 0]);
+    L.loopStart = pts.length - 1;
+    const N2 = 240;
+    for (let i = 1; i <= N2; i++) { const th = 2 * Math.PI * i / N2; pts.push([p.r * Math.sin(th), p.r - p.r * Math.cos(th)]); }
+    L.loopEnd = pts.length - 1;
+    pts.push([3 * p.r + 2, 0]);
+    const cum = [0];
+    for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+    L.pts = pts; L.cum = cum;
+  }
+  function lAt(s) {
+    const c = L.cum; let i = 1;
+    while (i < c.length - 1 && c[i] < s) i++;
+    const u = (s - c[i - 1]) / (c[i] - c[i - 1] || 1), a = L.pts[i - 1], b = L.pts[i];
+    return { x: a[0] + u * (b[0] - a[0]), y: a[1] + u * (b[1] - a[1]), tx: (b[0] - a[0]) / (c[i] - c[i - 1] || 1), ty: (b[1] - a[1]) / (c[i] - c[i - 1] || 1), i };
+  }
+  function lReset() { lBuild(); L.state = "idle"; L.s = 0; L.dir = 1; L.msg = ""; L.t = 0; L.minN = Infinity; const q = lAt(0); L.x = q.x; L.y = q.y; }
+  $("l_go").onclick = () => { lReset(); L.state = "run"; L.s = 1e-4; };
+  $("l_reset").onclick = lReset;
+  ["l_h", "l_r", "l_m"].forEach(id => $(id).addEventListener("input", lReset));
+  function lStep(dt) {
+    const p = lP();
+    if (p.slow) dt *= 0.25;
+    if (L.state === "run") {
+      const n = 40, h = dt / n;
+      for (let k = 0; k < n; k++) {
+        const q = lAt(L.s);
+        const v2 = 2 * g * (p.h - q.y);
+        if (v2 <= 1e-6 && L.s > 0.01) { L.dir = -L.dir; L.s += L.dir * 0.002; if (!L.msg) L.msg = "Zu wenig Energie: Der Wagen rollt zurück."; continue; }
+        const v = Math.sqrt(Math.max(v2, 1e-6));
+        const inLoop = L.s > L.cum[L.loopStart] && L.s < L.cum[L.loopEnd];
+        if (inLoop) {
+          const th = (L.s - L.cum[L.loopStart]) / p.r;          // Winkel ab tiefstem Punkt
+          const N = p.m * (v * v / p.r + g * Math.cos(th));
+          if (th > 0.05 && th < 2 * Math.PI - 0.05) L.minN = Math.min(L.minN, N);
+          if (N < 0) {
+            L.state = "fly"; L.x = q.x; L.y = q.y; L.vx = q.tx * v * L.dir; L.vy = q.ty * v * L.dir;
+            L.msg = "Die Schiene müsste ziehen: Der Wagen löst sich bei " + fmt(th * 180 / Math.PI, 0) + "° und fällt."; break;
+          }
+        }
+        L.s += L.dir * v * h;
+        if (L.s <= 0) { L.s = 0; L.dir = 1; }
+        if (L.s >= L.cum[L.cum.length - 1]) { L.s = L.cum[L.cum.length - 1]; L.state = "done"; if (!L.msg) L.msg = "Looping geschafft!"; break; }
+      }
+      const q = lAt(L.s); L.x = q.x; L.y = q.y;
+      L.t += dt; if (L.t > 20) L.state = "done";
+    } else if (L.state === "fly") {
+      const n = 20, h = dt / n;
+      for (let k = 0; k < n; k++) { L.vy -= g * h; L.x += L.vx * h; L.y += L.vy * h; }
+      if (L.y <= 0) { L.y = 0; L.state = "done"; }
+    }
+  }
+  function lDraw() {
+    const p = lP(), W = cv.clientWidth, H = cv.clientHeight;
+    if (!L.pts) lReset();
+    const xs = L.pts.map(q => q[0]), xmin = Math.min(...xs) - 0.5, xmax = Math.max(...xs) + 0.5;
+    const ymax = Math.max(p.h, 2 * p.r) * 1.15 + 0.5;
+    const sc = Math.min((W - 40) / (xmax - xmin), (H - 90) / ymax);
+    const ox = 20 - xmin * sc + ((W - 40) - (xmax - xmin) * sc) / 2, oy = H - 50;
+    const X = x => ox + x * sc, Y = y => oy - y * sc;
+    ctx.fillStyle = "#e7f1fb"; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "#c9d6c0"; ctx.fillRect(0, oy, W, H - oy);
+    // Raster 1 m
+    ctx.strokeStyle = "#d3e0ee"; ctx.lineWidth = 1;
+    const step = ymax > 20 ? 5 : (ymax > 8 ? 2 : 1);
+    for (let y = step; y < ymax; y += step) { ctx.beginPath(); ctx.moveTo(0, Y(y)); ctx.lineTo(W, Y(y)); ctx.stroke(); text(fmt(y, 0) + " m", 6, Y(y) - 3, "#7a8796", 11); }
+    ctx.strokeStyle = "#444"; ctx.lineWidth = 4; ctx.beginPath();
+    L.pts.forEach((q, i) => i ? ctx.lineTo(X(q[0]), Y(q[1])) : ctx.moveTo(X(q[0]), Y(q[1]))); ctx.stroke();
+    // Markierungen
+    ctx.setLineDash([5, 5]); ctx.strokeStyle = C.red; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(0, Y(2.5 * p.r)); ctx.lineTo(W, Y(2.5 * p.r)); ctx.stroke(); ctx.setLineDash([]);
+    text("h_min = 2,5 · r = " + fmt(2.5 * p.r, 2) + " m", W - 10, Y(2.5 * p.r) - 5, C.red, 13, "right");
+    ctx.fillStyle = C.orange; ctx.strokeStyle = "#222"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(X(L.x), Y(L.y), Math.max(7, 0.12 * sc), 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
+    if (L.msg) text(L.msg, W / 2, 26, L.msg.startsWith("Looping") ? C.green : C.red, 16, "center", true);
+    text("Seitenansicht", 12, H - 16, "#41505f", 13);
+  }
+  function lPanel() {
+    const p = lP();
+    $("l_ho").textContent = fmt(p.h, 1) + " m"; $("l_ro").textContent = fmt(p.r, 1) + " m"; $("l_mo").textContent = fmt(p.m, 0) + " kg";
+    const vb = Math.sqrt(2 * g * p.h), vt2 = 2 * g * (p.h - 2 * p.r), vt = vt2 > 0 ? Math.sqrt(vt2) : NaN;
+    const FG = p.m * g, FZt = vt2 > 0 ? p.m * vt2 / p.r : NaN, FNt = FZt - FG;
+    let cur = "–";
+    if (L.state === "run" || L.state === "done") { const q = lAt(L.s); cur = fmt(Math.sqrt(Math.max(0, 2 * g * (p.h - q.y))), 2) + " m/s"; }
+    $("l_tab").innerHTML = rows([
+      ["v unten √(2gh)", fmt(vb, 2) + " m/s"], ["v oben (aus Energie)", isFinite(vt) ? fmt(vt, 2) + " m/s" : "kommt nicht hoch"],
+      ["v_min oben √(g·r)", fmt(Math.sqrt(g * p.r), 2) + " m/s"], ["F_G", fmt(FG, 0) + " N"],
+      ["nötige F_Z oben m·v²/r", isFinite(FZt) ? fmt(FZt, 0) + " N" : "–"],
+      ["Schienenkraft oben F_N = F_Z − F_G", isFinite(FNt) ? fmt(FNt, 0) + " N" + (FNt < 0 ? " (müsste ziehen!)" : "") : "–"],
+      ["aktuelle Geschwindigkeit", cur]]);
+  }
+
+  // ------------------------------------------------------------ Steuerung
+  document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+    tab = b.dataset.tab;
+    document.querySelectorAll(".tabs button").forEach(c => c.classList.toggle("on", c === b));
+    document.querySelectorAll(".pane").forEach(pn => pn.classList.toggle("on", pn.id === "p-" + tab));
+    if (tab === "loop") lReset(); if (tab === "kurve") kReset();
+  });
+  resize(); kReset(); lReset();
+  let last = performance.now();
+  function loop(t) {
+    const dt = Math.min(0.05, (t - last) / 1000); last = t;
+    const W = cv.clientWidth, H = cv.clientHeight; ctx.clearRect(0, 0, W, H);
+    if (tab === "kurve") { kStep(dt); kDraw(); kPanel(); }
+    else if (tab === "kette") { const r = cDraw(dt); cPanel(r); }
+    else { lStep(dt); lDraw(); lPanel(); }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+<!-- KI-Hinweis: einheitlich in allen Simulationen, immer sichtbar unten rechts -->
+<style>
+#ki-hinweis{position:fixed;right:0;bottom:0;z-index:2147483000;pointer-events:none;
+  font:10px/16px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  color:#5b6270;background:rgba(243,244,246,.92);border-top:1px solid rgba(0,0,0,.08);border-left:1px solid rgba(0,0,0,.08);
+  border-top-left-radius:6px;padding:0 max(7px,env(safe-area-inset-right)) env(safe-area-inset-bottom) 8px;white-space:nowrap}
+.ki-platz::after{content:"";display:block;height:20px;flex:none}
+@media (max-width:520px){#ki-hinweis .ki-archiv{display:block}#ki-hinweis .ki-trenner{display:none}}
+@media print{#ki-hinweis{position:static;text-align:right;border:0;background:none}}
+</style>
+<div id="ki-hinweis" role="note"><span class="ki-archiv">Archivstand vom 28.10.2026<span class="ki-trenner"> · </span></span>Mit KI erstellt · Physik nicht geprüft · Ergebnisse kritisch prüfen</div>
+<script>
+/* Scrollbereiche, die bis unter den Hinweis reichen, bekommen unten 20 px Luft,
+   damit ihr letzter Inhalt nicht dauerhaft vom Hinweis verdeckt wird. */
+(function(){
+  var hin=document.getElementById('ki-hinweis');
+  function platz(){
+    var alt=document.querySelectorAll('.ki-platz');
+    for(var i=0;i<alt.length;i++)alt[i].classList.remove('ki-platz');
+    var vw=innerWidth,vh=innerHeight,hb=hin.getBoundingClientRect();
+    var els=document.body.querySelectorAll('*');
+    function passt(el){
+      var cs=getComputedStyle(el);
+      if(cs.display==='block'||cs.display==='flow-root')return true;
+      return cs.display==='flex'&&/column/.test(cs.flexDirection);
+    }
+    for(var j=0;j<els.length;j++){
+      var el=els[j];if(el===hin||el.closest('svg'))continue;
+      var oy=getComputedStyle(el).overflowY;
+      if(oy!=='auto'&&oy!=='scroll')continue;
+      var r=el.getBoundingClientRect();
+      if(r.height<40||r.bottom<vh-hb.height-4||r.right<hb.left+20||r.left>vw)continue;
+      if(passt(el))el.classList.add('ki-platz');
+    }
+    var se=document.scrollingElement||document.documentElement;
+    if(se.scrollHeight>vh+2&&passt(document.body))document.body.classList.add('ki-platz');
+  }
+  var t;function spaeter(){clearTimeout(t);t=setTimeout(platz,150);}
+  addEventListener('resize',spaeter);addEventListener('load',spaeter);
+  document.addEventListener('click',spaeter,true);
+  platz();
+})();
+</script>
+</body>
+</html>

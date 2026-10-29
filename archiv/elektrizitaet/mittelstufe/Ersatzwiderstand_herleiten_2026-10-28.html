@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Ersatzwiderstand herleiten (Archiv 28.10.2026)</title>
+<style>
+:root{--bg:#eef1f5;--panel:#fff;--ink:#1d2433;--muted:#5d6779;--line:#d3d9e3;--accent:#2563eb;--accent-soft:#dbe6fd;
+--q1:#2563eb;--q2:#7c3aed;--qg:#0f172a;--ok:#15803d;--ok-bg:#e7f6ec;--bad:#b42318;--bad-bg:#fdecea;--hint:#fff7d6;--hl:#facc15}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{font-size:calc(16px * var(--fs,1.15))}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.35;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+button{font:inherit;color:inherit;cursor:pointer}
+#app{display:grid;grid-template-rows:auto minmax(0,1fr);height:100vh;height:100dvh}
+#top{display:flex;align-items:center;gap:.5rem;padding:.35rem .6rem;background:#1f2a3d;color:#fff;min-width:0}
+#top.hidden{display:none}
+#top h1{font-size:1rem;margin:0 .4rem 0 0;white-space:nowrap;color:#cfe0ff;font-weight:700}
+.tabs{display:flex;gap:.3rem;flex:1 1 auto;min-width:0}
+.tab{border:0;border-radius:.55rem;background:#2d3b54;color:#e8eefb;padding:.4rem .75rem;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tab.on{background:#3b82f6;color:#fff;font-weight:650}
+.tool{border:0;border-radius:.5rem;background:#2d3b54;color:#fff;padding:.4rem .6rem;font-size:.85rem;min-width:2.3rem;white-space:nowrap}
+#showTop{position:fixed;top:.4rem;right:.4rem;z-index:30;display:none;border:0;border-radius:.5rem;background:rgba(31,42,61,.85);color:#fff;padding:.35rem .6rem;font-size:.85rem}
+#top.hidden ~ #showTop{display:block}
+.page{display:none;grid-template-columns:minmax(0,44fr) minmax(0,56fr);min-height:0;min-width:0}
+.page.on{display:grid}
+.left{background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;padding:.4rem .5rem;gap:.25rem;overflow:hidden}
+.cap{display:flex;justify-content:space-between;align-items:center;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:700;padding:0 .2rem}
+.svgbox{flex:1 1 0;min-height:0;display:flex;align-items:center;justify-content:center}
+.svgbox svg{width:100%;height:100%;max-height:100%;display:block}
+.equiv{text-align:center;font-size:.82rem;color:var(--muted);padding:.1rem 0;border-top:1px dashed var(--line);border-bottom:1px dashed var(--line);background:#fafbfd}
+.equiv b{color:var(--ink)}
+.legend{display:flex;align-items:center;gap:.4rem;font-size:.72rem;color:var(--muted);flex-wrap:wrap;justify-content:center}
+.legend .bar{width:7rem;height:.6rem;border-radius:.3rem;background:linear-gradient(90deg,hsl(125,78%,46%),hsl(60,78%,46%),hsl(30,78%,46%),hsl(0,78%,46%))}
+.mini{border:1px solid var(--line);background:#f6f8fb;border-radius:.45rem;padding:.15rem .5rem;font-size:.75rem;text-transform:none;letter-spacing:0;font-weight:600;color:var(--ink)}
+.mini.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.right{display:flex;flex-direction:column;min-height:0;min-width:0}
+.scroll{flex:1 1 auto;overflow:auto;-webkit-overflow-scrolling:touch;padding:.7rem .9rem;min-height:0}
+.nav{display:flex;gap:.5rem;align-items:center;padding:.5rem .8rem;background:var(--panel);border-top:1px solid var(--line)}
+.btn{border:1px solid var(--line);background:#f6f8fb;border-radius:.6rem;padding:.5rem .9rem;font-size:.95rem;white-space:nowrap}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:650;padding:.55rem 1.4rem}
+.btn:disabled{opacity:.4;cursor:default}
+.dots{flex:1;display:flex;gap:.25rem;justify-content:center;flex-wrap:wrap}
+.dot{width:.62rem;height:.62rem;border-radius:50%;background:#cfd6e2;border:0;padding:0}
+.dot.done{background:#93b4f5}.dot.on{background:var(--accent);transform:scale(1.3)}
+.phases{display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.55rem}
+.ph{font-size:.75rem;border-radius:1rem;padding:.15rem .6rem;background:#e7ebf2;color:var(--muted);font-weight:600}
+.ph.on{background:var(--accent-soft);color:#1e40af}
+h2{font-size:1.15rem;margin:.1rem 0 .5rem}
+.board{background:#fff;border:1px solid var(--line);border-radius:.8rem;padding:.5rem .7rem;display:flex;flex-direction:column;gap:.15rem}
+.ln{display:grid;grid-template-columns:1.6rem minmax(0,1fr) auto;align-items:center;gap:.5rem;padding:.3rem .2rem;border-radius:.5rem;animation:slide .45s ease}
+.ln .nr{width:1.4rem;height:1.4rem;border-radius:50%;background:#e7ebf2;color:var(--muted);font-size:.75rem;font-weight:700;display:flex;align-items:center;justify-content:center}
+.ln.cur{background:#f3f7ff}.ln.cur .nr{background:var(--accent);color:#fff}
+.ln.old .eq{opacity:.75}
+.eq{font-size:1.25rem;font-family:"Cambria Math","STIX Two Math","Times New Roman",serif;white-space:nowrap;overflow-x:auto;overflow-y:hidden;padding:.1rem 0}
+.tag{font-size:.72rem;color:var(--muted);text-align:right;white-space:nowrap}
+.op{color:#b45309;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:.85rem;margin-left:.8rem;font-weight:700;animation:fade .5s}
+.final{border:2.5px solid var(--accent);border-radius:.6rem;padding:.2rem .6rem;background:#f3f7ff;display:inline-block}
+@keyframes slide{from{opacity:0;transform:translateY(-.5rem)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 .12em}
+.fr>span{padding:0 .15em;line-height:1.15}
+.fr>span:first-child{border-bottom:.08em solid currentColor}
+.fr .fr{font-size:.92em}
+sub{font-size:.68em;line-height:0;vertical-align:-.28em}
+.q1{color:var(--q1)}.q2{color:var(--q2)}.qg{color:var(--qg);font-weight:700}
+.u{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:.85em}
+.cx{position:relative;display:inline-block}
+.cx.on::after{content:"";position:absolute;left:-.15em;right:-.15em;top:50%;border-top:.15em solid #dc2626;transform:rotate(-35deg);animation:fade .6s}
+.comment{margin-top:.7rem;background:var(--hint);border:1px solid #f2dc8b;border-radius:.8rem;padding:.6rem .8rem;font-size:.95rem;animation:fade .5s}
+.comment p{margin:.25rem 0}
+.comment .eqi{font-family:"Cambria Math","STIX Two Math","Times New Roman",serif;font-size:1.05em}
+.note{margin-top:.5rem;font-size:.85rem;color:var(--muted)}
+.card{background:#fff;border:1px solid var(--line);border-radius:.8rem;padding:.6rem .8rem;margin-bottom:.6rem}
+.card h3{margin:.1rem 0 .4rem;font-size:1rem}
+.sl{display:grid;grid-template-columns:5.5rem minmax(0,1fr) 5rem;align-items:center;gap:.5rem;margin:.15rem 0}
+.sl output{font-variant-numeric:tabular-nums;text-align:right;font-weight:650}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:2rem;background:transparent;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:#d6dde8}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:var(--accent);margin-top:-10px;border:3px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.35)}
+input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:#d6dde8}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--accent);border:3px solid #fff}
+.bars{display:flex;flex-direction:column;gap:.25rem;margin-top:.4rem}
+.barrow{display:grid;grid-template-columns:3.2rem minmax(0,1fr) 4.5rem;align-items:center;gap:.4rem;font-size:.85rem}
+.barrow .b{height:.9rem;border-radius:.3rem;transition:width .25s}
+.barrow span:last-child{text-align:right;font-variant-numeric:tabular-nums}
+/* Teil 2 */
+.task{background:#f3f7ff;border:1px solid #bfd2fb;border-radius:.8rem;padding:.6rem .8rem;margin-bottom:.6rem}
+.task p{margin:.25rem 0}
+.hints{display:flex;gap:.35rem;flex-wrap:wrap;margin:.2rem 0 .5rem}
+.hbtn{border:1px solid var(--line);background:#fff;border-radius:.6rem;padding:.4rem .65rem;font-size:.85rem;display:flex;align-items:center;gap:.3rem}
+.hbtn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.hbtn.used:not(.on){background:#e8eefb;border-color:#bfd2fb}
+.hbtn:disabled{opacity:.45;cursor:default}
+.lock{font-size:.8em}
+.status{font-size:.8rem;color:var(--muted);margin-bottom:.4rem}
+.mcq{margin:.35rem 0 .7rem}
+.mcq .qq{font-weight:650;margin-bottom:.3rem}
+.opts{display:flex;flex-direction:column;gap:.3rem}
+.opt{border:1.5px solid var(--line);background:#fff;border-radius:.6rem;padding:.4rem .7rem;text-align:left;font-size:1rem}
+.opt .eqi{font-family:"Cambria Math","STIX Two Math","Times New Roman",serif;font-size:1.1em}
+.opt.right{border-color:var(--ok);background:var(--ok-bg)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.fb{font-size:.88rem;border-radius:.5rem;padding:.35rem .6rem;margin-top:.3rem;animation:fade .4s}
+.fb.ok{background:var(--ok-bg);color:#14532d}.fb.no{background:var(--bad-bg);color:#7f1d1d}.fb.info{background:#eef4ff;color:#1e3a8a}
+.pool{display:flex;flex-wrap:wrap;gap:.4rem;min-height:3rem;padding:.4rem;border:1.5px dashed var(--line);border-radius:.7rem;background:#fafbfd}
+.dc{border:1.5px solid #93b4f5;background:#fff;border-radius:.55rem;padding:.3rem .6rem;font-family:"Cambria Math","STIX Two Math","Times New Roman",serif;font-size:1.05rem;touch-action:none;cursor:grab;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.dc.sel{outline:3px solid var(--hl)}
+.dc.ghost{position:fixed;z-index:50;pointer-events:none;opacity:.92;box-shadow:0 6px 16px rgba(0,0,0,.25)}
+.dc.dragging{opacity:.3}
+.slots{display:flex;flex-direction:column;gap:.35rem;margin:.5rem 0}
+.slot{display:grid;grid-template-columns:1.6rem minmax(0,1fr);align-items:center;gap:.5rem}
+.slot .nr{width:1.4rem;height:1.4rem;border-radius:50%;background:#e7ebf2;color:var(--muted);font-size:.75rem;font-weight:700;display:flex;align-items:center;justify-content:center}
+.drop{min-height:2.6rem;border:1.5px dashed #b8c3d6;border-radius:.6rem;display:flex;align-items:center;padding:.2rem .3rem;background:#fff}
+.drop.over{background:#fff7d6;border-color:#e0b100}
+.drop.right{border-style:solid;border-color:var(--ok);background:var(--ok-bg)}
+.drop.wrong{border-style:solid;border-color:var(--bad);background:var(--bad-bg)}
+.drop .ph2{color:#9aa5b8;font-size:.82rem;padding-left:.3rem}
+.gaptext{font-size:1rem;line-height:2.3}
+.gaptext .eqi{font-family:"Cambria Math","STIX Two Math","Times New Roman",serif;font-size:1.08em}
+.gap{border:1.5px dashed #93b4f5;background:#f3f7ff;border-radius:.45rem;padding:.05rem .5rem;min-width:4rem;font-family:"Cambria Math","STIX Two Math","Times New Roman",serif;font-size:1.05rem;line-height:1.4}
+.gap.right{border-style:solid;border-color:var(--ok);background:var(--ok-bg)}
+.gap.wrong{border-style:solid;border-color:var(--bad);background:var(--bad-bg)}
+#menu{position:fixed;z-index:60;background:#fff;border:1px solid var(--line);border-radius:.6rem;box-shadow:0 8px 24px rgba(0,0,0,.2);padding:.3rem;display:none;flex-direction:column;gap:.2rem}
+#menu button{border:0;background:#f6f8fb;border-radius:.45rem;padding:.4rem .8rem;text-align:left;font-family:"Cambria Math","STIX Two Math","Times New Roman",serif;font-size:1.05rem}
+.numin{font:inherit;font-size:1rem;width:6rem;padding:.3rem .5rem;border:1.5px solid var(--line);border-radius:.5rem;-webkit-user-select:text;user-select:text}
+.sol .ln,.noanim .ln{animation:none}
+.gaptext .eqi{white-space:nowrap}
+table.cmp{border-collapse:collapse;width:100%;font-size:.9rem;margin-top:.4rem}
+table.cmp td,table.cmp th{border:1px solid var(--line);padding:.3rem .45rem;text-align:left}
+table.cmp th{background:#f3f5f9}
+table.cmp .eqi{font-family:"Cambria Math","STIX Two Math","Times New Roman",serif;font-size:1.05em}
+.tl{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:.6rem;align-items:center}
+.tl .lvl{font-size:.8rem;color:#b45309;font-weight:700;margin-right:-.2rem}
+.tn{border:1.5px solid var(--line);background:#fff;border-radius:.5rem;min-width:2.2rem;padding:.25rem .45rem;font-size:.9rem;font-weight:650}
+.tn.on{border-color:var(--accent);background:var(--accent-soft)}
+.tn.ok{background:var(--ok-bg);border-color:var(--ok);color:#14532d}
+.tn.ok.on{box-shadow:0 0 0 2px var(--accent)}
+.given{font-family:"Cambria Math","STIX Two Math","Times New Roman",serif;font-size:1.08rem;margin:.3rem 0}
+.field{display:flex;align-items:center;gap:.5rem;margin:.35rem 0;flex-wrap:wrap}
+.field .lab{font-family:"Cambria Math","STIX Two Math","Times New Roman",serif;font-size:1.15rem;min-width:3.5rem;text-align:right}
+.numin.right{border-color:var(--ok);background:var(--ok-bg)}.numin.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.stars{color:#d97706;letter-spacing:.05em}
+/* SVG */
+svg text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:19px;fill:#1d2433}
+svg .sym{font-style:italic}
+svg .halo{opacity:0;fill:none;stroke:var(--hl);stroke-linecap:round;stroke-linejoin:round}
+svg .hl .halo{animation:pulse 1.3s ease-in-out infinite}
+svg .hl text{paint-order:stroke;stroke:#fde68a;stroke-width:6px;stroke-linejoin:round}
+@keyframes pulse{0%,100%{opacity:.3}50%{opacity:.95}}
+svg .wire{fill:none;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;transition:stroke .3s}
+svg .res{fill:#fff;stroke:#1d2433;stroke-width:3}
+svg .box{fill:none;stroke:#64748b;stroke-width:2;stroke-dasharray:7 5}
+svg .boxlab{font-size:13px;fill:#64748b}
+svg .val{font-weight:600}
+.capbtns{display:flex;gap:.3rem;align-items:center}
+.phone{display:none}
+#rotate{display:none}
+/* ===== Smartphone (schmaler Bildschirm): eigenes Hochformat-Layout ===== */
+@media (max-width:640px){
+ .phone{display:inline-block}
+ #top{flex-wrap:wrap;gap:.3rem;padding:.3rem .4rem}
+ #top h1{display:none}
+ .tabs{order:2;flex:1 1 100%}
+ .tab{flex:1 1 0;padding:.35rem .3rem;font-size:.8rem;text-align:center}
+ .tool{padding:.3rem .5rem;font-size:.8rem;min-width:2rem}
+ .tlong{display:none}
+ #top::before{content:"Ersatzwiderstand";color:#cfe0ff;font-weight:700;font-size:.9rem;flex:1 1 auto;order:0}
+ .page{grid-template-columns:1fr!important;grid-template-rows:auto minmax(0,1fr)!important}
+ .left{border-right:0;border-bottom:1px solid var(--line);padding:.25rem .3rem;max-height:40vh;max-height:40dvh}
+ .left .svgbox{flex:0 1 auto;height:calc((100vw - .6rem) * 260 / 560);max-height:30vh}
+ .left .equiv{display:none}
+ .left .c-eq{display:none}
+ .left.alt .c-eq{display:flex}
+ .left.alt .c-orig{display:none}
+ .left.folded .svgbox,.left.folded .legend{display:none!important}
+ .left.folded .fold{transform:rotate(180deg)}
+ .legend{font-size:.65rem}
+ .legend .bar{width:4rem}
+ .legend span:last-child{display:none}
+ .scroll{padding:.5rem .55rem}
+ .nav{padding:.4rem .45rem;gap:.35rem}
+ .nav .btn{padding:.45rem .6rem;font-size:.85rem}
+ .nav .btn.primary{padding:.5rem .8rem}
+ #restart{font-size:0!important;padding:.45rem .55rem!important}
+ #restart::before{content:"↺";font-size:1rem}
+ .dots .dot{display:none}
+ .dots::after{content:attr(data-pos);font-size:.85rem;color:var(--muted);font-weight:600}
+ .ln{grid-template-columns:1.3rem minmax(0,1fr);gap:.35rem}
+ .ln .tag{display:none}
+ .eq{font-size:1.05rem}
+ h2{font-size:1rem}
+ .comment{font-size:.9rem;padding:.5rem .6rem}
+ .sl{grid-template-columns:2.2rem minmax(0,1fr) 4.2rem}
+ .card{padding:.5rem .6rem}
+ table.cmp{font-size:.78rem}
+ .phases .ph{font-size:.68rem;padding:.1rem .45rem}
+}
+/* Handy quer: Hinweis zum Drehen */
+@media (orientation:landscape) and (max-height:500px) and (pointer:coarse){
+ body:not(.norotate) #rotate{display:flex;position:fixed;inset:0;z-index:100;background:rgba(15,23,42,.92);color:#fff;align-items:center;justify-content:center;text-align:center;padding:1rem}
+ #rotate .rbox{max-width:26rem}
+ #rotate .btn{color:#1d2433;margin-top:.5rem}
+}
+@media (orientation:portrait){
+ .page{grid-template-columns:1fr;grid-template-rows:minmax(0,42fr) minmax(0,58fr)}
+ .left{border-right:0;border-bottom:1px solid var(--line)}
+}
+</style>
+</head>
+<body>
+<div id="app">
+ <div id="top">
+  <h1>Ersatzwiderstand</h1>
+  <div class="tabs" id="tabs">
+   <button class="tab on" data-tab="1">1 · Parallel<span class="tlong">: Herleitung</span></button>
+   <button class="tab" data-tab="2">2 · Reihe<span class="tlong">: selbst herleiten</span></button>
+   <button class="tab" data-tab="3">3 · Übungen</button>
+  </div>
+  <button class="tool" id="aminus" title="Schrift kleiner">A−</button>
+  <button class="tool" id="aplus" title="Schrift größer">A+</button>
+  <button class="tool" id="fs" title="Vollbild">⛶</button>
+  <button class="tool" id="hideTop" title="Leiste ausblenden">▲</button>
+ </div>
+ <button id="showTop">▼ Leiste</button>
+
+ <!-- ===================== Teil 1 ===================== -->
+ <div class="page on" id="page1">
+  <div class="left">
+   <div class="cap c-orig"><span>Parallelschaltung</span><span class="capbtns"><span id="p1vals" class="mini" style="display:none">mit Werten</span><button class="mini phone swap">⇄ Ersatz</button><button class="mini phone fold" title="Schaltplan ein-/ausklappen">▴</button></span></div>
+   <div class="svgbox c-orig" id="svgP"></div>
+   <div class="equiv">wird ersetzt durch ⇣ &nbsp;<b>gleiche Spannung <i>U</i>, gleicher Gesamtstrom <i>I</i><sub>ges</sub></b></div>
+   <div class="cap c-eq"><span>Ersatzschaltung</span><span class="capbtns"><button class="mini phone swap">⇄ Original</button><button class="mini phone fold" title="Schaltplan ein-/ausklappen">▴</button></span></div>
+   <div class="svgbox c-eq" id="svgPE"></div>
+   <div class="legend"><span>Potenzial:</span><span>0 V</span><span class="bar"></span><span>12 V</span><span>· gleiche Farbe = gleiches Potenzial</span></div>
+  </div>
+  <div class="right">
+   <div class="scroll" id="scroll1">
+    <div class="phases" id="phases"></div>
+    <h2 id="stTitle"></h2>
+    <div id="board1"></div>
+    <div id="comment1"></div>
+   </div>
+   <div class="nav">
+    <button class="btn" id="restart">↺ Von vorn</button>
+    <button class="btn" id="prev">◀ Zurück</button>
+    <div class="dots" id="dots"></div>
+    <button class="btn primary" id="next">Weiter ▶</button>
+   </div>
+  </div>
+ </div>
+
+ <!-- ===================== Teil 2 ===================== -->
+ <div class="page" id="page2">
+  <div class="left">
+   <div class="cap c-orig"><span>Reihenschaltung</span><span class="capbtns"><button class="mini" id="meas">Messwerte zeigen</button><button class="mini phone swap">⇄ Ersatz</button><button class="mini phone fold" title="Schaltplan ein-/ausklappen">▴</button></span></div>
+   <div class="svgbox c-orig" id="svgS"></div>
+   <div class="equiv">wird ersetzt durch ⇣ &nbsp;<b>gleiche Spannung <i>U</i>, gleiche Stromstärke <i>I</i></b></div>
+   <div class="cap c-eq"><span>Ersatzschaltung</span><span class="capbtns"><button class="mini phone swap">⇄ Original</button><button class="mini phone fold" title="Schaltplan ein-/ausklappen">▴</button></span></div>
+   <div class="svgbox c-eq" id="svgSE"></div>
+   <div class="legend"><span>Potenzial:</span><span>0 V</span><span class="bar"></span><span>12 V</span><span>· gleiche Farbe = gleiches Potenzial</span></div>
+  </div>
+  <div class="right">
+   <div class="scroll" id="scroll2">
+    <div class="task">
+     <p><b>Dein Auftrag:</b> Leite die Formel für den Ersatzwiderstand <i>R</i><sub>ges</sub> von zwei <b>in Reihe</b> geschalteten Widerständen her.</p>
+     <p>Geh vor wie bei der Parallelschaltung in Teil 1. Schreib deine Herleitung ins Heft und prüf dann dein Ergebnis unten. Wenn du nicht weiterkommst, helfen dir nach deinem ersten Versuch die Hilfen.</p>
+    </div>
+    <div class="card" id="checkCard"></div>
+    <div class="status" id="hstatus"></div>
+    <div class="hints" id="hints"></div>
+    <div id="hintBody"></div>
+   </div>
+  </div>
+ </div>
+
+ <!-- ===================== Teil 3 ===================== -->
+ <div class="page" id="page3">
+  <div class="left">
+   <div class="cap"><span id="t3cap">Schaltplan zur Aufgabe</span><span class="capbtns"><button class="mini phone fold" title="Schaltplan ein-/ausklappen">▴</button></span></div>
+   <div class="svgbox" id="svgT"></div>
+   <div class="legend"><span>Potenzial:</span><span>0 V</span><span class="bar"></span><span>12 V</span><span>· ? = gesucht</span></div>
+  </div>
+  <div class="right">
+   <div class="scroll" id="scroll3">
+    <div id="tlist"></div>
+    <div id="tbody"></div>
+   </div>
+   <div class="nav">
+    <button class="btn" id="tprev">◀ Vorige</button>
+    <div class="dots" id="tscore"></div>
+    <button class="btn primary" id="tnext">Nächste ▶</button>
+   </div>
+  </div>
+ </div>
+</div>
+<div id="menu"></div>
+<div id="rotate"><div class="rbox"><div style="font-size:3rem">📱↻</div><p><b>Bitte dreh dein Handy ins Hochformat.</b></p><p>Auf dem Handy ist das Programm für das Hochformat gebaut.</p><button class="btn" id="rotOk">Trotzdem quer weiter</button></div></div>
+
+<script>
+"use strict";
+/* ============ Hilfsfunktionen Formelsatz (HTML) ============ */
+const fr=(n,d)=>`<span class="fr"><span>${n}</span><span>${d}</span></span>`;
+const q=(cls,b,s)=>`<span class="${cls}"><i>${b}</i>${s?`<sub>${s}</sub>`:''}</span>`;
+const U=q('qg','U'), U1=q('q1','U','1'), U2=q('q2','U','2');
+const I=q('qg','I'), Ig=q('qg','I','ges'), I1=q('q1','I','1'), I2=q('q2','I','2');
+const R1=q('q1','R','1'), R2=q('q2','R','2'), Rg=q('qg','R','ges');
+const OHM='<span class="u">&thinsp;Ω</span>', VOLT='<span class="u">&thinsp;V</span>', AMP='<span class="u">&thinsp;A</span>';
+const cx=(s,id)=>`<span class="cx" data-cx="${id}">${s}</span>`;
+function fmt(x,sig=3){ if(!isFinite(x)) return '–'; if(x===0) return '0';
+  const d=Math.max(0,sig-1-Math.floor(Math.log10(Math.abs(x)))); return (+x.toFixed(Math.min(d,6))).toLocaleString('de-DE',{maximumFractionDigits:6}); }
+
+/* ============ Potenzialfarben wie im Stromkreis-Labor: 0 V grün, 12 V rot ============ */
+function potHue(v){ v=Math.max(0,Math.min(12,v)); return 125*(1-Math.pow(v/12,0.75)); }
+const potColor=v=>`hsl(${potHue(v).toFixed(1)},78%,46%)`;
+
+/* ============ SVG-Bausteine ============ */
+const SV={q1:'#2563eb',q2:'#7c3aed',qg:'#0f172a'};
+function stext(x,y,sym,sub,val,opt={}){
+  const a=opt.anchor||'start', col=SV[opt.c||'qg'];
+  let s=`<text x="${x}" y="${y}" text-anchor="${a}" style="fill:${col}"><tspan class="sym">${sym}</tspan>`;
+  if(sub) s+=`<tspan dy="5" font-size="13">${sub}</tspan><tspan dy="-5">${val?' = '+val:''}</tspan>`;
+  else if(val) s+=`<tspan> = ${val}</tspan>`;
+  return s+'</text>';
+}
+function wire(d,v){ return `<path class="wire" d="${d}" stroke="${potColor(v)}"/>`; }
+function tri(x,y,dir,c){ // Stromrichtungs-Pfeil auf dem Draht
+  const s=9; const pts={r:[[x+s,y],[x-s,y-s*.8],[x-s,y+s*.8]],l:[[x-s,y],[x+s,y-s*.8],[x+s,y+s*.8]],d:[[x,y+s],[x-s*.8,y-s],[x+s*.8,y-s]]}[dir];
+  return `<polygon points="${pts.map(p=>p.join(',')).join(' ')}" fill="${SV[c]}" stroke="#fff" stroke-width="1.5"/>`;
+}
+function vArrow(x,y1,y2,c){ // Spannungspfeil senkrecht von + nach −
+  const col=SV[c]; return `<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2-9}" stroke="${col}" stroke-width="2.5"/><polygon points="${x},${y2} ${x-6},${y2-11} ${x+6},${y2-11}" fill="${col}"/>`;
+}
+function hArrow(x1,x2,y,c){ const col=SV[c]; return `<line x1="${x1}" y1="${y}" x2="${x2-9}" y2="${y}" stroke="${col}" stroke-width="2.5"/><polygon points="${x2},${y} ${x2-11},${y-6} ${x2-11},${y+6}" fill="${col}"/>`; }
+const g=(id,inner,halo)=>`<g id="${id}">${halo||''}${inner}</g>`;
+const haloPath=(d,w=16)=>`<path class="halo" d="${d}" stroke-width="${w}"/>`;
+const haloRect=(x,y,w,h)=>`<rect class="halo" x="${x-6}" y="${y-6}" width="${w+12}" height="${h+12}" rx="8" stroke-width="8"/>`;
+/* Beschriftung: o.lbl überschreibt einzelne Werte (Übungsaufgaben), sonst Zahlenwerte wenn o.vals */
+function mkLab(o){ return (k,num,unit)=> o.lbl ? (o.lbl[k]||'') : (o.vals&&num!==undefined ? fmt(num)+' '+unit : ''); }
+function battery(Uv,labU,prefix){
+  return `${wire('M40 50 V133',Uv)}${wire('M40 147 V230',0)}
+  <line x1="20" y1="133" x2="60" y2="133" stroke="#1d2433" stroke-width="3"/>
+  <line x1="30" y1="147" x2="50" y2="147" stroke="#1d2433" stroke-width="8"/>
+  <text x="12" y="126" font-size="18" font-weight="700">+</text><text x="12" y="166" font-size="18" font-weight="700">−</text>
+  ${g(prefix+'U',vArrow(76,112,170,'qg')+stext(84,165,'U','',labU),haloPath('M76 112 V170',14))}`;
+}
+function resV(id,x,y,lab,sub,val,c,labSide){ // senkrechter Widerstand, Mitte y
+  const h=70,w=26, yy=y-h/2;
+  const lx=labSide==='r'?x+22:x-22, an=labSide==='r'?'start':'end';
+  return g(id,`<rect class="res" x="${x-w/2}" y="${yy}" width="${w}" height="${h}" rx="2"/>`+stext(lx,y-12,lab,sub,val,{anchor:an,c}),haloRect(x-w/2,yy,w,h));
+}
+
+/* Parallelschaltung (Original), Rahmen 560 × 260 */
+function svgParallel(o){
+  const L=mkLab(o), Uv=o.U||12;
+  const x1=250,x2=420;
+  let s=`<svg viewBox="0 0 560 260" preserveAspectRatio="xMidYMid meet">`;
+  s+=g('pHi',wire(`M40 50 H${x2} M${x1} 50 V105 M${x2} 50 V105`,Uv),haloPath(`M40 50 H${x2}`,18));
+  s+=g('pLo',wire(`M40 230 H${x2} M${x1} 230 V175 M${x2} 230 V175`,0),haloPath(`M40 230 H${x2}`,18));
+  s+=battery(Uv,L('U',o.U,'V'),'p');
+  if(!o.nobox) s+=`<rect class="box" x="205" y="68" width="345" height="135" rx="10"/>`;
+  s+=resV('pR1',x1,140,'R','1',L('R1',o.R1,'Ω'),'q1','l');
+  s+=resV('pR2',x2,140,'R','2',L('R2',o.R2,'Ω'),'q2','l');
+  s+=g('pU1',vArrow(x1+32,108,172,'q1')+stext(x1+40,172,'U','1',L('U1',o.U,'V'),{c:'q1'}),haloPath(`M${x1+32} 108 V172`,14));
+  s+=g('pU2',vArrow(x2+32,108,172,'q2')+stext(x2+40,172,'U','2',L('U2',o.U,'V'),{c:'q2'}),haloPath(`M${x2+32} 108 V172`,14));
+  s+=g('pIg',tri(130,50,'r','qg')+stext(130,32,'I','ges',L('Ig',o.Ig,'A'),{anchor:'middle'}),haloPath('M112 50 H148',20));
+  s+=g('pI1',tri(x1,80,'d','q1')+stext(x1+14,86,'I','1',L('I1',o.I1,'A'),{c:'q1'}),haloPath(`M${x1} 66 V94`,20));
+  s+=g('pI2',tri(x2,80,'d','q2')+stext(x2+14,86,'I','2',L('I2',o.I2,'A'),{c:'q2'}),haloPath(`M${x2} 66 V94`,20));
+  s+=g('pNode',`<circle cx="${x1}" cy="50" r="7" fill="#1d2433"/><circle cx="${x1}" cy="230" r="7" fill="#1d2433"/>`,`<circle class="halo" cx="${x1}" cy="50" r="13" stroke-width="8"/><circle class="halo" cx="${x1}" cy="230" r="13" stroke-width="8"/>`);
+  if(o.lbl&&o.lbl.Rg) s+=`<text x="545" y="252" text-anchor="end" style="fill:#0f172a;font-weight:600"><tspan class="sym">R</tspan><tspan dy="5" font-size="12">ges</tspan><tspan dy="-5"> = ${o.lbl.Rg}</tspan></text>`;
+  return s+'</svg>';
+}
+/* Ersatzschaltung, gleicher Rahmen */
+function svgEquiv(o,prefix,iSub){
+  const L=mkLab(o), Uv=o.U||12, x=330;
+  let s=`<svg viewBox="0 0 560 260" preserveAspectRatio="xMidYMid meet">`;
+  s+=g(prefix+'Hi',wire(`M40 50 H${x} V105`,Uv),haloPath(`M40 50 H${x}`,18));
+  s+=g(prefix+'Lo',wire(`M40 230 H${x} V175`,0),haloPath(`M40 230 H${x}`,18));
+  s+=battery(Uv,L('U',o.U,'V'),prefix);
+  s+=`<rect class="box" x="205" y="68" width="345" height="135" rx="10"/>`;
+  s+=resV(prefix+'Rg',x,140,'R','ges',o.vals?L('Rg',o.Rg,'Ω'):(o.rgUnknown?'?':''),'qg','l');
+  s+=g(prefix+'Ur',vArrow(x+32,108,172,'qg')+stext(x+40,172,'U','',L('U',o.U,'V')),haloPath(`M${x+32} 108 V172`,14));
+  s+=g(prefix+'Ig',tri(130,50,'r','qg')+stext(130,32,'I',iSub,L('Ig',o.Ig,'A'),{anchor:'middle'}),haloPath('M112 50 H148',20));
+  return s+'</svg>';
+}
+/* Reihenschaltung */
+function svgSeries(o){
+  const L=mkLab(o), Uv=o.U||12, phiM=o.U2!==undefined?o.U2:Uv*o.R2/(o.R1+o.R2); // Potenzial zwischen R1 und R2 = U2
+  let s=`<svg viewBox="0 0 560 260" preserveAspectRatio="xMidYMid meet">`;
+  s+=g('sHi',wire('M40 50 H160',Uv),haloPath('M40 50 H160',18));
+  s+=g('sMid',wire('M240 50 H420 V105',phiM),haloPath('M240 50 H420 V105',18));
+  s+=g('sLo',wire('M40 230 H420 V175',0),haloPath('M40 230 H420',18));
+  s+=battery(Uv,L('U',o.U,'V'),'s');
+  if(!o.nobox) s+=`<rect class="box" x="135" y="30" width="415" height="173" rx="10"/>`;
+  s+=g('sR1',`<rect class="res" x="160" y="37" width="80" height="26" rx="2"/>`+stext(200,92,'R','1',L('R1',o.R1,'Ω'),{anchor:'middle',c:'q1'}),haloRect(160,37,80,26));
+  s+=resV('sR2',420,140,'R','2',L('R2',o.R2,'Ω'),'q2','l');
+  s+=g('sU1',hArrow(162,238,18,'q1')+stext(248,24,'U','1',L('U1',o.U1,'V'),{c:'q1'}),haloPath('M162 18 H238',14));
+  s+=g('sU2',vArrow(452,108,172,'q2')+stext(460,172,'U','2',L('U2',o.U2,'V'),{c:'q2'}),haloPath('M452 108 V172',14));
+  const il=L('I',o.I,'A');
+  s+=g('sI',tri(100,50,'r','qg')+stext(100,32,'I','',il,{anchor:'middle'})+tri(330,50,'r','qg')+stext(330,32,'I','',il,{anchor:'middle'})+tri(230,230,'l','qg')+stext(230,255,'I','',il,{anchor:'middle'}),
+    haloPath('M82 50 H118',20)+haloPath('M312 50 H348',20)+haloPath('M212 230 H248',20));
+  if(o.lbl&&o.lbl.Rg) s+=`<text x="545" y="252" text-anchor="end" style="fill:#0f172a;font-weight:600"><tspan class="sym">R</tspan><tspan dy="5" font-size="12">ges</tspan><tspan dy="-5"> = ${o.lbl.Rg}</tspan></text>`;
+  return s+'</svg>';
+}
+function setHL(ids){ document.querySelectorAll('svg g.hl').forEach(e=>e.classList.remove('hl')); (ids||[]).forEach(id=>{const e=document.getElementById(id); if(e) e.classList.add('hl');}); }
+
+/* ============ Oberfläche: Reiter, Schrift, Vollbild ============ */
+const FS=[.9,1,1.15,1.3,1.5,1.75]; const PHONE=matchMedia('(max-width:640px)'); let fsI=PHONE.matches?1:2;
+function applyFs(){ document.documentElement.style.setProperty('--fs',FS[fsI]); }
+document.getElementById('aplus').onclick=()=>{ fsI=Math.min(FS.length-1,fsI+1); applyFs(); };
+document.getElementById('aminus').onclick=()=>{ fsI=Math.max(0,fsI-1); applyFs(); };
+document.getElementById('fs').onclick=()=>{ const d=document, el=d.documentElement;
+  if(d.fullscreenElement||d.webkitFullscreenElement){ (d.exitFullscreen||d.webkitExitFullscreen).call(d); }
+  else { const f=el.requestFullscreen||el.webkitRequestFullscreen; if(f) f.call(el); else alert('Vollbild wird von diesem Browser nicht unterstützt. Tipp: In Safari über „Teilen“ → „Zum Home-Bildschirm“.'); } };
+document.getElementById('hideTop').onclick=()=>document.getElementById('top').classList.add('hidden');
+document.getElementById('showTop').onclick=()=>document.getElementById('top').classList.remove('hidden');
+let tab=1;
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{ tab=+b.dataset.tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t===b));
+  [1,2,3].forEach(n=>document.getElementById('page'+n).classList.toggle('on',tab===n));
+  if(tab===1) render1(); else if(tab===2) render2(); else render3(); });
+
+/* =================================================================
+   TEIL 1: Herleitung Parallelschaltung
+   ================================================================= */
+const EX={R1:100,R2:300,U:12};
+const own={R1:200,R2:300,U:12};
+function calcP(o){ const Rg=1/(1/o.R1+1/o.R2); return {...o,Rg,I1:o.U/o.R1,I2:o.U/o.R2,Ig:o.U/Rg}; }
+
+const PH=['Ziel','Herleitung','Ergebnis','Rechenbeispiel','Selbst rechnen'];
+const STEPS=[
+ {ph:0,t:'Worum geht es?',board:'d',hl:['pR1','pR2','eRg'],
+  c:`<p>Zwei Widerstände ${R1} und ${R2} sind <b>parallel</b> geschaltet. Wir wollen sie gedanklich durch <b>einen einzigen</b> Widerstand ersetzen, den <b>Ersatzwiderstand</b> ${Rg}.</p>
+     <p>Die Quelle darf dabei keinen Unterschied merken: Bei gleicher Spannung ${U} soll derselbe Gesamtstrom ${Ig} fließen.</p>
+     <p>Gesucht ist eine Formel, mit der man ${Rg} aus ${R1} und ${R2} berechnet.</p>`},
+ {ph:1,t:'Schritt 1: Was ist bei beiden Widerständen gleich?',board:'d',hl:['pHi','pLo','pU1','pU2','pU'],
+  c:`<p>Schau auf die Farben im Schaltplan: Die obere Leitung hat überall <b>dasselbe Potenzial</b> wie der Pluspol, die untere überall dasselbe Potenzial wie der Minuspol.</p>
+     <p>Jeder Widerstand liegt also zwischen <b>denselben beiden Farben</b>. Die Spannung ist der Potenzialunterschied, deshalb ist sie an beiden Widerständen gleich groß, nämlich gleich der Spannung der Quelle.</p>`},
+ {ph:1,t:'Schritt 2: Was teilt sich auf?',board:'d',hl:['pNode','pIg','pI1','pI2'],
+  c:`<p>Am <b>Knoten</b> teilt sich der Gesamtstrom auf die beiden Zweige auf. Nach der <b>Knotenregel</b> geht dabei keine Ladung verloren:</p>
+     <p>Was in den Knoten hineinfließt, fließt auch wieder heraus. Also ist ${Ig} die Summe von ${I1} und ${I2}.</p>`},
+ {ph:1,t:'Schritt 3: Ohmsches Gesetz für jeden Widerstand',board:'d',hl:['pR1','pR2','eRg','pI1','pI2','eIg'],
+  c:`<p>Für jeden Widerstand gilt <span class="eqi"><i>R</i> = ${fr('<i>U</i>','<i>I</i>')}</span>, umgestellt nach der Stromstärke: <span class="eqi"><i>I</i> = ${fr('<i>U</i>','<i>R</i>')}</span>.</p>
+     <p>Wir wenden das auf ${R1}, auf ${R2} und auf den Ersatzwiderstand ${Rg} an. An allen dreien liegt dieselbe Spannung ${U} (Schritt 1).</p>`},
+ {ph:1,t:'Schritt 4: Einsetzen',board:'d',hl:['pIg','pI1','pI2'],
+  c:`<p>Jetzt ersetzen wir in der Knotenregel (Zeile 2) jede Stromstärke durch den Bruch aus Zeile 3. Die Farben zeigen dir, was wohin gehört.</p>
+     <p>Damit steht in einer einzigen Gleichung nur noch Spannung und Widerstände, keine Stromstärke mehr.</p>`},
+ {ph:1,t:'Schritt 5: Durch U teilen',board:'d',hl:['pU','pU1','pU2'],
+  c:`<p>In jedem Bruch steht ${U} im Zähler. Wir teilen beide Seiten der Gleichung durch ${U}. Das ist erlaubt, weil ${U} nicht null ist.</p>
+     <p>Übrig bleibt eine Gleichung, in der nur noch Widerstände vorkommen: <b>Die Kehrwerte der Widerstände addieren sich.</b></p>
+     <p class="note">Gut zu wissen: Den Kehrwert ${fr('1','<i>R</i>')} nennt man auch <b>Leitwert</b>. In der Parallelschaltung addieren sich die Leitwerte.</p>`},
+ {ph:2,t:'Schritt 6: Nach R<sub>ges</sub> auflösen',board:'d',hl:['eRg'],
+  c:`<p>Links steht noch der Kehrwert ${fr('1',Rg)}. Wir bilden auf beiden Seiten den Kehrwert, also „Bruch umdrehen“.</p>
+     <p><b>Vorsicht, typischer Fehler:</b> Man darf nicht jeden Summanden einzeln umdrehen. ${Rg} ist <b>nicht</b> ${R1} + ${R2}! Erst wird rechts die ganze Summe berechnet, dann der Kehrwert davon.</p>`},
+ {ph:2,t:'Was bedeutet das Ergebnis?',board:'d',hl:['pR1','pR2','eRg'],
+  c:`<p><b>${Rg} ist kleiner als der kleinste Einzelwiderstand.</b> Durch den zweiten Zweig bekommt der Strom einen zusätzlichen Weg, deshalb fließt insgesamt mehr Strom als durch einen Widerstand allein.</p>
+     <p>Sonderfall: Sind beide Widerstände gleich groß (${R1} = ${R2} = <i>R</i>), dann ist ${Rg} = ${fr('<i>R</i>','2')}.</p>`},
+ {ph:3,t:'Rechenbeispiel: Gegeben und gesucht',board:'e',vals:true,hl:['pR1','pR2','pU'],
+  c:`<p>Im Schaltplan siehst du jetzt die Werte. Gesucht ist der Ersatzwiderstand ${Rg}.</p>`},
+ {ph:3,t:'Rechenbeispiel: Werte einsetzen',board:'e',vals:true,hl:['pR1','pR2'],
+  c:`<p>Wir setzen in die Gleichung mit den Kehrwerten ein. Die Einheit Ω kommt mit in den Nenner.</p>`},
+ {ph:3,t:'Rechenbeispiel: Brüche addieren',board:'e',vals:true,hl:[],
+  c:`<p>Brüche addiert man, indem man sie auf einen gemeinsamen Nenner bringt. Hier ist 300 Ω der Hauptnenner: ${fr('1','100 Ω')} = ${fr('3','300 Ω')}.</p>`},
+ {ph:3,t:'Rechenbeispiel: Kehrwert bilden',board:'e',vals:true,hl:['eRg'],
+  c:`<p>Jetzt drehen wir den Bruch um. Ergebnis: <b>${Rg} = 75 Ω</b>. Das ist kleiner als 100 Ω und kleiner als 300 Ω, wie erwartet.</p>
+     <p>Mit dem Taschenrechner geht es auch in einem Rutsch: <span class="eqi">1 ÷ (1 ÷ 100 + 1 ÷ 300) = 75</span>.</p>`},
+ {ph:3,t:'Rechenbeispiel: Probe mit den Stromstärken',board:'e',vals:true,hl:['pIg','pI1','pI2','eIg'],
+  c:`<p>Wir prüfen, ob der Ersatzwiderstand wirklich dasselbe bewirkt: Durch die beiden Zweige fließen zusammen 0,16 A, durch den Ersatzwiderstand bei 12 V ebenfalls 0,16 A. <b>Passt!</b></p>`},
+ {ph:4,t:'Selbst rechnen',board:'o',vals:true,hl:[],
+  c:`<p>Stell eigene Werte ein und beobachte: Wie verändert sich ${Rg}, wenn du ${R2} sehr groß machst? Was passiert bei zwei gleich großen Widerständen?</p>`}
+];
+let step=0;
+
+function dLine(nr,eq,tag,cur){ return `<div class="ln ${cur?'cur':'old'}"><span class="nr">${nr}</span><span class="eq">${eq}</span><span class="tag">${tag}</span></div>`; }
+function boardDeriv(s){
+  const L=[];
+  if(s===0) L.push(`<div class="ln cur"><span class="nr">?</span><span class="eq">${Rg} = ?</span><span class="tag">gesucht</span></div>`);
+  if(s>=1) L.push(dLine(1,`${U1} = ${U2} = ${U}`,'gleiche Spannung',s===1));
+  if(s>=2) L.push(dLine(2,`${Ig} = ${I1} + ${I2}`,'Knotenregel',s===2));
+  if(s>=3) L.push(dLine(3,`${I1} = ${fr(U,R1)}&emsp;${I2} = ${fr(U,R2)}&emsp;${Ig} = ${fr(U,Rg)}`,'ohmsches Gesetz',s===3));
+  if(s>=4) L.push(dLine(4,`${fr(cx(U,'a'),Rg)} = ${fr(cx(U,'b'),R1)} + ${fr(cx(U,'c'),R2)}${s>=5?'<span class="op">| : <i>U</i></span>':''}`,'3 in 2 eingesetzt',s===4));
+  if(s>=5) L.push(dLine(5,`${fr('1',Rg)} = ${fr('1',R1)} + ${fr('1',R2)}${s>=6?'<span class="op">| Kehrwert</span>':''}`,'durch U geteilt',s===5));
+  if(s>=6) L.push(dLine(6,`<span class="final">${Rg} = ${fr('1',fr('1',R1)+' + '+fr('1',R2))}</span>`,'Ergebnis',s===6||s===7));
+  return `<div class="board">${L.join('')}</div>`;
+}
+function boardEx(s){
+  const L=[], k=s-8;
+  L.push(dLine('G',`${R1} = 100${OHM}&emsp;${R2} = 300${OHM}&emsp;${U} = 12${VOLT}`,'gegeben',k===0));
+  if(k>=1) L.push(dLine('1',`${fr('1',Rg)} = ${fr('1',`100${OHM}`)} + ${fr('1',`300${OHM}`)}`,'eingesetzt',k===1));
+  if(k>=2) L.push(dLine('2',`${fr('1',Rg)} = ${fr('3',`300${OHM}`)} + ${fr('1',`300${OHM}`)} = ${fr('4',`300${OHM}`)}`,'Hauptnenner',k===2));
+  if(k>=3) L.push(dLine('3',`<span class="final">${Rg} = ${fr(`300${OHM}`,'4')} = 75${OHM}</span>`,'Kehrwert',k===3));
+  if(k>=4) L.push(dLine('P',`${I1} = ${fr(`12${VOLT}`,`100${OHM}`)} = 0,12${AMP}&emsp;${I2} = ${fr(`12${VOLT}`,`300${OHM}`)} = 0,04${AMP}`,'Probe',k===4)
+     + dLine('',`${Ig} = 0,12${AMP} + 0,04${AMP} = 0,16${AMP}`,'Knotenregel',k===4)
+     + dLine('',`${Ig} = ${fr(`12${VOLT}`,`75${OHM}`)} = 0,16${AMP} ✓`,'mit R<sub>ges</sub>',k===4));
+  return `<div class="board">${L.join('')}</div>`;
+}
+function boardOwn(){
+  const sl=(k,lab,min,max,st,unit)=>`<div class="sl"><span>${lab}</span><input type="range" min="${min}" max="${max}" step="${st}" value="${own[k]}" data-k="${k}" data-u="${unit}"><output>${fmt(own[k])} ${unit}</output></div>`;
+  return `<div class="card">${sl('R1',R1,10,1000,10,'Ω')}${sl('R2',R2,10,1000,10,'Ω')}${sl('U',U,1,12,0.5,'V')}</div><div id="ownOut">${ownOut()}</div>`;
+}
+function ownOut(){
+  const o=calcP(own), g1=1/o.R1, g2=1/o.R2;
+  const mx=Math.max(o.R1,o.R2);
+  const bar=(lab,v,c)=>`<div class="barrow"><span>${lab}</span><span class="b" style="width:${(v/mx*100).toFixed(1)}%;background:${c}"></span><span>${fmt(v)} Ω</span></div>`;
+  return `<div class="board noanim">
+   ${dLine('1',`${fr('1',Rg)} = ${fr('1',`${fmt(o.R1)}${OHM}`)} + ${fr('1',`${fmt(o.R2)}${OHM}`)}`,'',false)}
+   ${dLine('',`${fr('1',Rg)} = ${fmt(g1)}${OHM}<sup class="u">−1</sup> + ${fmt(g2)}${OHM}<sup class="u">−1</sup> = ${fmt(g1+g2)}${OHM}<sup class="u">−1</sup>`,'',false)}
+   ${dLine('2',`<span class="final">${Rg} = ${fr('1',`${fmt(g1+g2)}${OHM}<sup class="u">−1</sup>`)} = ${fmt(o.Rg)}${OHM}</span>`,'',false)}
+   ${dLine('P',`${Ig} = ${fmt(o.I1)}${AMP} + ${fmt(o.I2)}${AMP} = ${fmt(o.Ig)}${AMP}`,'Probe',false)}
+  </div>
+  <div class="bars">${bar('R<sub>1</sub>',o.R1,SV.q1)}${bar('R<sub>2</sub>',o.R2,SV.q2)}${bar('R<sub>ges</sub>',o.Rg,'#0f172a')}</div>
+  <p class="note">Hinweis: Ω<sup>−1</sup> bedeutet ${fr('1','Ω')}. Die Zahlen sind gerundet.</p>`;
+}
+function drawCircuits1(){
+  const st=STEPS[step];
+  const o=st.board==='o'?calcP(own):calcP(EX);
+  o.vals=!!st.vals; if(st.board==='e'&&step<11){ o.rgUnknown=true; }
+  const e={...o}; if(st.board==='e'&&step<11) e.vals=false;
+  document.getElementById('svgP').innerHTML=svgParallel(o);
+  e.rgUnknown=!e.vals;
+  document.getElementById('svgPE').innerHTML=svgEquiv(e,'e','ges');
+  if(st.board==='e'&&step<11){ // Ersatzschaltung: U bekannt, R_ges noch gesucht
+    document.getElementById('svgPE').innerHTML=svgEquiv({...o,vals:false,rgUnknown:true},'e','ges');
+  }
+  document.getElementById('p1vals').style.display=o.vals?'':'none';
+  setHL(st.hl);
+  const lf=document.querySelector('#page1 .left'); if(lastStepDrawn!==step){ lf.classList.toggle('alt',st.hl.length>0&&st.hl.every(id=>id[0]==='e')); lastStepDrawn=step; }
+}
+let lastStepDrawn=-1;
+function render1(){
+  const st=STEPS[step];
+  document.getElementById('phases').innerHTML=PH.map((p,i)=>`<span class="ph ${i===st.ph?'on':''}">${p}</span>`).join('');
+  document.getElementById('stTitle').innerHTML=st.t;
+  const b=document.getElementById('board1');
+  b.innerHTML=st.board==='d'?boardDeriv(step):st.board==='e'?boardEx(step):boardOwn();
+  if(step>=5&&st.board==='d') setTimeout(()=>b.querySelectorAll('.cx').forEach(e=>e.classList.add('on')),350);
+  document.getElementById('comment1').innerHTML=`<div class="comment">${st.c}</div>`;
+  document.getElementById('dots').dataset.pos=`${step+1} / ${STEPS.length}`;
+  document.getElementById('dots').innerHTML=STEPS.map((_,i)=>`<button class="dot ${i<step?'done':''} ${i===step?'on':''}" data-i="${i}" aria-label="Schritt ${i+1}"></button>`).join('');
+  document.getElementById('prev').disabled=step===0;
+  document.getElementById('next').disabled=step===STEPS.length-1;
+  document.getElementById('next').textContent=step===7?'Zum Beispiel ▶':step===12?'Selbst rechnen ▶':'Weiter ▶';
+  b.querySelectorAll('input[type=range]').forEach(r=>r.oninput=()=>{ own[r.dataset.k]=+r.value; r.nextElementSibling.textContent=fmt(own[r.dataset.k])+' '+r.dataset.u;
+    document.getElementById('ownOut').innerHTML=ownOut(); drawCircuits1(); });
+  drawCircuits1();
+  const cur=b.querySelector('.ln.cur'); if(cur) cur.scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+document.getElementById('next').onclick=()=>{ if(step<STEPS.length-1){step++;render1();} };
+document.getElementById('prev').onclick=()=>{ if(step>0){step--;render1();} };
+document.getElementById('restart').onclick=()=>{ step=0; render1(); };
+document.getElementById('dots').onclick=e=>{ const d=e.target.closest('.dot'); if(d){ step=+d.dataset.i; render1(); } };
+document.addEventListener('keydown',e=>{ if(tab!==1||e.target.tagName==='INPUT') return;
+  if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){ e.preventDefault(); document.getElementById('next').click(); }
+  if(e.key==='ArrowLeft'||e.key==='PageUp'){ e.preventDefault(); document.getElementById('prev').click(); } });
+
+/* =================================================================
+   TEIL 2: Reihenschaltung selbst herleiten
+   ================================================================= */
+const SE={R1:100,R2:300,U:12}; SE.Rg=SE.R1+SE.R2; SE.I=SE.U/SE.Rg; SE.U1=SE.R1*SE.I; SE.U2=SE.R2*SE.I;
+let meas=false;
+const H={tried:false, solved:false, open:0, worked:[false,false,false,false], used:new Set()};
+const ck={formula:null, num:''};
+const HINTS=['Denkanstoß','Grundideen','Schritte ordnen','Lückentext','Musterlösung'];
+
+function drawCircuits2(hl){
+  document.getElementById('svgS').innerHTML=svgSeries({...SE,vals:meas});
+  document.getElementById('svgSE').innerHTML=svgEquiv({U:SE.U,Rg:SE.Rg,Ig:SE.I,vals:meas,rgUnknown:!H.solved},'f','');
+  setHL(hl||[]);
+}
+document.getElementById('meas').onclick=()=>{ meas=!meas; document.getElementById('meas').classList.toggle('on',meas); document.getElementById('meas').textContent=meas?'Messwerte aus':'Messwerte zeigen'; drawCircuits2(lastHL2); };
+let lastHL2=[];
+
+/* ---- Ergebnis prüfen ---- */
+const FORMS=[
+ {h:`${Rg} = ${R1} + ${R2}`,ok:true},
+ {h:`${Rg} = ${fr('1',fr('1',R1)+' + '+fr('1',R2))}`,ok:false,fb:'Das ist die Formel für die Parallelschaltung. In der Reihenschaltung muss der Strom durch beide Widerstände nacheinander, das kann den Gesamtwiderstand nicht kleiner machen.'},
+ {h:`${Rg} = ${R1} · ${R2}`,ok:false,fb:'Prüf die Einheit: Ω · Ω ergibt Ω², das ist kein Widerstand.'},
+ {h:`${Rg} = ${R2} − ${R1}`,ok:false,fb:'Ein zusätzlicher Widerstand kann den Gesamtwiderstand nicht verkleinern. Rechne mal mit zwei gleich großen Widerständen.'}
+];
+function renderCheck(){
+  const c=document.getElementById('checkCard');
+  let s=`<h3>Ergebnis prüfen</h3><div class="mcq"><div class="qq">1. Welche Formel hast du herausgefunden?</div><div class="opts">`;
+  FORMS.forEach((f,i)=>{ const cls=ck.formula===i?(f.ok?'right':'wrong'):''; s+=`<button class="opt ${cls}" data-f="${i}"><span class="eqi">${f.h}</span></button>`; });
+  s+='</div>';
+  if(ck.formula!==null){ const f=FORMS[ck.formula]; s+=f.ok?`<div class="fb ok">Richtig! Mach jetzt noch die Probe mit Messwerten.</div>`:`<div class="fb no">${f.fb}${H.tried?' Nutze die Hilfen unten.':''}</div>`; }
+  s+='</div>';
+  if(ck.formula!==null&&FORMS[ck.formula].ok){
+    s+=`<div class="mcq"><div class="qq">2. Probe: Schalte die Messwerte im Schaltplan ein. Berechne ${Rg} einmal mit deiner Formel und einmal mit ${Rg} = ${fr(U,I)}.</div>
+     <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap"><span class="eqi" style="font-family:'Cambria Math','Times New Roman',serif;font-size:1.1em">${Rg} =</span><input class="numin" id="numIn" inputmode="decimal" value="${ck.num}" placeholder="Wert"><span>Ω</span><button class="btn" id="numBtn">Prüfen</button></div><div id="numFb">${numFb()}</div></div>`;
+  }
+  c.innerHTML=s;
+  c.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ ck.formula=+b.dataset.f; H.tried=true; renderAll2(); });
+  const nb=document.getElementById('numBtn'); if(nb) nb.onclick=()=>{ ck.num=document.getElementById('numIn').value; if(numOk()){ H.solved=true; } renderAll2(); };
+}
+function numOk(){ const v=parseFloat(String(ck.num).replace(',','.')); return Math.abs(v-400)<0.5; }
+function numFb(){ if(ck.num==='') return ''; const v=parseFloat(String(ck.num).replace(',','.'));
+  if(numOk()) return `<div class="fb ok">Beide Wege ergeben 400 Ω: 100 Ω + 300 Ω = 400 Ω und ${fr('12 V','0,03 A')} = 400 Ω. Deine Formel passt zur Messung! Die Musterlösung ist jetzt freigeschaltet, vergleiche sie mit deiner Herleitung.</div>`;
+  if(Math.abs(v-75)<1) return `<div class="fb no">75 Ω wäre das Ergebnis der Parallelschaltung. Hier sind die Widerstände in Reihe.</div>`;
+  if(Math.abs(v-0.0025)<0.001||Math.abs(v-0.4)<0.01) return `<div class="fb no">Fast: Prüf, ob du ${U} durch ${I} geteilt hast und nicht umgekehrt, und ob die Einheiten stimmen.</div>`;
+  return `<div class="fb no">Das passt noch nicht. Hast du die Messwerte eingeschaltet? ${U} = 12 V, ${I} = 0,03 A.</div>`; }
+
+/* ---- Hilfen ---- */
+function unlocked(k){ if(!H.tried) return false; if(k===0) return true; if(k===4) return H.solved||H.worked[3]; return H.worked[k-1]; }
+function renderHints(){
+  const used=[...H.used].filter(k=>k<4).length;
+  document.getElementById('hstatus').innerHTML=H.tried?`<b>Hilfen</b> (jede neue Hilfe öffnet sich, wenn du die vorige bearbeitet hast) · genutzt: ${used} von 4`:`<b>Hilfen</b> öffnen sich nach deinem ersten Versuch bei „Ergebnis prüfen“.`;
+  document.getElementById('hints').innerHTML=HINTS.map((h,k)=>{ const u=unlocked(k);
+    return `<button class="hbtn ${H.open===k+1?'on':''} ${H.used.has(k)?'used':''}" data-k="${k}" ${u?'':'disabled'}>${u?'':'<span class="lock">🔒</span>'}${k<4?'Hilfe '+(k+1)+': ':''}${h}</button>`; }).join('');
+  document.querySelectorAll('.hbtn').forEach(b=>b.onclick=()=>{ const k=+b.dataset.k; H.open=H.open===k+1?0:k+1; H.used.add(k); if(k===0) H.worked[0]=true; renderAll2(); });
+  const body=document.getElementById('hintBody');
+  body.innerHTML=H.open?`<div class="card">${[hint1,hint2,hint3,hint4,hint5][H.open-1]()}</div>`:'';
+  if(H.open===3) bindDrag(); if(H.open===2) bindMC(); if(H.open===4) bindGaps();
+}
+/* Hilfe 1 */
+function hint1(){ return `<h3>Hilfe 1: Denkanstoß</h3>
+ <p>Die Herleitung in Teil 1 hatte immer denselben Aufbau. Stell dir dieselben Fragen für die Reihenschaltung:</p>
+ <table class="cmp"><tr><th></th><th>Parallelschaltung (Teil 1)</th><th>Reihenschaltung</th></tr>
+ <tr><td>Was ist überall gleich?</td><td>die Spannung</td><td>?</td></tr>
+ <tr><td>Was teilt sich auf / addiert sich?</td><td>die Stromstärke</td><td>?</td></tr>
+ <tr><td>Ohmsches Gesetz</td><td><span class="eqi"><i>I</i> = ${fr('<i>U</i>','<i>R</i>')}</span></td><td>diesmal nach <i>U</i> umstellen: <span class="eqi"><i>U</i> = ?</span></td></tr>
+ <tr><td>Einsetzen und vereinfachen</td><td>durch <i>U</i> teilen</td><td>durch ? teilen</td></tr></table>
+ <p class="note">Tipp: Schalte die Messwerte im Schaltplan ein und schau auf die Potenzialfarben. Zwischen ${R1} und ${R2} gibt es eine dritte Farbe!</p>`; }
+/* Hilfe 2 */
+const MC=[
+ {q:'Wie verhält sich die Stromstärke in der Reihenschaltung?',hl:['sI'],o:[
+  {h:`${I} = ${I1} + ${I2}`,fb:'Das ist die Knotenregel. In der Reihenschaltung gibt es aber keinen Knoten, an dem sich der Strom aufteilen könnte.'},
+  {h:`${I1} = ${I2} = ${I}`,ok:true,fb:'Genau! Es gibt nur einen Weg. Durch jede Stelle des Stromkreises fließt in einer Sekunde gleich viel Ladung.'},
+  {h:`${I2} ist kleiner als ${I1}, weil ${R1} Strom verbraucht.`,fb:'Typische Fehlvorstellung: Strom wird nicht verbraucht. Die Ladung fließt vollständig weiter. Umgewandelt wird Energie.'}]},
+ {q:'Wie verhält sich die Spannung?',hl:['sU','sU1','sU2','sHi','sMid','sLo'],o:[
+  {h:`${U1} = ${U2} = ${U}`,fb:'So ist es in der Parallelschaltung. Schau auf die Farben: Hier liegt kein Widerstand direkt zwischen Rot und Grün.'},
+  {h:`${U} = ${U1} · ${U2}`,fb:'Prüf die Einheit: V · V ist keine Spannung.'},
+  {h:`${U} = ${U1} + ${U2}`,ok:true,fb:'Genau! Der Potenzialunterschied der Quelle wird in zwei Stufen „abgebaut“: erst an R₁, dann an R₂. Die Farben zeigen die Zwischenstufe.'}]},
+ {q:'Wie lautet das ohmsche Gesetz für R₁, aufgelöst nach der Spannung?',hl:['sR1','sU1'],o:[
+  {h:`${U1} = ${fr(I,R1)}`,fb:'Stell R = U / I noch einmal um: Multipliziere beide Seiten mit I.'},
+  {h:`${U1} = ${R1} · ${I}`,ok:true,fb:'Richtig! Genauso gilt U₂ = R₂ · I und für den Ersatzwiderstand U = R_ges · I. Jetzt kannst du alles in U = U₁ + U₂ einsetzen.'},
+  {h:`${U1} = ${fr(R1,I)}`,fb:'Stell R = U / I noch einmal um: Multipliziere beide Seiten mit I.'}]}
+];
+const mcAns=[null,null,null];
+function hint2(){ let s=`<h3>Hilfe 2: Grundideen</h3>`;
+  MC.forEach((m,i)=>{ s+=`<div class="mcq"><div class="qq">${i+1}. ${m.q}</div><div class="opts">`;
+    m.o.forEach((o,j)=>{ const cls=mcAns[i]===j?(o.ok?'right':'wrong'):''; s+=`<button class="opt ${cls}" data-i="${i}" data-j="${j}"><span class="eqi">${o.h}</span></button>`; });
+    s+='</div>'; if(mcAns[i]!==null){ const o=m.o[mcAns[i]]; s+=`<div class="fb ${o.ok?'ok':'no'}">${o.fb}</div>`; } s+='</div>'; });
+  return s; }
+function bindMC(){ document.querySelectorAll('#hintBody .opt').forEach(b=>b.onclick=()=>{ const i=+b.dataset.i,j=+b.dataset.j; mcAns[i]=j; H.worked[1]=true;
+  if(MC[i].o[j].ok){ lastHL2=MC[i].hl; } renderAll2(); }); }
+/* Hilfe 3: Ziehen */
+const CARDS=[
+ {id:'A',h:`${I1} = ${I2} = ${I}`},
+ {id:'B',h:`${U} = ${U1} + ${U2}`},
+ {id:'C',h:`${U1} = ${R1} · ${I}&ensp;${U2} = ${R2} · ${I}&ensp;${U} = ${Rg} · ${I}`},
+ {id:'D',h:`${Rg} · ${I} = ${R1} · ${I} + ${R2} · ${I}`},
+ {id:'E',h:`${Rg} = ${R1} + ${R2}`},
+ {id:'X1',h:`${I} = ${I1} + ${I2}`,why:'gilt am Knoten der Parallelschaltung'},
+ {id:'X2',h:`${U1} = ${U2} = ${U}`,why:'gilt in der Parallelschaltung'},
+ {id:'X3',h:`${fr('1',Rg)} = ${fr('1',R1)} + ${fr('1',R2)}`,why:'gehört zur Parallelschaltung'}
+];
+const SLOTLAB=['Was ist gleich? / Was addiert sich?','Was ist gleich? / Was addiert sich?','ohmsches Gesetz, nach U umgestellt','in die Spannungsgleichung eingesetzt','durch I geteilt'];
+const slots=[null,null,null,null,null]; let poolOrder=['D','X2','B','E','X1','C','X3','A']; let slotState=null; let selCard=null;
+function cardHTML(id){ const c=CARDS.find(c=>c.id===id); return `<span class="dc ${selCard===id?'sel':''}" data-c="${id}">${c.h}</span>`; }
+function hint3(){
+  let s=`<h3>Hilfe 3: Schritte ordnen</h3><p style="margin:.2rem 0 .4rem">Zieh die Gleichungen in die richtige Reihenfolge (oder tippe erst eine Karte und dann ein Feld an). <b>Drei Karten gehören nicht dazu.</b></p><div class="slots">`;
+  slots.forEach((c,i)=>{ const st=slotState?slotState[i]:''; s+=`<div class="slot"><span class="nr">${i+1}</span><div class="drop ${st}" data-s="${i}">${c?cardHTML(c):`<span class="ph2">${SLOTLAB[i]}</span>`}</div></div>`; });
+  s+=`</div><div class="pool" data-s="pool">${poolOrder.filter(id=>!slots.includes(id)).map(cardHTML).join('')}</div>
+  <div style="display:flex;gap:.5rem;margin-top:.5rem"><button class="btn primary" id="ordCheck">Prüfen</button><button class="btn" id="ordReset">Zurücksetzen</button></div><div id="ordFb">${ordFb||''}</div>`;
+  return s; }
+let ordFb='';
+function checkOrder(){
+  slotState=slots.map((c,i)=>{ if(!c) return 'wrong'; if(i<2) return (c==='A'||c==='B')?'right':'wrong'; return c===['C','D','E'][i-2]?'right':'wrong'; });
+  if(slots[0]&&slots[0]===slots[1]) slotState[1]='wrong';
+  const wrongX=slots.filter(c=>c&&c.startsWith('X')).map(id=>CARDS.find(c=>c.id===id));
+  const allOk=slotState.every(s=>s==='right');
+  H.worked[2]=true;
+  if(allOk) ordFb=`<div class="fb ok">Alles richtig! Ob du mit dem Strom oder mit der Spannung anfängst, ist egal. Im letzten Schritt kürzt sich ${I} heraus, weil es in jedem Summanden steht.</div>`;
+  else ordFb=`<div class="fb no">Noch nicht ganz. Rote Felder stimmen nicht.${wrongX.length?' '+wrongX.map(c=>`<span class="eqi">${c.h}</span> ${c.why}.`).join(' '):''}</div>`;
+  renderAll2();
+}
+function placeCard(id,target){
+  const from=slots.indexOf(id);
+  if(target==='pool'){ if(from>=0) slots[from]=null; }
+  else { const t=+target; const prev=slots[t]; if(from>=0) slots[from]=prev; slots[t]=id; }
+  slotState=null; ordFb=''; selCard=null; renderAll2();
+}
+function bindDrag(){
+  const body=document.getElementById('hintBody');
+  body.querySelector('#ordCheck').onclick=checkOrder;
+  body.querySelector('#ordReset').onclick=()=>{ slots.fill(null); slotState=null; ordFb=''; selCard=null; renderAll2(); };
+  body.querySelectorAll('.drop,.pool').forEach(d=>d.addEventListener('click',e=>{ if(e.target.closest('.dc')) return; if(selCard){ placeCard(selCard,d.dataset.s); } }));
+  body.querySelectorAll('.dc').forEach(el=>{
+    el.addEventListener('pointerdown',e=>{
+      e.preventDefault(); const id=el.dataset.c; const sx=e.clientX, sy=e.clientY; let ghost=null, over=null;
+      const r=el.getBoundingClientRect(); const ox=sx-r.left, oy=sy-r.top;
+      const move=ev=>{ if(!ghost&&Math.hypot(ev.clientX-sx,ev.clientY-sy)>6){ ghost=el.cloneNode(true); ghost.classList.add('ghost'); ghost.style.width=r.width+'px'; document.body.appendChild(ghost); el.classList.add('dragging'); }
+        if(ghost){ ghost.style.left=(ev.clientX-ox)+'px'; ghost.style.top=(ev.clientY-oy)+'px';
+          const t=document.elementFromPoint(ev.clientX,ev.clientY); const d=t&&t.closest('.drop,.pool');
+          if(over&&over!==d) over.classList.remove('over'); over=d; if(d) d.classList.add('over'); } };
+      const up=ev=>{ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up); window.removeEventListener('pointercancel',up);
+        if(ghost){ ghost.remove(); el.classList.remove('dragging'); if(over){ over.classList.remove('over'); placeCard(id,over.dataset.s); } }
+        else { // Antippen: auswählen bzw. Auswahl wieder lösen
+          if(selCard&&selCard!==id){ const tgt=el.closest('.drop'); if(tgt){ placeCard(selCard,tgt.dataset.s); return; } }
+          selCard=selCard===id?null:id; renderAll2(); } };
+      window.addEventListener('pointermove',move); window.addEventListener('pointerup',up); window.addEventListener('pointercancel',up);
+    });
+  });
+}
+/* Hilfe 4: Lückentext */
+const GAPS=[
+ {o:['Stromstärke','Spannung'],a:0},
+ {o:['die Summe','die Differenz','das Produkt'],a:0},
+ {o:[I,U,R2],a:0},
+ {o:[`${R2} · ${I}`,`${U2} · ${I}`,fr(R2,I)],a:0},
+ {o:[I,U,R1],a:0},
+ {o:[`${R1} + ${R2}`,fr('1',fr('1',R1)+' + '+fr('1',R2)),`${R1} · ${R2}`],a:0}
+];
+const gapAns=GAPS.map(()=>null); let gapChecked=false;
+function gap(i){ const v=gapAns[i]; const cls=gapChecked&&v!==null?(v===GAPS[i].a?'right':'wrong'):(gapChecked?'wrong':''); return `<button class="gap ${cls}" data-g="${i}">${v===null?'…':GAPS[i].o[v]}</button>`; }
+function hint4(){ return `<h3>Hilfe 4: Lückentext</h3><p style="margin:.2rem 0">Tippe auf eine Lücke und wähle aus.</p>
+ <div class="gaptext">In der Reihenschaltung ist die ${gap(0)} überall gleich: <span class="eqi">${I1} = ${I2} = ${I}</span>.<br>
+ Die Gesamtspannung ist ${GAPS[1]&&''}${gap(1)} der Teilspannungen: <span class="eqi">${U} = ${U1} + ${U2}</span>.<br>
+ Nach dem ohmschen Gesetz gilt <span class="eqi">${U1} = ${R1} ·</span> ${gap(2)}, <span class="eqi">${U2} = ${R2} · ${I}</span> und <span class="eqi">${U} = ${Rg} · ${I}</span>.<br>
+ Eingesetzt: <span class="eqi">${Rg} · ${I} = ${R1} · ${I} +</span> ${gap(3)}.<br>
+ Wir teilen beide Seiten durch ${gap(4)} und erhalten: <span class="eqi">${Rg} =</span> ${gap(5)}.</div>
+ <div style="margin-top:.5rem"><button class="btn primary" id="gapCheck">Prüfen</button></div>
+ ${gapChecked?(gapAns.every((v,i)=>v===GAPS[i].a)?`<div class="fb ok">Alles richtig! Trag dein Ergebnis oben bei „Ergebnis prüfen“ ein.</div>`:`<div class="fb no">Rote Lücken stimmen noch nicht. Bei „Summe“ hilft ein Blick auf die Gleichung dahinter.</div>`):''}`; }
+function bindGaps(){
+  document.querySelectorAll('#hintBody .gap').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const i=+b.dataset.g; const m=document.getElementById('menu');
+    m.innerHTML=GAPS[i].o.map((o,j)=>`<button data-j="${j}">${o}</button>`).join(''); m.style.display='flex';
+    const r=b.getBoundingClientRect(); const mh=m.offsetHeight, mw=m.offsetWidth;
+    m.style.left=Math.max(4,Math.min(innerWidth-mw-4,r.left))+'px'; m.style.top=(r.bottom+mh+4<innerHeight?r.bottom+4:r.top-mh-4)+'px';
+    m.querySelectorAll('button').forEach(o=>o.onclick=()=>{ gapAns[i]=+o.dataset.j; gapChecked=false; m.style.display='none'; renderAll2(); }); });
+  document.getElementById('gapCheck').onclick=()=>{ gapChecked=true; H.worked[3]=true; renderAll2(); };
+}
+document.addEventListener('click',e=>{ const m=document.getElementById('menu'); if(!m.contains(e.target)) m.style.display='none'; });
+/* Musterlösung */
+function hint5(){
+  return `<h3>Musterlösung</h3><div class="board sol">
+  ${dLine(1,`${I1} = ${I2} = ${I}`,'nur ein Weg',false)}
+  ${dLine(2,`${U} = ${U1} + ${U2}`,'Spannung teilt sich auf',false)}
+  ${dLine(3,`${U1} = ${R1} · ${I}&emsp;${U2} = ${R2} · ${I}&emsp;${U} = ${Rg} · ${I}`,'ohmsches Gesetz',false)}
+  ${dLine(4,`${Rg} · ${cx(I,'s1')} = ${R1} · ${cx(I,'s2')} + ${R2} · ${cx(I,'s3')}<span class="op">| : <i>I</i></span>`,'3 in 2 eingesetzt',false)}
+  ${dLine(5,`<span class="final">${Rg} = ${R1} + ${R2}</span>`,'Ergebnis',true)}
+  </div>
+  <div class="comment"><p><b>In der Reihenschaltung addieren sich die Widerstände.</b> ${Rg} ist größer als jeder Einzelwiderstand: Der Strom muss durch beide hindurch.</p>
+  <p>Beispiel: 100 Ω + 300 Ω = 400 Ω. Bei 12 V fließen dann ${fr('12 V','400 Ω')} = 0,03 A.</p></div>
+  <table class="cmp"><tr><th></th><th>Reihenschaltung</th><th>Parallelschaltung</th></tr>
+  <tr><td>Stromstärke</td><td class="eqi">${I1} = ${I2} = ${I}</td><td class="eqi">${Ig} = ${I1} + ${I2}</td></tr>
+  <tr><td>Spannung</td><td class="eqi">${U} = ${U1} + ${U2}</td><td class="eqi">${U1} = ${U2} = ${U}</td></tr>
+  <tr><td>Ersatzwiderstand</td><td class="eqi">${Rg} = ${R1} + ${R2}</td><td class="eqi">${fr('1',Rg)} = ${fr('1',R1)} + ${fr('1',R2)}</td></tr>
+  <tr><td>Vergleich</td><td>größer als jeder Einzelwiderstand</td><td>kleiner als jeder Einzelwiderstand</td></tr></table>`;
+}
+function renderAll2(){
+  const sc=document.getElementById('scroll2'), y=sc.scrollTop;
+  renderCheck(); renderHints(); drawCircuits2(lastHL2);
+  if(H.open===5) setTimeout(()=>document.querySelectorAll('#hintBody .cx').forEach(e=>e.classList.add('on')),300);
+  sc.scrollTop=y;
+}
+function render2(){ renderAll2(); }
+
+/* =================================================================
+   TEIL 3: Übungsaufgaben, gestaffelt
+   ================================================================= */
+const par=(a,b)=>1/(1/a+1/b);
+const near=(v,x,rel=0.02)=>Math.abs(v-x)<=Math.abs(x)*rel+1e-9;
+const TASKS=[
+ {lv:1,type:'s',t:'Zwei Widerstände in Reihe',lbl:{R1:'47 Ω',R2:'33 Ω',Rg:'?'},
+  text:`Zwei Widerstände sind in Reihe geschaltet. Berechne den Ersatzwiderstand.`,given:`${R1} = 47${OHM}&emsp;${R2} = 33${OHM}`,
+  f:[{l:Rg,u:'Ω',a:80,err:[[par(47,33),'Das ist das Ergebnis für eine Parallelschaltung. Hier sind die Widerstände in Reihe.']]}],
+  tip:`In Reihe addieren sich die Widerstände: <span class="eqi">${Rg} = ${R1} + ${R2}</span>.`,
+  sol:`<span class="eqi">${Rg} = ${R1} + ${R2} = 47${OHM} + 33${OHM} = 80${OHM}</span>`},
+ {lv:1,type:'p',t:'Zwei gleiche Widerstände parallel',lbl:{R1:'200 Ω',R2:'200 Ω',Rg:'?'},
+  text:`Zwei gleich große Widerstände sind parallel geschaltet. Berechne den Ersatzwiderstand.`,given:`${R1} = ${R2} = 200${OHM}`,
+  f:[{l:Rg,u:'Ω',a:100,err:[[400,'400 Ω wäre das Ergebnis der Reihenschaltung. Parallel wird der Ersatzwiderstand kleiner.'],[0.01,'Du hast nur den Kehrwert 1/R<sub>ges</sub> ausgerechnet. Bilde noch den Kehrwert davon.']]}],
+  tip:`<span class="eqi">${fr('1',Rg)} = ${fr('1',R1)} + ${fr('1',R2)}</span>, danach den Kehrwert bilden. Für zwei gleiche Widerstände gibt es eine Abkürzung (Teil 1).`,
+  sol:`<span class="eqi">${fr('1',Rg)} = ${fr('1',`200${OHM}`)} + ${fr('1',`200${OHM}`)} = ${fr('2',`200${OHM}`)} = ${fr('1',`100${OHM}`)}&emsp;⇒&emsp;${Rg} = 100${OHM}</span><br>Abkürzung: zwei gleiche Widerstände parallel ergeben die Hälfte.`},
+ {lv:1,type:'p',t:'Parallelschaltung mit Hauptnenner',lbl:{R1:'60 Ω',R2:'30 Ω',Rg:'?'},
+  text:`Berechne den Ersatzwiderstand der Parallelschaltung.`,given:`${R1} = 60${OHM}&emsp;${R2} = 30${OHM}`,
+  f:[{l:Rg,u:'Ω',a:20,err:[[90,'90 Ω wäre die Reihenschaltung.'],[0.05,'Das ist 1/R<sub>ges</sub> (in 1/Ω). Bilde noch den Kehrwert.'],[45,'45 Ω ist der Mittelwert. Der Ersatzwiderstand einer Parallelschaltung ist kleiner als der kleinste Einzelwiderstand.']]}],
+  tip:`Hauptnenner ist 60 Ω: <span class="eqi">${fr('1',`30${OHM}`)} = ${fr('2',`60${OHM}`)}</span>.`,
+  sol:`<span class="eqi">${fr('1',Rg)} = ${fr('1',`60${OHM}`)} + ${fr('2',`60${OHM}`)} = ${fr('3',`60${OHM}`)}&emsp;⇒&emsp;${Rg} = ${fr(`60${OHM}`,'3')} = 20${OHM}</span>`},
+ {lv:2,type:'p',t:'Gesamtstrom in der Parallelschaltung',lbl:{R1:'100 Ω',R2:'400 Ω',U:'12 V',Ig:'?',Rg:'?'},U:12,
+  text:`Die Parallelschaltung liegt an einer Spannung von 12 V. Berechne den Ersatzwiderstand und die Gesamtstromstärke.`,given:`${R1} = 100${OHM}&emsp;${R2} = 400${OHM}&emsp;${U} = 12${VOLT}`,
+  f:[{l:Rg,u:'Ω',a:80,err:[[500,'500 Ω wäre die Reihenschaltung.'],[0.0125,'Das ist 1/R<sub>ges</sub>. Bilde noch den Kehrwert.']]},
+     {l:Ig,u:'A',a:0.15,err:[[0.024,'Du hast mit 500 Ω (Reihenschaltung) gerechnet.'],[0.12,'Das ist nur die Stromstärke durch R<sub>1</sub>.'],[0.03,'Das ist nur die Stromstärke durch R<sub>2</sub>.'],[960,'Umgekehrt: I = U / R, nicht U · R.']]}],
+  tip:`Erst ${Rg} wie gewohnt, dann <span class="eqi">${Ig} = ${fr(U,Rg)}</span>. Zur Probe: ${I1} + ${I2} muss dasselbe ergeben.`,
+  sol:`<span class="eqi">${fr('1',Rg)} = ${fr('4',`400${OHM}`)} + ${fr('1',`400${OHM}`)} = ${fr('5',`400${OHM}`)}&emsp;⇒&emsp;${Rg} = 80${OHM}</span><br><span class="eqi">${Ig} = ${fr(`12${VOLT}`,`80${OHM}`)} = 0,15${AMP}</span>&emsp;Probe: 0,12 A + 0,03 A = 0,15 A ✓`},
+ {lv:2,type:'s',t:'Strom und Teilspannung in der Reihenschaltung',lbl:{R1:'150 Ω',R2:'250 Ω',U:'12 V',I:'?',U1:'?'},U:12,
+  text:`Die Reihenschaltung liegt an 12 V. Berechne die Stromstärke und die Spannung an R<sub>1</sub>.`,given:`${R1} = 150${OHM}&emsp;${R2} = 250${OHM}&emsp;${U} = 12${VOLT}`,
+  f:[{l:I,u:'A',a:0.03,err:[[0.08,'Du hast nur R<sub>1</sub> berücksichtigt. Der Strom muss durch beide Widerstände.'],[0.048,'Du hast nur R<sub>2</sub> berücksichtigt.'],[12/par(150,250),'Du hast mit der Parallelschaltung gerechnet.']]},
+     {l:U1,u:'V',a:4.5,err:[[12,'In der Reihenschaltung teilt sich die Spannung auf. An R<sub>1</sub> liegt nur ein Teil.'],[7.5,'Das ist die Spannung an R<sub>2</sub>.']]}],
+  tip:`<span class="eqi">${Rg} = ${R1} + ${R2}</span>, dann <span class="eqi">${I} = ${fr(U,Rg)}</span> und <span class="eqi">${U1} = ${R1} · ${I}</span>.`,
+  sol:`<span class="eqi">${Rg} = 400${OHM}&emsp;${I} = ${fr(`12${VOLT}`,`400${OHM}`)} = 0,03${AMP}&emsp;${U1} = 150${OHM} · 0,03${AMP} = 4,5${VOLT}</span><br>Probe: ${U2} = 250 Ω · 0,03 A = 7,5 V und 4,5 V + 7,5 V = 12 V ✓`},
+ {lv:2,type:'p',t:'Krumme Werte',lbl:{R1:'220 Ω',R2:'330 Ω',Rg:'?'},
+  text:`Berechne den Ersatzwiderstand. Nutze den Taschenrechner.`,given:`${R1} = 220${OHM}&emsp;${R2} = 330${OHM}`,
+  f:[{l:Rg,u:'Ω',a:132,err:[[550,'550 Ω wäre die Reihenschaltung.'],[1/132,'Das ist 1/R<sub>ges</sub>. Bilde noch den Kehrwert.']]}],
+  tip:`Taschenrechner: <span class="eqi">1 ÷ (1 ÷ 220 + 1 ÷ 330)</span>. Achte auf die Klammer!`,
+  sol:`<span class="eqi">${Rg} = ${fr('1',fr('1',`220${OHM}`)+' + '+fr('1',`330${OHM}`))} = 132${OHM}</span><br>Kontrolle: 132 Ω ist kleiner als 220 Ω ✓`},
+ {lv:3,type:'p',t:'Welcher Widerstand fehlt?',lbl:{R1:'60 Ω',R2:'?',Rg:'40 Ω'},
+  text:`Zu einem Widerstand von 60 Ω soll ein zweiter parallel geschaltet werden, sodass der Ersatzwiderstand 40 Ω beträgt. Wie groß muss R<sub>2</sub> sein?`,given:`${R1} = 60${OHM}&emsp;${Rg} = 40${OHM}`,
+  f:[{l:R2,u:'Ω',a:120,err:[[20,'Bei der Parallelschaltung darf man nicht einfach R<sub>ges</sub> − R<sub>1</sub> rechnen. Das geht nur in Reihe.'],[par(40,60),'Du hast die Kehrwerte addiert statt subtrahiert.'],[1/120,'Das ist 1/R<sub>2</sub>. Bilde noch den Kehrwert.']]}],
+  tip:`Stell <span class="eqi">${fr('1',Rg)} = ${fr('1',R1)} + ${fr('1',R2)}</span> nach <span class="eqi">${fr('1',R2)}</span> um.`,
+  sol:`<span class="eqi">${fr('1',R2)} = ${fr('1',Rg)} − ${fr('1',R1)} = ${fr('3',`120${OHM}`)} − ${fr('2',`120${OHM}`)} = ${fr('1',`120${OHM}`)}&emsp;⇒&emsp;${R2} = 120${OHM}</span>`},
+ {lv:3,type:'s',t:'Rückwärts aus Messwerten',lbl:{R1:'100 Ω',R2:'?',U:'12 V',I:'0,05 A'},U:12,phiM:7,
+  text:`In einer Reihenschaltung misst man bei 12 V eine Stromstärke von 0,05 A. R<sub>1</sub> hat 100 Ω. Wie groß ist R<sub>2</sub>?`,given:`${U} = 12${VOLT}&emsp;${I} = 0,05${AMP}&emsp;${R1} = 100${OHM}`,
+  f:[{l:R2,u:'Ω',a:140,err:[[240,'240 Ω ist der Ersatzwiderstand R<sub>ges</sub>. Zieh noch R<sub>1</sub> ab.'],[0.6,'Prüf das ohmsche Gesetz: R = U / I, nicht U · I.']]}],
+  tip:`Berechne zuerst <span class="eqi">${Rg} = ${fr(U,I)}</span>. In Reihe gilt dann <span class="eqi">${R2} = ${Rg} − ${R1}</span>.`,
+  sol:`<span class="eqi">${Rg} = ${fr(`12${VOLT}`,`0,05${AMP}`)} = 240${OHM}&emsp;${R2} = 240${OHM} − 100${OHM} = 140${OHM}</span>`},
+ {lv:3,type:'p',t:'Wie viele Widerstände?',lbl:{R1:'1 kΩ',R2:'1 kΩ',Rg:'250 Ω'},cap:'Schaltplan: zwei von mehreren gleichen Widerständen',
+  text:`Du hast viele Widerstände mit je 1 kΩ = 1000 Ω. Wie viele musst du parallel schalten, um 250 Ω zu erhalten?`,given:`je 1000${OHM}&emsp;${Rg} = 250${OHM}`,
+  f:[{l:'Anzahl',u:'',a:4,rel:0,err:[[0.25,'Gefragt ist eine Anzahl von Widerständen, keine Größe in Ω.']]}],
+  tip:`Zwei gleiche parallel ergeben die Hälfte. Bei <i>n</i> gleichen gilt: <span class="eqi">${fr('1',Rg)} = ${fr('<i>n</i>',`1000${OHM}`)}</span>.`,
+  sol:`<span class="eqi">${fr('1',`250${OHM}`)} = ${fr('4',`1000${OHM}`)}</span>, also <b>4 Widerstände</b>. Allgemein: <i>n</i> gleiche Widerstände <i>R</i> parallel ergeben <span class="eqi">${fr('<i>R</i>','<i>n</i>')}</span>.`},
+ {lv:3,type:'p',mc:true,t:'Eine Lampe kommt dazu',lbl:{R1:'100 Ω',R2:'100 Ω',U:'12 V'},U:12,
+  text:`An 12 V leuchtet eine Lampe (100 Ω). Eine zweite, gleiche Lampe wird <b>parallel</b> dazugeschaltet. Was passiert?`,given:'',
+  o:[{h:`${Rg} halbiert sich, ${Ig} verdoppelt sich, die erste Lampe leuchtet gleich hell.`,ok:true,fb:'Richtig! An jeder Lampe liegen weiter 12 V, also fließen durch jede 0,12 A. Insgesamt fließen 0,24 A, das passt zu R<sub>ges</sub> = 50 Ω.'},
+     {h:`${Rg} verdoppelt sich, ${Ig} halbiert sich.`,fb:'So wäre es in Reihe. Parallel bekommt der Strom einen zusätzlichen Weg.'},
+     {h:`${Rg} halbiert sich, beide Lampen leuchten nur halb so hell.`,fb:'Der Gesamtwiderstand halbiert sich zwar, aber an jeder Lampe liegt weiterhin die volle Spannung. Jede leuchtet so hell wie vorher.'},
+     {h:`Nichts ändert sich, weil die Spannung gleich bleibt.`,fb:'Die Spannung bleibt gleich, aber durch die zweite Lampe fließt zusätzlich Strom. Der Gesamtstrom steigt.'}],
+  tip:`Schau auf die Potenzialfarben: Welche Spannung liegt an jeder Lampe?`,
+  sol:`Jede Lampe liegt an 12 V: <span class="eqi">${I1} = ${I2} = 0,12${AMP}</span>, <span class="eqi">${Ig} = 0,24${AMP}</span>, <span class="eqi">${Rg} = 50${OHM}</span>.`}
+];
+const TS=TASKS.map(t=>({inp:t.f?t.f.map(()=>''):[],res:t.f?t.f.map(()=>null):[],mc:null,tries:0,tip:false,sol:false,done:false}));
+let tI=0;
+function parseNum(s){ s=String(s).trim().replace(/\s/g,'').replace(',','.').replace(/[^0-9.\-eE]/g,''); return s===''?NaN:parseFloat(s); }
+function judge(f,v){
+  if(isNaN(v)) return {ok:false,fb:'Bitte eine Zahl eingeben.'};
+  const rel=f.rel===undefined?0.02:f.rel;
+  if(rel===0? v===f.a : near(v,f.a,rel)) return {ok:true,fb:'Richtig!'};
+  for(const [x,fb] of (f.err||[])) if(near(v,x,0.02)) return {ok:false,fb};
+  if(f.a!==0&&(near(v,f.a*1000,0.02)||near(v,f.a/1000,0.02))) return {ok:false,fb:'Die Ziffern stimmen, aber prüf die Kommastelle bzw. die Einheit.'};
+  return {ok:false,fb:'Das stimmt noch nicht. Prüf deinen Rechenweg oder hol dir einen Tipp.'};
+}
+function render3(){
+  const t=TASKS[tI], st=TS[tI];
+  const stars=n=>'★'.repeat(n);
+  let L='<div class="tl">';
+  [1,2,3].forEach(lv=>{ L+=`<span class="lvl">${stars(lv)}</span>`; TASKS.forEach((x,i)=>{ if(x.lv===lv) L+=`<button class="tn ${i===tI?'on':''} ${TS[i].done?'ok':''}" data-i="${i}">${i+1}${TS[i].done?' ✓':''}</button>`; }); });
+  L+='</div>';
+  document.getElementById('tlist').innerHTML=L;
+  let s=`<div class="card"><h3><span class="stars">${stars(t.lv)}</span>&ensp;Aufgabe ${tI+1}: ${t.t}</h3><p style="margin:.2rem 0">${t.text}</p>${t.given?`<div class="given">Gegeben: ${t.given}</div>`:''}`;
+  if(t.mc){
+    s+=`<div class="opts" style="margin-top:.4rem">`+t.o.map((o,j)=>`<button class="opt ${st.mc===j?(o.ok?'right':'wrong'):''}" data-j="${j}">${o.h}</button>`).join('')+'</div>';
+    if(st.mc!==null) s+=`<div class="fb ${t.o[st.mc].ok?'ok':'no'}">${t.o[st.mc].fb}</div>`;
+  } else {
+    t.f.forEach((f,k)=>{ const r=st.res[k];
+      s+=`<div class="field"><span class="lab">${f.l} =</span><input class="numin ${r?(r.ok?'right':'wrong'):''}" data-k="${k}" inputmode="decimal" value="${st.inp[k]}" placeholder="?"><span>${f.u}</span></div>`;
+      if(r) s+=`<div class="fb ${r.ok?'ok':'no'}">${r.fb}</div>`; });
+    s+=`<div style="margin-top:.5rem"><button class="btn primary" id="tcheck">Prüfen</button></div>`;
+  }
+  s+=`<div style="display:flex;gap:.5rem;margin-top:.6rem;flex-wrap:wrap"><button class="btn" id="ttip">💡 Tipp</button><button class="btn" id="tsol" ${st.tries>0||st.done?'':'disabled'}>Lösungsweg${st.tries>0||st.done?'':' (nach einem Versuch)'}</button></div>`;
+  if(st.tip) s+=`<div class="comment">${t.tip}</div>`;
+  if(st.sol) s+=`<div class="comment" style="background:#eef4ff;border-color:#bfd2fb">${t.sol}</div>`;
+  s+='</div>';
+  document.getElementById('tbody').innerHTML=s;
+  const n=TS.filter(x=>x.done).length;
+  document.getElementById('tscore').innerHTML=`<span style="font-size:.9rem;color:var(--muted)">gelöst: <b>${n}</b> von ${TASKS.length}</span>`;
+  document.getElementById('tprev').disabled=tI===0; document.getElementById('tnext').disabled=tI===TASKS.length-1;
+  // Schaltplan
+  const o={lbl:t.lbl,U:t.U||12,R1:100,R2:300,nobox:true};
+  if(t.type==='s'){ const r1=parseFloat(t.lbl.R1)||1,r2=parseFloat(t.lbl.R2); o.U2=t.phiM!==undefined?t.phiM:(t.U||12)*(isNaN(r2)?0.5:r2/(r1+r2)); }
+  document.getElementById('svgT').innerHTML=t.type==='p'?svgParallel(o):svgSeries(o);
+  document.getElementById('t3cap').textContent=t.cap||(t.type==='p'?'Parallelschaltung':'Reihenschaltung');
+  // Ereignisse
+  document.querySelectorAll('#tlist .tn').forEach(b=>b.onclick=()=>{ tI=+b.dataset.i; render3(); });
+  document.querySelectorAll('#tbody .numin').forEach(inp=>{ inp.oninput=()=>{ st.inp[+inp.dataset.k]=inp.value; }; inp.onkeydown=e=>{ if(e.key==='Enter') document.getElementById('tcheck').click(); }; });
+  const c=document.getElementById('tcheck'); if(c) c.onclick=()=>{ st.tries++; st.res=t.f.map((f,k)=>judge(f,parseNum(st.inp[k]))); if(st.res.every(r=>r.ok)) st.done=true; render3(); };
+  document.querySelectorAll('#tbody .opt').forEach(b=>b.onclick=()=>{ st.mc=+b.dataset.j; st.tries++; if(t.o[st.mc].ok) st.done=true; render3(); });
+  document.getElementById('ttip').onclick=()=>{ st.tip=!st.tip; render3(); };
+  document.getElementById('tsol').onclick=()=>{ st.sol=!st.sol; render3(); };
+}
+document.getElementById('tprev').onclick=()=>{ if(tI>0){ tI--; render3(); document.getElementById('scroll3').scrollTop=0; } };
+document.getElementById('tnext').onclick=()=>{ if(tI<TASKS.length-1){ tI++; render3(); document.getElementById('scroll3').scrollTop=0; } };
+
+/* Smartphone: Schaltplan umschalten/einklappen, Vollbild nur wenn möglich, Drehhinweis */
+document.querySelectorAll('.swap').forEach(b=>b.onclick=()=>b.closest('.left').classList.toggle('alt'));
+document.querySelectorAll('.fold').forEach(b=>b.onclick=()=>b.closest('.left').classList.toggle('folded'));
+document.getElementById('rotOk').onclick=()=>document.body.classList.add('norotate');
+{ const el=document.documentElement; if(!el.requestFullscreen&&!el.webkitRequestFullscreen) document.getElementById('fs').style.display='none'; }
+/* Start */
+applyFs(); render1(); render2(); render3();
+</script>
+<!-- KI-Hinweis: einheitlich in allen Simulationen, immer sichtbar unten rechts -->
+<style>
+#ki-hinweis{position:fixed;right:0;bottom:0;z-index:2147483000;pointer-events:none;
+  font:10px/16px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  color:#5b6270;background:rgba(243,244,246,.92);border-top:1px solid rgba(0,0,0,.08);border-left:1px solid rgba(0,0,0,.08);
+  border-top-left-radius:6px;padding:0 max(7px,env(safe-area-inset-right)) env(safe-area-inset-bottom) 8px;white-space:nowrap}
+.ki-platz::after{content:"";display:block;height:20px;flex:none}
+@media (max-width:520px){#ki-hinweis .ki-archiv{display:block}#ki-hinweis .ki-trenner{display:none}}
+@media print{#ki-hinweis{position:static;text-align:right;border:0;background:none}}
+</style>
+<div id="ki-hinweis" role="note"><span class="ki-archiv">Archivstand vom 28.10.2026<span class="ki-trenner"> · </span></span>Mit KI erstellt · Physik nicht geprüft · Ergebnisse kritisch prüfen</div>
+<script>
+/* Scrollbereiche, die bis unter den Hinweis reichen, bekommen unten 20 px Luft,
+   damit ihr letzter Inhalt nicht dauerhaft vom Hinweis verdeckt wird. */
+(function(){
+  var hin=document.getElementById('ki-hinweis');
+  function platz(){
+    var alt=document.querySelectorAll('.ki-platz');
+    for(var i=0;i<alt.length;i++)alt[i].classList.remove('ki-platz');
+    var vw=innerWidth,vh=innerHeight,hb=hin.getBoundingClientRect();
+    var els=document.body.querySelectorAll('*');
+    function passt(el){
+      var cs=getComputedStyle(el);
+      if(cs.display==='block'||cs.display==='flow-root')return true;
+      return cs.display==='flex'&&/column/.test(cs.flexDirection);
+    }
+    for(var j=0;j<els.length;j++){
+      var el=els[j];if(el===hin||el.closest('svg'))continue;
+      var oy=getComputedStyle(el).overflowY;
+      if(oy!=='auto'&&oy!=='scroll')continue;
+      var r=el.getBoundingClientRect();
+      if(r.height<40||r.bottom<vh-hb.height-4||r.right<hb.left+20||r.left>vw)continue;
+      if(passt(el))el.classList.add('ki-platz');
+    }
+    var se=document.scrollingElement||document.documentElement;
+    if(se.scrollHeight>vh+2&&passt(document.body))document.body.classList.add('ki-platz');
+  }
+  var t;function spaeter(){clearTimeout(t);t=setTimeout(platz,150);}
+  addEventListener('resize',spaeter);addEventListener('load',spaeter);
+  document.addEventListener('click',spaeter,true);
+  platz();
+})();
+</script>
+</body>
+</html>

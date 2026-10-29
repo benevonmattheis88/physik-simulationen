@@ -16,6 +16,7 @@ Die Ordner sind erst nach Thema, dann nach Stufe (Unterstufe, Mittelstufe, Obers
 index.html                    Startseite mit allen Simulationen
 CNAME                         eigene Adresse (simulationen.familiemueller.space) für GitHub Pages
 datenschutz.html              Datenschutzhinweis
+versionen.html                Ältere Versionen: archivierte Stände und Links zum GitHub-Verlauf
 mechanik/
   oberstufe/
     Bewegungsdiagramme.html
@@ -34,6 +35,8 @@ kernphysik/
 optik/
   mittelstufe/
     Prisma_Labor.html
+archiv/                       eingefrorene ältere Stände, gleiche Ordnerstruktur,
+                              Dateiname mit Datum, z. B. Kurvenlabor_2026-10-28.html
 ```
 
 ## Nutzung
@@ -43,4 +46,5 @@ optik/
 - Auf der Startseite gibt es bei jeder Simulation einen Knopf „HTML-Datei herunterladen“, z. B. zum Hochladen in Moodle oder für die Offline-Nutzung.
 - In Moodle als Aktivität „Link/URL“ mit Anzeige „Im neuen Fenster“ einbinden, oder die Datei herunterladen und als Aktivität „Datei“ hochladen.
 - Dateien bitte nicht umbenennen oder verschieben, sonst funktionieren Links und QR-Codes nicht mehr.
+- Ältere Stände: Seite „Ältere Versionen“ (`versionen.html`, verlinkt von der Startseite). Archivierte Stände in `archiv/` laufen direkt im Browser und werden nicht mehr verändert (außer KI-Hinweis), ihre Links bleiben fest. Alle übrigen Stände findet man im GitHub-Verlauf der jeweiligen Datei.
 - Änderungen an `Kernlabor.html` müssen auch in die Dateien in `Kernlabor_einzeln/` übernommen werden.
