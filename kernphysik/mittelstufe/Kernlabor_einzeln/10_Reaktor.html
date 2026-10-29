@@ -6,6 +6,7 @@
 <title>Reaktor · Kernlabor</title>
 <style>
 :root{
+  --fs:1.25; --pz:1;
   --bg:#0d1526; --bg2:#16213a; --panel:#f4f6fa; --ink:#1b2333; --muted:#5b6475; --line:#d5dbe5;
   --accent:#2563eb; --accent2:#1d4ed8; --ok:#16a34a; --warn:#d97706; --bad:#dc2626;
   --p:#d9342b; --n:#8f9aa8;
@@ -23,15 +24,15 @@ header h1{margin:0 6px 0 2px;font-size:19px;color:#fff;font-weight:700;letter-sp
 #tools button{border:0;border-radius:9px;min-width:40px;padding:8px 9px;font-size:16px;font-weight:700;color:#c8d3ea;background:rgba(255,255,255,.07);cursor:pointer}
 #tools button.on{background:#fff;color:#14203a}
 main.nopanel aside{display:none}
-body.big #eq{font-size:38px}body.big #eq .small{font-size:21px}body.big #hint{font-size:17px}
+#tools button:disabled{opacity:.35;cursor:default}
 #tabs button.on{background:#fff;color:#14203a;box-shadow:0 2px 6px rgba(0,0,0,.35)}
 main{flex:1 1 auto;display:flex;min-height:0}
 #stage{position:relative;flex:1 1 auto;min-width:0;background:radial-gradient(ellipse at 40% 35%,#1d2c4d 0%,#0d1526 70%)}
 #cv{position:absolute;left:0;top:0;touch-action:none}
-#eq{position:absolute;left:0;right:0;top:10px;text-align:center;color:#fff;font-size:30px;pointer-events:none;text-shadow:0 2px 6px rgba(0,0,0,.6)}
-#eq .small{font-size:17px;color:#c8d3ea;display:block;margin-top:4px}
-#hint{position:absolute;left:12px;bottom:10px;color:#9fb0d0;font-size:14px;pointer-events:none;max-width:70%}
-aside{flex:0 0 300px;background:var(--panel);overflow-y:auto;padding:12px 12px 20px;border-left:1px solid #000;-webkit-overflow-scrolling:touch}
+#eq{position:absolute;left:0;right:0;top:10px;text-align:center;color:#fff;font-size:calc(24px*var(--fs));pointer-events:none;text-shadow:0 2px 6px rgba(0,0,0,.6)}
+#eq .small{font-size:calc(14px*var(--fs));color:#c8d3ea;display:block;margin-top:4px}
+#hint{position:absolute;left:12px;bottom:10px;color:#9fb0d0;font-size:calc(11.5px*var(--fs));pointer-events:none;max-width:70%}
+aside{flex:0 0 300px;zoom:var(--pz);background:var(--panel);overflow-y:auto;padding:12px 12px 20px;border-left:1px solid #000;-webkit-overflow-scrolling:touch}
 aside h2{font-size:18px;margin:2px 0 8px}
 aside h3{font-size:14px;margin:14px 0 6px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
 .btn{display:block;width:100%;border:0;border-radius:10px;padding:11px 10px;margin:6px 0;font-size:16px;font-weight:600;cursor:pointer;
@@ -80,8 +81,13 @@ table.res td,table.res th{border-bottom:1px solid var(--line);padding:3px 4px;te
 .legend span{display:inline-flex;align-items:center;gap:5px}
 .dot{width:13px;height:13px;border-radius:50%;display:inline-block;box-shadow:inset -2px -2px 3px rgba(0,0,0,.35)}
 @media (max-width:1100px){header h1{font-size:0}header h1:first-letter{font-size:20px}header{gap:6px;padding:6px 6px}#tabs button{padding:8px 8px;font-size:13.5px}#tools button{min-width:34px;padding:7px 6px}}
-@media (max-width:900px){aside{flex-basis:260px}header h1{font-size:16px}#tabs button{padding:8px 9px;font-size:14px}#eq{font-size:24px}}
-@media (orientation:portrait) and (min-width:641px){#rot{display:flex!important}}
+@media (max-width:900px){aside{flex-basis:260px}header h1{font-size:16px}#tabs button{padding:8px 9px;font-size:14px}#eq{font-size:calc(20px*var(--fs))}}
+@media (orientation:portrait) and (min-width:641px){
+  main{flex-direction:column}
+  #stage{flex:1 1 auto;min-height:0}
+  aside{flex:0 0 auto;height:40%;border-left:0;border-top:1px solid #000;padding:10px 14px 20px}
+  #hint{max-width:92%}
+}
 @media (orientation:landscape) and (max-height:500px){body:not(.quer) #rot2{display:flex!important}}
 #rot2{display:none;position:fixed;inset:0;background:rgba(13,21,38,.96);color:#fff;z-index:9;flex-direction:column;align-items:center;justify-content:center;gap:18px;font-size:20px;text-align:center;padding:24px}
 #rot2 button{border:0;border-radius:10px;padding:10px 16px;font-size:16px;font-weight:700;background:#fff;color:#14203a}
@@ -97,24 +103,21 @@ table.res td,table.res th{border-bottom:1px solid var(--line);padding:3px 4px;te
   #stage{flex:0 0 auto;height:60vh;height:60svh}
   main.nopanel aside{display:block}
   aside{flex:1 1 auto;border-left:0;border-top:1px solid #000;padding:8px 10px 24px}
-  #eq{font-size:20px;top:6px}#eq .small{font-size:13px}
-  body.big #eq{font-size:24px}body.big #eq .small{font-size:14px}
+  #eq{font-size:calc(27px*var(--fs));top:6px}#eq .small{font-size:calc(17px*var(--fs))}
   #hint{display:none}
   .list.grid2 .btn{font-size:13px}
 }
-#rot{display:none;position:fixed;inset:0;background:rgba(13,21,38,.95);color:#fff;z-index:9;align-items:center;justify-content:center;font-size:22px;text-align:center;padding:30px}
 #ttl{color:#fff;font-size:20px;font-weight:700;white-space:nowrap}#tabs{display:none}
 </style>
 </head>
 <body>
 <div id="app">
-  <header><h1>⚛︎ Kernlabor</h1><nav id="tabs"></nav><span id="ttl">Reaktor</span><div id="tools"><button id="t_fs" title="Schrift größer/kleiner">A+</button><button id="t_panel" title="Bedienfeld ein-/ausblenden">◨</button><button id="t_full" title="Vollbild">⛶</button></div></header>
+  <header><h1>⚛︎ Kernlabor</h1><nav id="tabs"></nav><span id="ttl">Reaktor</span><div id="tools"><button id="t_fsm" title="Schrift kleiner">A−</button><button id="t_fsp" title="Schrift größer">A+</button><button id="t_panel" title="Bedienfeld ein-/ausblenden">◨</button><button id="t_full" title="Vollbild">⛶</button></div></header>
   <main>
     <div id="stage"><canvas id="cv"></canvas><div id="eq"></div><div id="hint"></div></div>
     <aside id="panel"></aside>
   </main>
 </div>
-<div id="rot">Bitte das iPad quer halten.</div>
 <div id="rot2"><div>Auf dem Handy bitte hochkant halten.</div><button onclick="document.body.classList.add('quer')">Trotzdem quer weiter</button></div>
 <script>
 "use strict";
@@ -214,7 +217,10 @@ function nucText(A, Z, sym, x, y, size, col, align){
 function label(t, x, y, size, col, align, weight){
   size *= FS;
   ctx.save(); ctx.fillStyle = col || '#fff'; ctx.font = `${weight||600} ${size}px -apple-system,Segoe UI,Roboto,Arial`;
-  ctx.textAlign = align || 'left'; ctx.textBaseline = 'middle'; ctx.fillText(t, x, y); ctx.restore();
+  // Text, der über den Rand ragen würde, wird kleiner gesetzt (wichtig bei großer Schrift)
+  const room = align === 'right' ? x - 4 : align === 'center' ? 2*Math.min(x, W - x) - 8 : W - x - 4, tw = ctx.measureText(t).width;
+  if (room > 30 && tw > room) ctx.font = `${weight||600} ${size*Math.max(0.55, room/tw)}px -apple-system,Segoe UI,Roboto,Arial`;
+  ctx.textAlign = align || 'left'; ctx.textBaseline = 'middle'; ctx.fillText(t, x, y, room > 30 ? room : undefined); ctx.restore();
 }
 
 /* ---------- Kugelpackung für Atomkerne ---------- */
@@ -2136,12 +2142,19 @@ function start(){
   cv.addEventListener('pointerdown', e => {const r = cv.getBoundingClientRect(); if (cur && cur.tap) cur.tap(e.clientX - r.left, e.clientY - r.top);});
   const pref = (k, d) => {try{const v = localStorage.getItem('kernlabor_' + k); return v === null ? d : v === '1';}catch(e){return d;}};
   const save = (k, v) => {try{localStorage.setItem('kernlabor_' + k, v ? '1' : '0');}catch(e){}};
-  let big = pref('big', !PHONE()), panel = pref('panel', true);
-  const apply = () => {FS = PHONE() ? (big ? 0.9 : 0.75) : (big ? 1.25 : 1); document.body.classList.toggle('big', big); $('#t_fs').classList.toggle('on', big);
+  // Schriftstufen 0–4 (A− / A+); Stufe 2 = bisheriges „groß“, auf dem Handy kleiner skaliert
+  const FSL = [0.85, 1, 1.25, 1.4, 1.55], PZL = [1, 1, 1, 1.1, 1.2];
+  let lvl = NaN; try{lvl = parseInt(localStorage.getItem('kernlabor_fs'), 10);}catch(e){}
+  if (!(lvl >= 0 && lvl < FSL.length)) lvl = PHONE() ? 1 : (pref('big', true) ? 2 : 1);
+  let panel = pref('panel', true);
+  const fsOf = () => FSL[lvl]*(PHONE() ? 0.72 : 1);
+  applyFS = () => {FS = fsOf(); const st = document.documentElement.style; st.setProperty('--fs', FS); st.setProperty('--pz', PHONE() ? 1 : PZL[lvl]);
+    $('#t_fsm').disabled = lvl <= 0; $('#t_fsp').disabled = lvl >= FSL.length - 1;};
+  const apply = () => {applyFS();
     document.querySelector('main').classList.toggle('nopanel', !panel); $('#t_panel').classList.toggle('on', panel);
     resize(); if (cur){cur.dots = null; cur.ldots = null;}};
-  applyFS = () => {FS = PHONE() ? (big ? 0.9 : 0.75) : (big ? 1.25 : 1);};
-  $('#t_fs').onclick = () => {big = !big; save('big', big); apply();};
+  const step = d => {lvl = clamp(lvl + d, 0, FSL.length - 1); try{localStorage.setItem('kernlabor_fs', lvl);}catch(e){} apply();};
+  $('#t_fsm').onclick = () => step(-1); $('#t_fsp').onclick = () => step(1);
   $('#t_panel').onclick = () => {panel = !panel; save('panel', panel); apply();};
   $('#t_full').onclick = () => {const d = document, el = d.documentElement;
     const on = d.fullscreenElement || d.webkitFullscreenElement;
