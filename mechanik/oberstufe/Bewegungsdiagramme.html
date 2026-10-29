@@ -168,6 +168,7 @@
       <div class="checks">
         <label><input id="cbArrows" type="checkbox" checked>Pfeile v und a</label>
         <label><input id="cbTrace" type="checkbox" checked>Spur jede Sekunde</label>
+        <label><input id="cbMark" type="checkbox" checked>Ort an der s-Achse</label>
         <label><input id="cbTan" type="checkbox">Steigungsdreieck</label>
         <label><input id="cbArea" type="checkbox">Fläche unter dem Graphen</label>
       </div>
@@ -674,6 +675,17 @@
     }
     ctx.restore();
 
+    // Ort-Markierung: kleines Auto an der s-Achse in der Höhe des aktuellen Orts, Linie zum Punkt
+    if (D.k === "s" && pn && $("cbMark").checked) {
+      const ys = Y(pn.s), kk = fz * 2.6 / CAR, xa = D.x + CAR / 2 * kk + 4, xp = X(pn.t);
+      ctx.strokeStyle = "rgba(31,78,121,.55)"; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]);
+      ctx.beginPath(); ctx.moveTo(xa + CAR / 2 * kk + 2, ys); ctx.lineTo(xp, ys); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = "#1F4E79"; ctx.beginPath(); ctx.moveTo(D.x, ys); ctx.lineTo(D.x + 6, ys - 5); ctx.lineTo(D.x + 6, ys + 5); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,.85)"; rrect(xa - CAR / 2 * kk - 2, ys - 1.45 * kk * 0.5 - 4, CAR * kk + 4, 1.45 * kk + 6, 4); ctx.fill();
+      car(xa, ys + 1.45 * kk * 0.5, kk, S.view === "3d", pn.s / 0.33);
+      txt("s = " + de(pn.s, 1) + " m", xa + CAR / 2 * kk + 8, ys - fz * 0.7, fz * 0.75, "#1F4E79", "left", true);
+    }
+
     // Cursor
     if (cur) {
       ctx.strokeStyle = "#E67E22"; ctx.lineWidth = 2;
@@ -819,7 +831,7 @@
   $("tab_bew").onclick = () => setTab("bew");
   $("tab_steu").onclick = () => setTab("steu");
   $("tab_ziel").onclick = () => setTab("ziel");
-  for (const id of ["cb_s", "cb_v", "cb_a", "cbArrows", "cbTrace", "cbTan", "cbArea", "cbSlow"]) $(id).addEventListener("change", draw);
+  for (const id of ["cb_s", "cb_v", "cb_a", "cbArrows", "cbTrace", "cbMark", "cbTan", "cbArea", "cbSlow"]) $(id).addEventListener("change", draw);
 
   // ---------- Finger auf der Simulation ----------
   function px(ev) { const r = cv.getBoundingClientRect(); return { x:ev.clientX - r.left, y:ev.clientY - r.top }; }
