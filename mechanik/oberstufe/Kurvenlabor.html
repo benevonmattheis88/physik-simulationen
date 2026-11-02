@@ -328,8 +328,17 @@
     ctx.fillStyle = lin(-14, 0, 14, 0, ["#1b4f7a", "#4f93c9", "#1b4f7a"]); rrect(-14, 4, 28, 7, 3); ctx.fill(); rrect(-14, -14, 6, 24, 3); ctx.fill();
     ctx.restore();
     ball(sx, sy, 10, C.orange, "#8a4210");
-    // Kräfte (Pfeillänge: F_G = 90 px, bei großem Winkel alle Pfeile gemeinsam kürzer)
-    const FG = p.m * g, k = Math.min(90, 240 * Math.cos(a)) / FG, FZ = FG * Math.tan(a), FS = FG / Math.cos(a);
+    // Kräfte mit festem Kraftmaßstab (100 px ≙ 1000 N), damit die Masse sichtbar wirkt.
+    // Nur wenn F_Seil nicht mehr ins Bild passt, wird der Maßstab in festen Stufen verkleinert (mit Hinweis).
+    const FG = p.m * g, FZ = FG * Math.tan(a), FS = FG / Math.cos(a), Lmax = Math.max(80, H * 0.42);
+    const kSteps = [0.1, 0.05, 0.02, 0.01];
+    let k = kSteps[kSteps.length - 1];
+    for (const kk of kSteps) if (FS * kk <= Lmax) { k = kk; break; }
+    const Fbar = k >= 0.05 ? 500 : 1000, bx = ax + 56, by = H * 0.9 - 14;
+    ctx.strokeStyle = "#222"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + Fbar * k, by); ctx.stroke();
+    ctx.lineWidth = 1.5; [bx, bx + Fbar * k].forEach(x => { ctx.beginPath(); ctx.moveTo(x, by - 5); ctx.lineTo(x, by + 5); ctx.stroke(); });
+    text("Kraftmaßstab: " + Fbar + " N", bx + Fbar * k + 8, by + 5, "#222", 13);
+    if (k < kSteps[0]) text("Kraftmaßstab verkleinert (" + fmt(kSteps[0] / k, 0) + " : 1)", bx, by - 12, C.red, 13);
     arrow(sx, sy, sx, sy + FG * k, C.blue, 3); text("F_G", sx + 8, sy + FG * k, C.blue, 14);
     arrow(sx, sy, sx - FS * k * Math.sin(a), sy - FS * k * Math.cos(a), C.green, 3); text("F_Seil", sx - FS * k * Math.sin(a) + 8, sy - FS * k * Math.cos(a), C.green, 14);
     if (FZ * k > 3) { arrow(sx, sy, sx - FZ * k, sy, C.red, 3.5); text("F_Z (Resultierende)", sx - FZ * k - 4, sy - 10, C.red, 14, "right"); }
