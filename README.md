@@ -35,6 +35,7 @@ kernphysik/
   mittelstufe/
     Kernlabor.html
     Kernlabor_einzeln/        jeder Reiter des Kernlabors als eigene Seite
+    Fusionslabor.html
 optik/
   mittelstufe/
     Prisma_Labor.html
