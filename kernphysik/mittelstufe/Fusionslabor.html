@@ -1,0 +1,1214 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Fusionslabor</title>
+<style>
+:root{
+  --fs:1.25; --pz:1;
+  --bg:#0d1526; --bg2:#16213a; --panel:#f4f6fa; --ink:#1b2333; --muted:#5b6475; --line:#d5dbe5;
+  --accent:#2563eb; --accent2:#1d4ed8; --ok:#16a34a; --warn:#d97706; --bad:#dc2626;
+  --p:#d9342b; --n:#8f9aa8;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+#app{display:flex;flex-direction:column;height:100%}
+header{display:flex;align-items:center;gap:10px;padding:6px 10px;background:linear-gradient(#1c2a48,#121c33);border-bottom:1px solid #000;flex:0 0 auto}
+header h1{margin:0 6px 0 2px;font-size:19px;color:#fff;font-weight:700;letter-spacing:.3px;white-space:nowrap}
+#tabs{display:flex;flex-wrap:wrap;gap:4px}
+#tabs::-webkit-scrollbar{display:none}
+#tabs button{border:0;border-radius:9px;padding:8px 10px;font-size:14.5px;font-weight:600;color:#c8d3ea;background:rgba(255,255,255,.07);cursor:pointer;white-space:nowrap}
+#tools{margin-left:auto;display:flex;gap:4px;flex:0 0 auto}
+#tools button{border:0;border-radius:9px;min-width:40px;padding:8px 9px;font-size:16px;font-weight:700;color:#c8d3ea;background:rgba(255,255,255,.07);cursor:pointer}
+#tools button.on{background:#fff;color:#14203a}
+main.nopanel aside{display:none}
+#tools button:disabled{opacity:.35;cursor:default}
+#tabs button.on{background:#fff;color:#14203a;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+main{flex:1 1 auto;display:flex;min-height:0}
+#stage{position:relative;flex:1 1 auto;min-width:0;background:radial-gradient(ellipse at 40% 35%,#1d2c4d 0%,#0d1526 70%)}
+#cv{position:absolute;left:0;top:0;touch-action:none}
+#eq{position:absolute;left:0;right:0;top:10px;text-align:center;color:#fff;font-size:calc(24px*var(--fs));pointer-events:none;text-shadow:0 2px 6px rgba(0,0,0,.6)}
+#eq .small{font-size:calc(14px*var(--fs));color:#c8d3ea;display:block;margin-top:4px}
+#hint{position:absolute;left:12px;bottom:10px;color:#9fb0d0;font-size:calc(11.5px*var(--fs));pointer-events:none;max-width:70%}
+aside{flex:0 0 300px;zoom:var(--pz);background:var(--panel);overflow-y:auto;padding:12px 12px 20px;border-left:1px solid #000;-webkit-overflow-scrolling:touch}
+aside h2{font-size:18px;margin:2px 0 8px}
+aside h3{font-size:14px;margin:14px 0 6px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.btn{display:block;width:100%;border:0;border-radius:10px;padding:11px 10px;margin:6px 0;font-size:16px;font-weight:600;cursor:pointer;
+  background:linear-gradient(#fff,#e9edf4);color:var(--ink);box-shadow:0 1px 0 #fff inset,0 1px 3px rgba(0,0,0,.25);border:1px solid #c3cad6}
+.btn:active{transform:translateY(1px)}
+.btn.main{background:linear-gradient(#3b82f6,#1d4ed8);color:#fff;border-color:#1e40af;box-shadow:0 1px 0 rgba(255,255,255,.3) inset,0 2px 5px rgba(0,0,0,.3)}
+.btn.red{background:linear-gradient(#ef4444,#b91c1c);color:#fff;border-color:#991b1b}
+.btn:disabled{opacity:.45}
+.row{display:flex;gap:6px}
+.row .btn{flex:1}
+.btn.sm{padding:8px 6px;font-size:14px}
+.seg{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0}
+.seg button{flex:1 1 auto;border:1px solid #c3cad6;background:#fff;border-radius:8px;padding:8px 6px;font-size:14px;font-weight:600;cursor:pointer;color:var(--ink)}
+.seg button.on{background:var(--accent);color:#fff;border-color:var(--accent2)}
+label.sw{display:flex;align-items:center;gap:10px;margin:8px 0;font-size:15px;cursor:pointer}
+label.sw input{display:none}
+label.sw .t{width:44px;height:26px;border-radius:13px;background:#c3cad6;position:relative;flex:0 0 auto;transition:.15s}
+label.sw .t:after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:.15s}
+label.sw input:checked+.t{background:var(--accent)}
+label.sw input:checked+.t:after{left:21px}
+.sl{margin:8px 0}
+.sl .lab{display:flex;justify-content:space-between;font-size:15px;margin-bottom:2px}
+.sl .lab b{font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;height:30px;accent-color:var(--accent)}
+.info{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 10px;font-size:15px;line-height:1.4;margin:8px 0}
+.info.big{font-size:17px}
+details{background:#fff;border:1px solid var(--line);border-radius:10px;margin:8px 0;font-size:14.5px;line-height:1.45}
+details summary{padding:9px 10px;font-weight:700;cursor:pointer;list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary:before{content:"▸ ";color:var(--accent)}
+details[open] summary:before{content:"▾ "}
+details div{padding:0 10px 10px}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-weight:700;font-size:15px;color:#fff}
+.b-ok{background:var(--ok)}.b-warn{background:var(--warn)}.b-bad{background:var(--bad)}.b-blue{background:#2563eb}.b-grey{background:#6b7280}
+.nuc{display:inline-flex;align-items:center;white-space:nowrap}
+.nuc .az{display:inline-flex;flex-direction:column;font-size:.58em;line-height:1.02;text-align:right;margin-right:.08em}
+.ov{text-decoration:overline}
+.list .btn{text-align:left;font-size:15px;padding:9px 10px;margin:4px 0}
+.list.grid2{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.list.grid2 .btn{margin:0;font-size:13.5px;padding:8px 7px;line-height:1.25}
+.list .btn.on{background:linear-gradient(#dbe7ff,#c7d8fb);border-color:#7da2ef}
+table.res{width:100%;border-collapse:collapse;font-size:13.5px}
+table.res td,table.res th{border-bottom:1px solid var(--line);padding:3px 4px;text-align:left}
+.kpi{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+.legend{display:flex;flex-wrap:wrap;gap:8px 12px;font-size:14px;margin:6px 0}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.dot{width:13px;height:13px;border-radius:50%;display:inline-block;box-shadow:inset -2px -2px 3px rgba(0,0,0,.35)}
+@media (max-width:1100px){header h1{font-size:0}header h1:first-letter{font-size:20px}header{gap:6px;padding:6px 6px}#tabs button{padding:8px 8px;font-size:13.5px}#tools button{min-width:34px;padding:7px 6px}}
+@media (max-width:900px){aside{flex-basis:260px}header h1{font-size:16px}#tabs button{padding:8px 9px;font-size:14px}#eq{font-size:calc(20px*var(--fs))}}
+@media (orientation:portrait) and (min-width:641px){
+  main{flex-direction:column}
+  #stage{flex:1 1 auto;min-height:0}
+  aside{flex:0 0 auto;height:40%;border-left:0;border-top:1px solid #000;padding:10px 14px 20px}
+  #hint{max-width:92%}
+}
+@media (orientation:landscape) and (max-height:500px){body:not(.quer) #rot2{display:flex!important}}
+#rot2{display:none;position:fixed;inset:0;background:rgba(13,21,38,.96);color:#fff;z-index:9;flex-direction:column;align-items:center;justify-content:center;gap:18px;font-size:20px;text-align:center;padding:24px}
+#rot2 button{border:0;border-radius:10px;padding:10px 16px;font-size:16px;font-weight:700;background:#fff;color:#14203a}
+@media (max-width:640px) and (orientation:portrait){
+  header{padding:5px 6px;gap:6px}
+  header h1{display:none}
+  #tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;flex:1 1 auto;min-width:0;scrollbar-width:none}
+  #tabs button{padding:7px 9px;font-size:13.5px}
+  #ttl{font-size:16px;flex:1 1 auto}
+  #tools{gap:3px}#tools button{min-width:32px;padding:6px 5px;font-size:14px}
+  #t_panel{display:none}
+  main{flex-direction:column}
+  #stage{flex:0 0 auto;height:60vh;height:60svh}
+  main.nopanel aside{display:block}
+  aside{flex:1 1 auto;border-left:0;border-top:1px solid #000;padding:8px 10px 24px}
+  #eq{font-size:calc(27px*var(--fs));top:6px}#eq .small{font-size:calc(17px*var(--fs))}
+  #hint{display:none}
+  .list.grid2 .btn{font-size:13px}
+}
+#cmp{position:absolute;left:10px;right:10px;bottom:10px;overflow:auto;-webkit-overflow-scrolling:touch}
+#cmp table{width:100%;border-collapse:separate;border-spacing:0 4px;color:#e6ecf7;font-size:calc(11.5px*var(--fs));line-height:1.3}
+#cmp th{font-size:calc(13px*var(--fs));text-align:left;padding:2px 8px}#cmp th.cs{color:#ffb27a}#cmp th.cf{color:#8fe0b0}
+#cmp td{background:rgba(255,255,255,.06);padding:5px 8px;vertical-align:top;cursor:pointer}
+#cmp td:first-child{font-weight:700;color:#c8d3ea;border-radius:8px 0 0 8px;width:22%}#cmp td:last-child{border-radius:0 8px 8px 0}
+#cmp tr.on td{background:rgba(255,214,102,.2);color:#fff}
+@media (max-width:640px) and (orientation:portrait){#cmp{left:4px;right:4px;bottom:4px}#cmp td{padding:4px 5px}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header><h1>☀︎ Fusionslabor</h1><nav id="tabs"></nav><div id="tools"><button id="t_fsm" title="Schrift kleiner">A−</button><button id="t_fsp" title="Schrift größer">A+</button><button id="t_view" title="3D-Ansicht / Symbolansicht">3D</button><button id="t_panel" title="Bedienfeld ein-/ausblenden">◨</button><button id="t_full" title="Vollbild">⛶</button></div></header>
+  <main>
+    <div id="stage"><canvas id="cv"></canvas><div id="eq"></div><div id="hint"></div></div>
+    <aside id="panel"></aside>
+  </main>
+</div>
+<div id="rot2"><div>Auf dem Handy bitte hochkant halten.</div><button onclick="document.body.classList.add('quer')">Trotzdem quer weiter</button></div>
+<script>
+"use strict";
+/* ===================== Grundlagen ===================== */
+const $ = s => document.querySelector(s);
+const cv = $('#cv'), ctx = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1, FS = 1.25, FLAT = false;
+const PORT = () => H > W*1.02;
+const PHONE = () => window.matchMedia('(max-width:640px) and (orientation:portrait)').matches;  // FS: Schriftfaktor für die Anzeige am Fernseher
+const TAU = Math.PI * 2;
+const rnd = Math.random;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const fmt = (v, d = 1) => v.toLocaleString('de-DE', {minimumFractionDigits: d, maximumFractionDigits: d});
+const fmtInt = v => Math.round(v).toLocaleString('de-DE');
+
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+const SYM=['n','H','He','Li','Be','B','C','N','O','F','Ne','Na','Mg','Al','Si','P','S','Cl','Ar','K','Ca','Sc','Ti','V','Cr','Mn','Fe','Co','Ni','Cu','Zn','Ga','Ge','As','Se','Br','Kr','Rb','Sr','Y','Zr','Nb','Mo','Tc','Ru','Rh','Pd','Ag','Cd','In','Sn','Sb','Te','I','Xe','Cs','Ba','La','Ce','Pr','Nd','Pm','Sm','Eu','Gd','Tb','Dy','Ho','Er','Tm','Yb','Lu','Hf','Ta','W','Re','Os','Ir','Pt','Au','Hg','Tl','Pb','Bi','Po','At','Rn','Fr','Ra','Ac','Th','Pa','U','Np','Pu','Am'];
+const NAME={0:'Neutron',1:'Wasserstoff',2:'Helium',3:'Lithium',4:'Beryllium',5:'Bor',6:'Kohlenstoff',7:'Stickstoff',8:'Sauerstoff',9:'Fluor',10:'Neon',11:'Natrium',12:'Magnesium',13:'Aluminium',14:'Silicium',15:'Phosphor',16:'Schwefel',17:'Chlor',18:'Argon',19:'Kalium',20:'Calcium',21:'Scandium',27:'Cobalt',28:'Nickel',36:'Krypton',37:'Rubidium',38:'Strontium',39:'Yttrium',40:'Zirconium',52:'Tellur',54:'Xenon',55:'Caesium',56:'Barium',81:'Thallium',82:'Blei',83:'Bismut',84:'Polonium',86:'Radon',88:'Radium',90:'Thorium',91:'Protactinium',92:'Uran',93:'Neptunium',95:'Americium'};
+
+/* Nuklid-Schreibweise in HTML: Massenzahl oben, Ordnungszahl unten */
+function nucHTML(A, Z, sym, star){return `<span class="nuc"><span class="az"><span>${A}</span><span>${Z}</span></span>${sym}${star?'<sup>*</sup>':''}</span>`;}
+const H_ALPHA = () => nucHTML(4, 2, 'He');
+const H_EM = () => nucHTML(0, '−1', 'e');
+const H_EP = () => nucHTML(0, '+1', 'e');
+const H_NU = '&nu;<sub>e</sub>';
+const H_NUBAR = '<span class="ov">&nu;</span><sub>e</sub>';
+const H_N = () => nucHTML(1, 0, 'n');
+
+/* ---------- Farben und 3D-Kugeln (vorberechnete Sprites) ---------- */
+function hex2rgb(h){h=h.replace('#','');return[parseInt(h.substr(0,2),16),parseInt(h.substr(2,2),16),parseInt(h.substr(4,2),16)];}
+function shade(h, f){const c=hex2rgb(h);return 'rgb('+c.map(v=>Math.round(f>0?v+(255-v)*f:v*(1+f))).join(',')+')';}
+const COL={p:'#d9342b', n:'#a3adb9', e:'#2f80ed', pos:'#f08a24', gamma:'#b277ff', nu:'#7ee0c3', u235:'#f5b301', u238:'#6f8193'};
+const spriteCache = new Map();
+function ballSprite(col, r){
+  r = Math.max(0.75, Math.round(r*4)/4);
+  const key = col+'|'+r+'|'+DPR;
+  let c = spriteCache.get(key); if (c) return c;
+  const size = Math.ceil(r*2+4);
+  c = document.createElement('canvas'); c.width = c.height = Math.ceil(size*DPR);
+  const g = c.getContext('2d'); g.scale(DPR, DPR);
+  const m = size/2;
+  const gr = g.createRadialGradient(m-r*.38, m-r*.42, r*.08, m, m, r);
+  gr.addColorStop(0, shade(col, .75)); gr.addColorStop(.25, shade(col, .2));
+  gr.addColorStop(.75, col); gr.addColorStop(1, shade(col, -.55));
+  g.fillStyle = gr; g.beginPath(); g.arc(m, m, r, 0, TAU); g.fill();
+  c._s = size; spriteCache.set(key, c); return c;
+}
+function ball(x, y, r, col, a){
+  if (FLAT){ // Symbolansicht: flache Kreise mit Rand
+    ctx.globalAlpha = a === undefined ? 1 : Math.max(0, a); ctx.fillStyle = col; ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = Math.max(1, r*0.12);
+    ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); ctx.stroke(); ctx.globalAlpha = 1; return;
+  }
+  const s = ballSprite(col, r);
+  if (a !== undefined && a < 1){ctx.globalAlpha = Math.max(0, a);}
+  ctx.drawImage(s, x - s._s/2, y - s._s/2, s._s, s._s);
+  ctx.globalAlpha = 1;
+}
+function glow(x, y, r, col, a){
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+  g.addColorStop(0, col); g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.globalAlpha = a === undefined ? 1 : a; ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); ctx.globalAlpha = 1;
+}
+function rrect(x, y, w, h, r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+
+/* Text mit echtem Hoch-/Tiefstellen im Canvas */
+function symText(base, sub, sup, x, y, size, col, align, bar){
+  size *= FS;
+  ctx.save(); ctx.fillStyle = col || '#fff'; ctx.textBaseline = 'alphabetic';
+  ctx.font = `600 ${size}px -apple-system,Segoe UI,Roboto,Arial`;
+  const wb = ctx.measureText(base).width;
+  ctx.font = `600 ${size*.62}px -apple-system,Segoe UI,Roboto,Arial`;
+  const ws = Math.max(sub?ctx.measureText(sub).width:0, sup?ctx.measureText(sup).width:0);
+  const tot = wb + ws + 1;
+  let x0 = align === 'center' ? x - tot/2 : align === 'right' ? x - tot : x;
+  ctx.font = `600 ${size}px -apple-system,Segoe UI,Roboto,Arial`;
+  ctx.fillText(base, x0, y);
+  if (bar){ctx.fillRect(x0+wb*.12, y-size*.86, wb*.8, Math.max(1.5,size*.07));}
+  ctx.font = `600 ${size*.62}px -apple-system,Segoe UI,Roboto,Arial`;
+  if (sup) ctx.fillText(sup, x0+wb+1, y-size*.42);
+  if (sub) ctx.fillText(sub, x0+wb+1, y+size*.22);
+  ctx.restore();
+}
+/* Nuklid im Canvas: A oben links, Z unten links */
+function nucText(A, Z, sym, x, y, size, col, align){
+  size *= FS;
+  ctx.save(); ctx.fillStyle = col || '#fff';
+  ctx.font = `600 ${size*.6}px -apple-system,Segoe UI,Roboto,Arial`;
+  const wa = Math.max(ctx.measureText(String(A)).width, ctx.measureText(String(Z)).width);
+  ctx.font = `700 ${size}px -apple-system,Segoe UI,Roboto,Arial`;
+  const ws = ctx.measureText(sym).width; const tot = wa + 2 + ws;
+  let x0 = align === 'center' ? x - tot/2 : align === 'right' ? x - tot : x;
+  ctx.textAlign = 'right'; ctx.font = `600 ${size*.6}px -apple-system,Segoe UI,Roboto,Arial`;
+  ctx.fillText(String(A), x0+wa, y - size*.42); ctx.fillText(String(Z), x0+wa, y + size*.18);
+  ctx.textAlign = 'left'; ctx.font = `700 ${size}px -apple-system,Segoe UI,Roboto,Arial`;
+  ctx.fillText(sym, x0+wa+2, y);
+  ctx.restore();
+}
+function label(t, x, y, size, col, align, weight){
+  size *= FS;
+  ctx.save(); ctx.fillStyle = col || '#fff'; ctx.font = `${weight||600} ${size}px -apple-system,Segoe UI,Roboto,Arial`;
+  // Text, der über den Rand ragen würde, wird kleiner gesetzt (wichtig bei großer Schrift)
+  const room = align === 'right' ? x - 4 : align === 'center' ? 2*Math.min(x, W - x) - 8 : W - x - 4, tw = ctx.measureText(t).width;
+  if (room > 30 && tw > room) ctx.font = `${weight||600} ${size*Math.max(0.55, room/tw)}px -apple-system,Segoe UI,Roboto,Arial`;
+  ctx.textAlign = align || 'left'; ctx.textBaseline = 'middle'; ctx.fillText(t, x, y, room > 30 ? room : undefined); ctx.restore();
+}
+
+/* ---------- Kugelpackung für Atomkerne ---------- */
+const packCache = {};
+function pack(A){
+  if (A <= 0) return [];
+  if (packCache[A]) return packCache[A];
+  const r = mulberry(A*9301 + 49297);
+  const R = 0.95*Math.cbrt(A) + 0.3;
+  const P = [];
+  while (P.length < A){const x=(r()*2-1)*R,y=(r()*2-1)*R,z=(r()*2-1)*R; if (x*x+y*y+z*z <= R*R) P.push([x,y,z]);}
+  if (A === 1) P[0] = [0,0,0];
+  const D = 1.78;
+  for (let it = 0; it < 90; it++){
+    for (let i = 0; i < A; i++){const a = P[i];
+      for (let j = i+1; j < A; j++){const b = P[j];
+        let dx=b[0]-a[0], dy=b[1]-a[1], dz=b[2]-a[2]; let d2 = dx*dx+dy*dy+dz*dz;
+        if (d2 < D*D){let d = Math.sqrt(d2)||0.01; const f = (D-d)/d*0.5;
+          dx*=f; dy*=f; dz*=f; a[0]-=dx; a[1]-=dy; a[2]-=dz; b[0]+=dx; b[1]+=dy; b[2]+=dz;}
+      }}
+    for (const p of P){p[0]*=0.975; p[1]*=0.975; p[2]*=0.975;}
+  }
+  let cx=0,cy=0,cz=0; for (const p of P){cx+=p[0];cy+=p[1];cz+=p[2];} cx/=A;cy/=A;cz/=A;
+  for (const p of P){p[0]-=cx;p[1]-=cy;p[2]-=cz;}
+  packCache[A] = P; return P;
+}
+function packRadius(A){if (A<=1) return 1; const P = pack(A); let m = 0; for (const p of P) m = Math.max(m, Math.hypot(p[0],p[1],p[2])); return m + 1;}
+
+/* ---------- Atomkern als 3D-Kugelhaufen ---------- */
+class Nucleus{
+  constructor(Z, N, seed){this.rot = 0; this.tilt = 0.35; this.excite = 0; this.deform = 0; this.spin = 0.25; this.list = []; this.set(Z, N, seed);}
+  get Z(){return this.list.filter(q => q.t === 'p').length;}
+  get N(){return this.list.filter(q => q.t === 'n').length;}
+  get A(){return this.list.length;}
+  set(Z, N, seed){
+    const A = Z + N, P = pack(A), r = mulberry((seed||1)*131 + A*7 + Z);
+    const types = []; for (let i = 0; i < Z; i++) types.push('p'); for (let i = 0; i < N; i++) types.push('n');
+    for (let i = types.length-1; i > 0; i--){const j = Math.floor(r()*(i+1)); [types[i], types[j]] = [types[j], types[i]];}
+    this.list = P.map((p, i) => ({x:p[0], y:p[1], z:p[2], tx:p[0], ty:p[1], tz:p[2], t:types[i], fl:0}));
+  }
+  retarget(){
+    const P = pack(this.list.length), used = new Array(P.length).fill(false);
+    const order = this.list.slice().sort((a, b) => (b.x*b.x+b.y*b.y+b.z*b.z) - (a.x*a.x+a.y*a.y+a.z*a.z));
+    for (const q of order){let best = -1, bd = 1e9;
+      for (let i = 0; i < P.length; i++){if (used[i]) continue; const d = (P[i][0]-q.x)**2+(P[i][1]-q.y)**2+(P[i][2]-q.z)**2; if (d < bd){bd = d; best = i;}}
+      used[best] = true; q.tx = P[best][0]; q.ty = P[best][1]; q.tz = P[best][2];}
+  }
+  add(t){
+    const a = rnd()*TAU, R = packRadius(this.A) + 6;
+    this.list.push({x:Math.cos(a)*R, y:Math.sin(a)*R*0.6, z:4, tx:0, ty:0, tz:0, t, fl:0.8});
+    this.retarget();
+  }
+  removeType(t){ // entfernt das außen am weitesten links/rechts liegende Teilchen
+    let best = -1, bd = -1;
+    this.list.forEach((q, i) => {if (q.t !== t) return; const d = q.x*q.x+q.y*q.y+q.z*q.z; if (d > bd){bd = d; best = i;}});
+    if (best >= 0){this.list.splice(best, 1); this.retarget();}
+  }
+  /* Blickrichtung: gedrehte Koordinaten */
+  view(q){
+    const c = Math.cos(this.rot), s = Math.sin(this.rot);
+    let x = q.x*c - q.z*s, z = q.x*s + q.z*c, y = q.y;
+    const ct = Math.cos(this.tilt), st = Math.sin(this.tilt);
+    const y2 = y*ct - z*st, z2 = y*st + z*ct;
+    if (this.deform){const f = 1 + this.deform; x *= f; const g = 1/Math.sqrt(f); return [x, y2*g, z2*g];}
+    return [x, y2, z2];
+  }
+  /* Indizes der am weitesten in Richtung (dx,dy) liegenden Nukleonen eines Typs */
+  pick(t, n, dx, dy){
+    const arr = [];
+    this.list.forEach((q, i) => {if (q.t !== t) return; const v = this.view(q); arr.push([v[0]*dx + v[1]*dy + v[2]*0.3, i]);});
+    arr.sort((a, b) => b[0] - a[0]);
+    return arr.slice(0, n).map(a => a[1]);
+  }
+  update(dt){
+    this.rot += dt*this.spin;
+    const k = 1 - Math.pow(0.02, dt);
+    for (const q of this.list){q.x += (q.tx-q.x)*k; q.y += (q.ty-q.y)*k; q.z += (q.tz-q.z)*k; if (q.fl > 0) q.fl = Math.max(0, q.fl - dt);}
+    if (this.excite > 0 && this.exciteDecay) this.excite = Math.max(0, this.excite - dt*this.exciteDecay);
+  }
+  screen(q, cx, cy, s){
+    const v = this.view(q); const f = 60/(60 - v[2]);
+    let jx = 0, jy = 0; if (this.excite > 0){jx = (rnd()-.5)*this.excite*0.5; jy = (rnd()-.5)*this.excite*0.5;}
+    return [cx + (v[0]+jx)*s*f, cy + (v[1]+jy)*s*f, v[2], f];
+  }
+  draw(cx, cy, s, alpha){
+    if (!this.list.length) return;
+    if (this.excite > 0){glow(cx, cy, (packRadius(this.A)+3)*s*(1+this.deform*0.5), 'rgba(255,220,120,0.55)', Math.min(1, this.excite));}
+    const pts = this.list.map(q => {const v = this.screen(q, cx, cy, s); return [v[0], v[1], v[2], v[3], q];});
+    pts.sort((a, b) => a[2] - b[2]);
+    for (const p of pts){
+      const q = p[4]; ball(p[0], p[1], s*1.0*p[3], q.t === 'p' ? COL.p : COL.n, alpha);
+      if (q.fl > 0){ctx.strokeStyle = `rgba(255,255,255,${q.fl})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(p[0], p[1], s*1.5*p[3]+ (1-q.fl)*s*2, 0, TAU); ctx.stroke();}
+    }
+  }
+}
+
+/* ---------- Teilchen, die aus dem Kern fliegen ---------- */
+class Emitted{
+  constructor(kind, x, y, vx, vy, s){this.kind = kind; this.x = x; this.y = y; this.vx = vx; this.vy = vy; this.s = s; this.age = 0; this.alive = true; this.ph = rnd()*TAU;}
+  update(dt){this.x += this.vx*dt; this.y += this.vy*dt; this.age += dt;
+    if (this.x < -80 || this.x > W+80 || this.y < -80 || this.y > H+80) this.alive = false;
+    if (this.life && this.age > this.life) this.alive = false;}
+  draw(){
+    const s = this.s, k = this.kind;
+    if (k === 'alpha'){
+      const P = pack(4), a = this.age*3;
+      const pts = P.map((p, i) => {const c = Math.cos(a), sn = Math.sin(a); return [p[0]*c - p[2]*sn, p[1], p[0]*sn + p[2]*c, i < 2 ? COL.p : COL.n];}).sort((u, v) => u[2]-v[2]);
+      for (const p of pts) ball(this.x + p[0]*s, this.y + p[1]*s, s, p[3]);
+      symText('α', '', '', this.x, this.y - s*3.2, 26, '#ffe08a', 'center');
+    } else if (k === 'e-' || k === 'e+'){
+      ball(this.x, this.y, Math.max(5, s*0.55), k === 'e-' ? COL.e : COL.pos);
+      symText('e', '', k === 'e-' ? '−' : '+', this.x, this.y - 18, 24, k === 'e-' ? '#9cc4ff' : '#ffc58a', 'center');
+    } else if (k === 'nu' || k === 'nubar'){
+      ctx.save(); ctx.strokeStyle = COL.nu; ctx.globalAlpha = 0.8; ctx.setLineDash([3,3]); ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(this.x, this.y, 6, 0, TAU); ctx.stroke(); ctx.restore();
+      symText('ν', 'e', '', this.x, this.y - 13, 22, COL.nu, 'center', k === 'nubar');
+    } else if (k === 'gamma'){
+      const len = 70, ang = Math.atan2(this.vy, this.vx);
+      ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(ang);
+      ctx.strokeStyle = COL.gamma; ctx.lineWidth = 3; ctx.shadowColor = COL.gamma; ctx.shadowBlur = 10; ctx.beginPath();
+      for (let i = 0; i <= 40; i++){const u = -len + i/40*len; const env = Math.sin(i/40*Math.PI); const yy = Math.sin(u*0.45 + this.ph)*7*env; i ? ctx.lineTo(u, yy) : ctx.moveTo(u, yy);}
+      ctx.stroke(); ctx.restore();
+      symText('γ', '', '', this.x - this.vx/Math.hypot(this.vx,this.vy)*35, this.y - 22, 26, '#d9b8ff', 'center');
+    } else if (k === 'n' || k === 'p'){
+      ball(this.x, this.y, Math.max(6, s), k === 'n' ? COL.n : COL.p);
+      label(k, this.x, this.y - Math.max(6, s) - 12, 18, '#dfe6ef', 'center');
+    } else if (k === 'flash'){
+      const a = 1 - this.age/this.life; glow(this.x, this.y, 30 + this.age*600, `rgba(255,240,180,${a})`, 1);
+    }
+  }
+}
+function dirVec(ang, v){return [Math.cos(ang)*v, Math.sin(ang)*v];}
+
+/* ---------- Kurven/Graphen ---------- */
+function axes(x, y, w, h, opt){
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,0.04)'; rrect(x-8, y-40, w+20, h+78, 10); ctx.fill();
+  ctx.strokeStyle = '#8fa3c7'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y+h); ctx.lineTo(x+w, y+h); ctx.stroke();
+  if (opt.title) label(opt.title, x, y-24, 15, '#dbe5f7', 'left', 700);
+  if (opt.xl) label(opt.xl, x+w, y+h+34, 13, '#aab8d4', 'right');
+  ctx.restore();
+}
+
+/* ---------- Ton für den Zähler ---------- */
+let audio = null;
+function clickSound(){
+  if (!audio) return;
+  try{
+    const t = audio.currentTime, len = Math.floor(audio.sampleRate*0.004);
+    const b = audio.createBuffer(1, len, audio.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (rnd()*2-1)*(1 - i/len);
+    const s = audio.createBufferSource(); s.buffer = b; const g = audio.createGain(); g.gain.value = 0.6;
+    s.connect(g); g.connect(audio.destination); s.start(t);
+  }catch(e){}
+}
+function ensureAudio(){try{if (!audio) audio = new (window.AudioContext||window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume();}catch(e){audio = null;}}
+
+/* ---------- Bedienelemente ---------- */
+function sw(id, text, on){return `<label class="sw"><input type="checkbox" id="${id}" ${on?'checked':''}><span class="t"></span><span>${text}</span></label>`;}
+function slider(id, text, min, max, step, val, unit){return `<div class="sl"><div class="lab"><span>${text}</span><b id="${id}_v"></b></div><input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${val}"></div>`;}
+function seg(id, items, on){return `<div class="seg" id="${id}">`+items.map(([k, t]) => `<button data-k="${k}" class="${k===on?'on':''}">${t}</button>`).join('')+`</div>`;}
+function bindSeg(id, cb){const el = $('#'+id); el.querySelectorAll('button').forEach(b => b.onclick = () => {el.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); cb(b.dataset.k);});}
+function setEq(html){$('#eq').innerHTML = html || '';}
+function setHint(t){$('#hint').textContent = t || '';}
+function arrow(x1, y1, x2, y2, col){
+  const a = Math.atan2(y2-y1, x2-x1), L = Math.hypot(x2-x1, y2-y1);
+  ctx.save(); ctx.translate(x1, y1); ctx.rotate(a); ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 2.5;
+  ctx.shadowColor = 'rgba(0,0,0,.8)'; ctx.shadowBlur = 3;
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(L - 9, 0); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(L, 0); ctx.lineTo(L - 11, -6); ctx.lineTo(L - 11, 6); ctx.closePath(); ctx.fill(); ctx.restore();
+}
+/* ===================== Gemeinsame Bausteine ===================== */
+const FUS_SYM = {1:'H', 2:'He'};
+/* kleiner Kern als Kugelhaufen; Z Protonen, N Neutronen, s = Radius eines Nukleons in px */
+function cluster(Z, N, x, y, s, rot, alpha){
+  const A = Z + N; if (A <= 0) return;
+  if (A === 1){ball(x, y, s, Z ? COL.p : COL.n, alpha); return;}
+  const P = pack(A), c = Math.cos(rot || 0), sn = Math.sin(rot || 0);
+  const pts = P.map((p, i) => [p[0]*c - p[2]*sn, p[1], p[0]*sn + p[2]*c, i % A < Z ? 'p' : 'n']);
+  // Protonen und Neutronen gleichmäßig verteilen
+  const t = []; let zp = 0; for (let i = 0; i < A; i++){const want = Math.round((i + 1)*Z/A); t.push(want > zp ? 'p' : 'n'); if (want > zp) zp++;}
+  pts.forEach((p, i) => p[3] = t[i]);
+  pts.sort((a, b) => a[2] - b[2]);
+  for (const p of pts) ball(x + p[0]*s*0.95, y + p[1]*s*0.95, s, p[3] === 'p' ? COL.p : COL.n, alpha);
+}
+function clusterR(A, s){return A <= 1 ? s : packRadius(A)*s*0.95;}
+/* Textumbruch im Canvas, gibt die Anzahl der Zeilen zurück */
+function wrapLabel(t, x, y, maxW, size, col, align, weight, lh){
+  ctx.save(); ctx.font = `${weight||600} ${size*FS}px -apple-system,Segoe UI,Roboto,Arial`;
+  const words = t.split(' '), lines = []; let line = '';
+  for (const w of words){const tt = line ? line + ' ' + w : w; if (ctx.measureText(tt).width > maxW && line){lines.push(line); line = w;} else line = tt;}
+  if (line) lines.push(line); ctx.restore();
+  lines.forEach((l, i) => label(l, x, y + i*(lh || size*1.3)*FS, size, col, align, weight));
+  return lines.length;
+}
+const kB = 8.617e-8; // Boltzmann-Konstante in keV pro Kelvin
+function fmtMioK(T){return T >= 1e9 ? fmt(T/1e9, T % 1e9 ? 1 : 0) + ' Mrd. K' : fmtInt(T/1e6) + ' Mio. K';}
+function fmtE(keV){return keV >= 1000 ? fmt(keV/1000, keV >= 10000 ? 1 : 2) + ' MeV' : keV >= 10 ? fmtInt(keV) + ' keV' : fmt(keV, keV >= 1 ? 1 : 2) + ' keV';}
+function normal(){let u = 0, v = 0; while (u === 0) u = rnd(); while (v === 0) v = rnd(); return Math.sqrt(-2*Math.log(u))*Math.cos(TAU*v);}
+function stepParticles(list, dt){for (const p of list) p.update(dt); for (let i = list.length - 1; i >= 0; i--) if (!list[i].alive) list.splice(i, 1);}
+function flash(x, y, r, a){glow(x, y, r, `rgba(255,236,170,${a})`);}
+
+/* ===================== Reiter 1: Verschmelzen ===================== */
+/* Ziel ruht bei r = 0, das Geschoss kommt von rechts (Blick aus dem Schwerpunkt vereinfacht).
+   Coulomb-Berg V(r) = 1440 keV·fm · Z1·Z2 / r, Berührabstand Rc = 1,2 fm·(A1^(1/3) + A2^(1/3)).
+   Durchschlüpfen (Tunneleffekt) mit der Gamow-Wahrscheinlichkeit exp(−√(EG/E)), in der Simulation stark verstärkt. */
+const REAC = {
+  dt:{name:'D + T', t:[1,2,'T','Tritium'], p:[1,1,'D','Deuterium'], EG:1175, S:1},
+  dd:{name:'D + D', t:[1,1,'D','Deuterium'], p:[1,1,'D','Deuterium'], EG:986, S:0.0022},
+  pp:{name:'p + p', t:[1,0,'p','Proton'], p:[1,0,'p','Proton'], EG:493, S:0}
+};
+const TSTEPS = [1e6, 2e6, 5e6, 1e7, 1.5e7, 2e7, 3e7, 5e7, 7e7, 1e8, 1.5e8, 2e8, 3e8, 5e8];
+const BOOST = 700;   // Verstärkung der Durchschlüpf-Wahrscheinlichkeit in der Simulation
+const RMAX = 200;    // sichtbarer Abstand in fm
+const Fuse = {
+  key:'verschmelzen', title:'Verschmelzen',
+  init(){this.r = 'dt'; this.ti = 10; this.zoom = false; this.auto = false; this.slow = false; this.tries = 0; this.hits = 0; this.shot = null; this.parts = []; this.wait = 0;},
+  T(){return TSTEPS[this.ti];},
+  rc(){const R = REAC[this.r]; return 1.2*(Math.cbrt(R.t[0]+R.t[1]) + Math.cbrt(R.p[0]+R.p[1]));},
+  V(r){return 1440*REAC[this.r].t[0]*REAC[this.r].p[0]/r;},
+  pg(E){return Math.exp(-Math.sqrt(REAC[this.r].EG/E));},
+  panel(){
+    return `<h2>Verschmelzen</h2>
+    <h3>Reaktion</h3>${seg('u_r', [['dt','D + T'],['dd','D + D'],['pp','p + p']], this.r)}
+    ${slider('u_t', 'Temperatur', 0, TSTEPS.length - 1, 1, this.ti)}
+    <div class="row"><button class="btn sm" id="u_sun">Sonnenkern</button><button class="btn sm" id="u_itr">Fusionsreaktor</button></div>
+    <button class="btn main" id="u_go">Zwei Kerne schießen</button>
+    ${sw('u_auto', 'Immer wieder schießen', this.auto)}
+    ${sw('u_slow', 'Zeitlupe', this.slow)}
+    ${sw('u_zoom', 'Energieachse gespreizt (bis 50 keV)', this.zoom)}
+    <div class="info" id="u_info"></div>
+    <details><summary>Warum stoßen sich die Kerne ab?</summary><div>Beide Kerne sind positiv geladen. Gleiche Ladungen stoßen sich ab, und zwar umso stärker, je näher sie sich kommen. Das zeigt der „Energieberg“ unten. Erst wenn sich die Kerne berühren, hält die Kernkraft sie zusammen. Sie ist stärker als die Abstoßung, reicht aber nicht weit.</div></details>
+    <details><summary>Durchschlüpfen (Tunneleffekt)</summary><div>Selbst bei 150 Millionen Grad sind die Kerne rund 20-mal zu langsam, um über den Berg zu kommen. Nach den Regeln, die wir aus dem Alltag kennen, gäbe es also keine Kernfusion, auch nicht in der Sonne.<br>Trotzdem schlüpfen ab und zu Kerne durch den Berg hindurch. Das ist ein Effekt der <b>Quantenphysik</b>, man nennt ihn Tunneleffekt. Er funktioniert nicht wie ein echter Tunnel: Es gibt kein Loch im Berg, der Kern ist einfach mit einer kleinen Wahrscheinlichkeit plötzlich auf der anderen Seite. Je schneller der Kern ist, desto eher klappt es.</div></details>
+    <details><summary>Was ist hier vereinfacht?</summary><div>• Die Kerne sind etwa 10-mal zu groß gezeichnet, die Abstände stimmen (Maßstabsbalken).<br>• In der Simulation schlüpfen viel mehr Kerne durch als in Wirklichkeit, sonst müsstest du tausende Male schießen. Die echte Chance steht im Kasten oben.<br>• Der schwere Kern bleibt der Einfachheit halber stehen.<br>• 1 fm (Femtometer) = 0,000 000 000 000 001 m. 1 keV und 1 MeV sind Energieeinheiten für Teilchen: 1 MeV = 1000 keV.</div></details>`;
+  },
+  bind(){
+    bindSeg('u_r', k => {this.r = k; this.shot = null; this.parts = []; this.tries = this.hits = 0; this.info();});
+    const s = $('#u_t'), upd = () => {this.ti = +s.value; $('#u_t_v').textContent = fmtMioK(this.T()); this.info();};
+    s.oninput = upd; upd();
+    $('#u_sun').onclick = () => {this.ti = 4; s.value = 4; upd();};
+    $('#u_itr').onclick = () => {this.ti = 10; s.value = 10; upd();};
+    $('#u_go').onclick = () => this.fire();
+    $('#u_auto').onchange = e => {this.auto = e.target.checked; if (this.auto && !this.shot) this.fire();};
+    $('#u_slow').onchange = e => {this.slow = e.target.checked;};
+    $('#u_zoom').onchange = e => {this.zoom = e.target.checked;};
+  },
+  enter(){setHint(''); this.eqIdle(); this.info();},
+  eqIdle(){const R = REAC[this.r]; setEq(`${R.name}<span class="small">Tippe auf „Zwei Kerne schießen“</span>`);},
+  info(){
+    const el = $('#u_info'); if (!el) return;
+    const R = REAC[this.r], Em = 1.5*kB*this.T(), Vc = this.V(this.rc());
+    let real;
+    if (R.S === 0) real = 'Zwei Protonen verschmelzen fast nie, auch wenn sie durchschlüpfen (siehe Reiter „Sonne“).';
+    else {const p = R.S*this.pg(Em); real = p < 1e-12 ? 'In Wirklichkeit verschmelzen bei dieser Temperatur praktisch nie zwei Kerne.' : `In Wirklichkeit verschmilzt grob nur <b>einer von ${fmtInt(Math.max(1, 1/p))}</b> Zusammenstößen.`;}
+    el.innerHTML = `Mittlere Bewegungsenergie: <b>${fmtE(Em)}</b><br>Höhe des Energiebergs: <b>${fmtE(Vc)}</b><br>Die Kerne sind etwa <b>${fmtInt(Vc/Em)}-mal</b> zu langsam. ${real}`;
+  },
+  fire(){
+    if (this.shot && this.shot.ph !== 'done') return;
+    const R = REAC[this.r], kT = kB*this.T();
+    let E = 0; for (let i = 0; i < 3; i++){const g = normal(); E += g*g;} E = Math.max(0.05*kT, E*kT/2);
+    const rt = this.V(1)/E, rc = this.rc();
+    const slip = rt > rc && rnd() < 1 - Math.exp(-BOOST*Math.max(R.S, R.S === 0 ? 1 : 0)*this.pg(E));
+    const v0 = clamp(60 + 80*Math.sqrt(E/20), 50, 200);
+    this.shot = {E, rt, rc, slip, v0, r:RMAX, dir:-1, ph:rt >= RMAX*0.97 ? 'far' : 'in', t:0};
+    this.tries++;
+    setEq(`${R.name}<span class="small">Bewegungsenergie dieses Kerns: ${fmtE(E)}</span>`);
+  },
+  geo(){
+    const port = PORT();
+    const x0 = port ? 40 : 70, x1 = W - (port ? 20 : 40), lane = port ? H*0.25 : H*0.30;
+    const gy = port ? H*0.46 : H*0.52, gh = H - gy - (port ? 70 : 64);
+    const px = (x1 - x0)/RMAX, s = clamp(px*3.4, 9, 17);
+    return {x0, x1, lane, gy, gh, px, s, emax:this.zoom ? 50 : 500};
+  },
+  update(dt){
+    if (this.slow) dt *= 0.3;
+    stepParticles(this.parts, dt);
+    const sh = this.shot; if (!sh){if (this.auto){this.wait += dt; if (this.wait > 0.4){this.wait = 0; this.fire();}} return;}
+    sh.t += dt;
+    if (sh.ph === 'in' || sh.ph === 'out'){
+      const ek = Math.max(0, 1 - this.V(sh.r)/sh.E), v = Math.max(0.12, Math.sqrt(ek))*sh.v0;
+      sh.r += sh.dir*v*dt;
+      if (sh.ph === 'in' && sh.r <= Math.max(sh.rt, sh.rc)){
+        sh.r = Math.max(sh.rt, sh.rc);
+        if (sh.slip){sh.ph = 'slip'; sh.t = 0; sh.r0 = sh.r;} else {sh.ph = 'out'; sh.dir = 1;}
+      }
+      if (sh.ph === 'out' && sh.r >= RMAX){sh.ph = 'done';}
+    } else if (sh.ph === 'far'){
+      if (sh.t > 1.6) sh.ph = 'done';
+    } else if (sh.ph === 'slip'){
+      sh.r = lerp(sh.r0, sh.rc*0.55, Math.min(1, sh.t/0.9));
+      if (sh.t > 0.9){
+        if (REAC[this.r].S === 0){sh.ph = 'out'; sh.dir = 1; sh.r = sh.rc; sh.bounce = true;
+          setEq(`p + p<span class="small">Durchgeschlüpft, aber die beiden Protonen fliegen wieder auseinander.</span>`);}
+        else this.fuse();
+      }
+    } else if (sh.ph === 'fused'){
+      if (sh.t > 2.6) sh.ph = 'done';
+    }
+    if (sh.ph === 'done'){
+      this.shot = null; this.wait = 0;
+      if (!this.auto) this.eqIdle();
+    }
+  },
+  fuse(){
+    const sh = this.shot, g = this.geo(); sh.ph = 'fused'; sh.t = 0; this.hits++;
+    const x = g.x0 + sh.r*g.px, y = g.lane;
+    let prod, txt;
+    if (this.r === 'dt'){prod = [[2,2,'He',3.5],[0,1,'n',14.1]]; txt = `${nucHTML(2,1,'H')} + ${nucHTML(3,1,'H')} → ${nucHTML(4,2,'He')} + ${H_N()}<span class="small">Energie: 17,6 MeV · davon trägt das Neutron 14,1 MeV</span>`;}
+    else if (rnd() < 0.5){prod = [[2,1,'He',0.82],[0,1,'n',2.45]]; txt = `${nucHTML(2,1,'H')} + ${nucHTML(2,1,'H')} → ${nucHTML(3,2,'He')} + ${H_N()}<span class="small">Energie: 3,3 MeV</span>`;}
+    else {prod = [[1,2,'T',1.01],[1,0,'p',3.02]]; txt = `${nucHTML(2,1,'H')} + ${nucHTML(2,1,'H')} → ${nucHTML(3,1,'H')} + ${nucHTML(1,1,'H')}<span class="small">Energie: 4,0 MeV</span>`;}
+    const ang = Math.PI - 0.5 + rnd()*0.3; // Neutron fliegt schnell nach links, der Heliumkern langsam nach rechts
+    sh.prod = prod.map((p, i) => {const A = p[0] + p[1], v = 40*Math.sqrt(p[3]/A)*(i ? 1 : 1); const a = i ? ang : ang + Math.PI;
+      return {Z:p[0], N:p[1], lab:p[2], x, y, vx:Math.cos(a)*v*7, vy:Math.sin(a)*v*7, rot:rnd()*TAU};});
+    sh.fx = x; sh.fy = y;
+    setEq(txt);
+  },
+  draw(){
+    const g = this.geo(), R = REAC[this.r], sh = this.shot, s = g.s;
+    // Bahn
+    ctx.strokeStyle = 'rgba(255,255,255,.08)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(g.x0, g.lane); ctx.lineTo(g.x1, g.lane); ctx.stroke();
+    // Maßstab
+    const sb = 50*g.px; ctx.strokeStyle = '#cfd8e8'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(g.x1 - sb, g.lane + 58); ctx.lineTo(g.x1, g.lane + 58); ctx.moveTo(g.x1 - sb, g.lane + 52); ctx.lineTo(g.x1 - sb, g.lane + 64); ctx.moveTo(g.x1, g.lane + 52); ctx.lineTo(g.x1, g.lane + 64); ctx.stroke();
+    label('50 fm', g.x1 - sb/2, g.lane + 74, 12, '#cfd8e8', 'center');
+    label(`Kerne etwa ${fmtInt(s/(0.85*g.px))}-fach vergrößert gezeichnet`, g.x1, g.lane - 58, 11.5, '#8798b8', 'right');
+    // Zielkern
+    const fused = sh && sh.ph === 'fused';
+    if (!fused){cluster(R.t[0], R.t[1] - (R.t[2] === 'p' ? 0 : 0), g.x0, g.lane, s, this.t0 = (this.t0 || 0) + 0.01);
+      label(R.t[3], g.x0, g.lane + clusterR(R.t[0] + R.t[1], s) + 16, 13, '#dbe5f7', 'center', 700);}
+    // Geschoss
+    if (sh && sh.ph !== 'fused'){
+      const ghost = sh.ph === 'slip';
+      let xr = g.x0 + sh.r*g.px; if (sh.ph === 'far') xr = g.x1 - Math.sin(Math.min(1, sh.t/1.6)*Math.PI)*24;
+      if (ghost){ctx.save(); ctx.setLineDash([4,4]); ctx.strokeStyle = '#ffb27a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(g.x0 + sh.r0*g.px, g.lane); ctx.lineTo(xr, g.lane); ctx.stroke(); ctx.restore();}
+      cluster(R.p[0], R.p[1], xr, g.lane, s, sh.t*2, ghost ? 0.6 : 1);
+      label(R.p[3], xr, g.lane - clusterR(R.p[0] + R.p[1], s) - 14, 13, '#dbe5f7', 'center', 700);
+      if (ghost) label('schlüpft durch!', (xr + g.x0 + sh.r0*g.px)/2 + 20, g.lane + (PORT() ? 52 : 34), 16, '#ffb27a', 'left', 800);
+      if (sh.ph === 'far') label(`Zu langsam: kehrt schon bei etwa ${fmtInt(sh.rt)} fm um`, g.x1 - 40, g.lane + 34, 14, '#ffd7a8', 'right', 700);
+      if (sh.ph === 'out' && !sh.bounce && sh.r < RMAX*0.9) label('abgeprallt', g.x0 + sh.r*g.px, g.lane + 34, 14, '#9fb0d0', 'center', 700);
+    }
+    if (fused){
+      const a = Math.max(0, 1 - sh.t/1.2); if (a > 0) flash(sh.fx, sh.fy, 30 + sh.t*260, a*0.8);
+      for (const p of sh.prod){const k = Math.min(sh.t, 2.6); const x = p.x + p.vx*k*0.25, y = p.y + p.vy*k*0.25;
+        cluster(p.Z, p.N, x, y, s, p.rot + sh.t); label(p.lab, x, y - clusterR(p.Z + p.N, s) - 12, 14, '#ffe6b0', 'center', 800);}
+      if (sh.t < 1.6) label(this.r === 'dt' ? '17,6 MeV' : 'Energie', sh.fx, sh.fy - 40, 24, `rgba(255,236,170,${Math.min(1, 2 - sh.t)})`, 'center', 800);
+    }
+    // Energieberg
+    this.drawHill(g);
+    // Zähler
+    label(`Versuche: ${this.tries} · verschmolzen: ${this.hits}`, g.x0 - (PORT() ? 20 : 50), PORT() ? g.lane - 72 : 18, 14, '#aab8d4', 'left', 700);
+  },
+  drawHill(g){
+    const {x0, x1, gy, gh, px, emax} = g, yb = gy + gh, Y = e => yb - e/emax*gh, rc = this.rc(), sh = this.shot;
+    ctx.save(); ctx.fillStyle = 'rgba(255,255,255,0.04)'; rrect(x0 - 50, gy - 40, x1 - x0 + 70, gh + 68, 10); ctx.fill();
+    label('Energieberg (Abstoßung)', x0 - 40, gy - 22, 14, '#dbe5f7', 'left', 700);
+    ctx.strokeStyle = '#8fa3c7'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x0, yb); ctx.lineTo(x1, yb); ctx.stroke();
+    const step = emax === 50 ? 10 : 100;
+    for (let e = step; e <= emax; e += step){ctx.strokeStyle = 'rgba(255,255,255,.07)'; ctx.beginPath(); ctx.moveTo(x0, Y(e)); ctx.lineTo(x1, Y(e)); ctx.stroke(); label(fmtInt(e), x0 - 6, Y(e), 11.5, '#aab8d4', 'right');}
+    label('keV', x0 + 4, gy - 8, 11.5, '#aab8d4', 'left');
+    for (let r = 50; r <= RMAX; r += 50) label(fmtInt(r), x0 + r*px, yb + 12, 11.5, '#aab8d4', 'center');
+    label('Abstand in fm →', x1, yb + 24, 12, '#aab8d4', 'right');
+    // Kurve
+    ctx.beginPath(); ctx.strokeStyle = '#ff7a6b'; ctx.lineWidth = 3;
+    ctx.moveTo(x0 + rc*px, yb + 8);
+    for (let i = 0; i <= 400; i++){const r = rc + (RMAX - rc)*Math.pow(i/400, 2); const y = Math.max(gy - 6, Y(this.V(r))); ctx.lineTo(x0 + r*px, y);}
+    ctx.stroke();
+    const Vc = this.V(rc); label(`Gipfel ≈ ${fmtE(Vc)}`, x0 + rc*px + 14, gy + 4, 12.5, '#ff9a8e', 'left', 700);
+    ctx.fillStyle = 'rgba(120,220,160,.25)'; ctx.fillRect(x0, yb - 3, rc*px, 6);
+    label('Kernkraft', x0 + rc*px/2, yb - 12, 10.5, '#8fe0b0', 'center');
+    // mittlere Energie
+    const Em = 1.5*kB*this.T(), ym = Y(Math.min(Em, emax));
+    ctx.save(); ctx.setLineDash([2,5]); ctx.strokeStyle = '#ffd666'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x0, ym); ctx.lineTo(x1, ym); ctx.stroke(); ctx.restore();
+    label(`mittlere Bewegungsenergie bei ${fmtMioK(this.T())}`, x1 - 4, ym - 9, 12, '#ffd666', 'right');
+    // aktueller Kern
+    if (sh && sh.ph !== 'fused' && sh.ph !== 'far'){
+      const ye = Y(Math.min(sh.E, emax)), xt = x0 + Math.max(sh.rt, rc)*px;
+      ctx.save(); ctx.strokeStyle = '#ffb27a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(xt, ye); ctx.lineTo(x1, ye); ctx.stroke();
+      if (sh.ph === 'slip'){ctx.setLineDash([4,4]); ctx.beginPath(); ctx.moveTo(x0 + rc*px, ye); ctx.lineTo(xt, ye); ctx.stroke();}
+      ctx.restore();
+      const xr = x0 + Math.min(RMAX, sh.r)*px; ball(xr, ye, 6, '#ff8a3d');
+      if (sh.rt > rc) label('Umkehrpunkt', xt, ye - 14, 11.5, '#ffb27a', 'center');
+    }
+    ctx.restore();
+  }
+};
+/* ===================== Reiter 2: Woher kommt die Energie? ===================== */
+/* Bindungsenergie pro Nukleon in MeV (Messwerte); schwere Kerne dazwischen nach der Weizsäcker-Formel */
+const BE = [
+  [2,1,'H',1.112,'Deuterium'],[3,1,'H',2.827,'Tritium'],[3,2,'He',2.573,'Helium-3'],[4,2,'He',7.074,'Helium-4'],
+  [6,3,'Li',5.332,'Lithium-6'],[7,3,'Li',5.606,'Lithium-7'],[9,4,'Be',6.463,'Beryllium-9'],[11,5,'B',6.928,'Bor-11'],
+  [12,6,'C',7.680,'Kohlenstoff-12'],[14,7,'N',7.476,'Stickstoff-14'],[16,8,'O',7.976,'Sauerstoff-16'],[20,10,'Ne',8.032,'Neon-20'],
+  [24,12,'Mg',8.261,'Magnesium-24'],[28,14,'Si',8.448,'Silicium-28'],[40,20,'Ca',8.551,'Calcium-40'],
+  [56,26,'Fe',8.790,'Eisen-56'],[62,28,'Ni',8.795,'Nickel-62'],[92,36,'Kr',8.513,'Krypton-92'],[141,56,'Ba',8.326,'Barium-141'],
+  [208,82,'Pb',7.868,'Blei-208'],[235,92,'U',7.591,'Uran-235'],[238,92,'U',7.570,'Uran-238']
+];
+function semf(A){const Z = A/(1.98 + 0.0155*Math.pow(A, 2/3)); const B = 15.75*A - 17.8*Math.pow(A, 2/3) - 0.711*Z*(Z-1)/Math.cbrt(A) - 23.7*(A-2*Z)*(A-2*Z)/A; return B/A;}
+const MU = {D:2.014102, T:3.016049, He:4.002603, n:1.008665};
+const Energy = {
+  key:'energie', title:'Woher kommt die Energie?',
+  init(){this.view = 'kurve'; this.show = 'fus'; this.sel = 3; this.t = 0;},
+  panel(){
+    return `<h2>Woher kommt die Energie?</h2>
+    ${seg('e_v', [['kurve','Bindungskurve'],['waage','Waage']], this.view)}
+    <div id="e_k">
+    <h3>Zeigen</h3>${seg('e_s', [['fus','Fusion'],['spa','Spaltung'],['beide','beides']], this.show)}
+    <div class="info" id="e_info"></div>
+    <div class="info" id="e_sel"></div>
+    </div>
+    <div id="e_w"><div class="info">Links liegen ein Deuterium- und ein Tritiumkern, rechts das, was bei der Fusion entsteht: ein Heliumkern und ein Neutron.<br><br>Rechts ist <b>weniger Masse</b>. Die fehlende Masse ist als Energie frei geworden:<br>E = m · c²</div>
+    <details><summary>Die Rechnung</summary><div>D + T: 2,014 102 u + 3,016 049 u = <b>5,030 151 u</b><br>He + n: 4,002 603 u + 1,008 665 u = <b>5,011 268 u</b><br>Unterschied: Δm = 0,018 883 u = 3,14 · 10<sup>−29</sup> kg<br>E = Δm · c² = 3,14 · 10<sup>−29</sup> kg · (3 · 10<sup>8</sup> m/s)² ≈ 2,8 · 10<sup>−12</sup> J = <b>17,6 MeV</b><br>(1 u = 1,66 · 10<sup>−27</sup> kg)</div></details>
+    <details><summary>Ist die Waage maßstäblich?</summary><div>Nein. Der Unterschied ist nur 0,4 % der Masse. Die Waage schlägt deshalb stark übertrieben aus.</div></details></div>
+    <details><summary>Was bedeutet die Kurve?</summary><div>Die Bindungsenergie pro Nukleon sagt, wie fest ein Proton oder Neutron im Kern gebunden ist. Je höher ein Kern auf der Kurve liegt, desto fester ist er gebunden.<br>Wird ein Kern umgebaut und landet dabei <b>höher</b> auf der Kurve, wird Energie frei. Leichte Kerne müssen dafür verschmelzen (Fusion), schwere Kerne müssen zerbrechen (Spaltung).<br>Am festesten gebunden sind Eisen und Nickel. Genau genommen liegt Nickel-62 ganz knapp vor Eisen-56.</div></details>
+    <details><summary>Tipp</summary><div>Tippe auf einen Punkt der Kurve, dann siehst du seine Werte.</div></details>`;
+  },
+  bind(){
+    const vis = () => {$('#e_k').style.display = this.view === 'kurve' ? '' : 'none'; $('#e_w').style.display = this.view === 'waage' ? '' : 'none';};
+    bindSeg('e_v', k => {this.view = k; vis(); this.eq();}); vis();
+    bindSeg('e_s', k => {this.show = k; this.t = 0; this.info();});
+    this.info(); this.selInfo();
+  },
+  enter(){setHint(''); this.eq();},
+  eq(){
+    if (this.view === 'waage') setEq(`${nucHTML(2,1,'H')} + ${nucHTML(3,1,'H')} ist schwerer als ${nucHTML(4,2,'He')} + ${H_N()}<span class="small">Die fehlende Masse wird zu Energie: E = m · c²</span>`);
+    else setEq(`Bindungsenergie pro Nukleon<span class="small">Weiter oben = fester gebunden</span>`);
+  },
+  info(){
+    const el = $('#e_info'); if (!el) return;
+    const f = 'Bei der <b>Fusion</b> klettern Deuterium und Tritium hinauf zu Helium-4. Gesamte Bindungsenergie vorher 2,2 MeV + 8,5 MeV = 10,7 MeV, nachher 28,3 MeV. Frei werden <b>17,6 MeV</b>.';
+    const s = 'Bei der <b>Spaltung</b> zerbricht Uran-235 in mittelschwere Kerne wie Barium und Krypton. Die liegen höher auf der Kurve. Pro Nukleon wird weniger frei als bei der Fusion, aber der Urankern hat viele Nukleonen: insgesamt etwa <b>200 MeV</b>.';
+    el.innerHTML = this.show === 'fus' ? f : this.show === 'spa' ? s : f + '<br><br>' + s;
+  },
+  selInfo(){
+    const el = $('#e_sel'); if (!el) return; const b = BE[this.sel];
+    el.innerHTML = `${nucHTML(b[0], b[1], b[2])} <b>${b[4]}</b><br>${b[1]} Protonen, ${b[0] - b[1]} Neutronen<br>pro Nukleon: <b>${fmt(b[3], 2)} MeV</b><br>gesamter Kern: <b>${fmt(b[3]*b[0], 1)} MeV</b>`;
+  },
+  geo(){const port = PORT(); const gx = port ? 50 : 70, gy = port ? 96 : 104; return {gx, gy, gw:W - gx - (port ? 20 : 40), gh:H - gy - (port ? 80 : 90)};},
+  X(A){const g = this.geo(); return g.gx + A/240*g.gw;},
+  Y(b){const g = this.geo(); return g.gy + g.gh - b/10.2*g.gh;},
+  tap(x, y){
+    if (this.view !== 'kurve') return;
+    let best = -1, bd = 40*40;
+    BE.forEach((b, i) => {const d = (this.X(b[0]) - x)**2 + (this.Y(b[3]) - y)**2; if (d < bd){bd = d; best = i;}});
+    if (best >= 0){this.sel = best; this.selInfo();}
+  },
+  update(dt){this.t += dt;},
+  draw(){this.view === 'kurve' ? this.drawCurve() : this.drawScale();},
+  drawCurve(){
+    const g = this.geo(), X = A => this.X(A), Y = b => this.Y(b);
+    ctx.strokeStyle = '#8fa3c7'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(g.gx, g.gy - 10); ctx.lineTo(g.gx, g.gy + g.gh); ctx.lineTo(g.gx + g.gw, g.gy + g.gh); ctx.stroke();
+    for (let b = 1; b <= 9; b++){ctx.strokeStyle = 'rgba(255,255,255,.06)'; ctx.beginPath(); ctx.moveTo(g.gx, Y(b)); ctx.lineTo(g.gx + g.gw, Y(b)); ctx.stroke(); label(String(b), g.gx - 8, Y(b), 12, '#aab8d4', 'right');}
+    for (let A = 0; A <= 240; A += 40) label(String(A), X(A), g.gy + g.gh + 14, 12, '#aab8d4', 'center');
+    label('Massenzahl A (Anzahl Nukleonen) →', g.gx + g.gw, g.gy + g.gh + 32, 13, '#aab8d4', 'right');
+    label('MeV pro Nukleon', g.gx + 6, g.gy - 26, 13, '#aab8d4', 'left');
+    // Kurve
+    ctx.strokeStyle = '#5aa0ff'; ctx.lineWidth = 3; ctx.beginPath();
+    const light = BE.filter(b => b[0] <= 20 && b[4] !== 'Helium-3');
+    light.forEach((b, i) => i ? ctx.lineTo(X(b[0]), Y(b[3])) : ctx.moveTo(X(b[0]), Y(b[3])));
+    for (let A = 22; A <= 240; A += 2) ctx.lineTo(X(A), Y(semf(A)));
+    ctx.stroke();
+    // Bereiche
+    const fe = X(58);
+    ctx.fillStyle = 'rgba(111,209,138,.07)'; ctx.fillRect(g.gx, g.gy, fe - g.gx, g.gh);
+    ctx.fillStyle = 'rgba(255,138,61,.06)'; ctx.fillRect(fe, g.gy, g.gx + g.gw - fe, g.gh);
+    label('Fusion setzt Energie frei', (g.gx + fe)/2 + 10, g.gy + g.gh - 18, 13, '#8fe0b0', 'center', 700);
+    label('Spaltung setzt Energie frei', (fe + g.gx + g.gw)/2, g.gy + g.gh - 18, 13, '#ffb27a', 'center', 700);
+    label('am festesten gebunden: Eisen, Nickel', X(64), Y(9.75), 13, '#ffd666', 'left', 700);
+    // Punkte
+    BE.forEach((b, i) => {
+      const x = X(b[0]), y = Y(b[3]), on = i === this.sel;
+      ball(x, y, on ? 8 : 5.5, on ? '#ffd666' : '#dbe5f7');
+      if (['Deuterium','Tritium','Helium-4','Uran-235','Barium-141','Krypton-92'].includes(b[4]) || on){
+        const left = b[0] > 200; nucText(b[0], b[1], b[2], x + (left ? -10 : 10), y + (b[4] === 'Tritium' ? 16 : -14), 16, on ? '#ffd666' : '#fff', left ? 'right' : 'left');
+      }
+    });
+    // Pfeile
+    const pulse = 0.6 + 0.4*Math.sin(this.t*4);
+    if (this.show !== 'spa'){
+      arrow(X(2) + 6, Y(1.112) - 6, X(4) - 3, Y(7.074) + 12, `rgba(111,209,138,${pulse})`);
+      arrow(X(3) + 5, Y(2.827) - 6, X(4) + 2, Y(7.074) + 12, `rgba(111,209,138,${pulse})`);
+      label('Fusion', X(4) + 26, Y(4.6), 18, '#8fe0b0', 'left', 800);
+    }
+    if (this.show !== 'fus'){
+      arrow(X(235) - 6, Y(7.591) - 6, X(141) + 10, Y(8.326) + 8, `rgba(255,138,61,${pulse})`);
+      arrow(X(235) - 8, Y(7.591) - 2, X(92) + 10, Y(8.513) + 6, `rgba(255,138,61,${pulse})`);
+      label('Spaltung', X(190), Y(7.15), 18, '#ffb27a', 'center', 800);
+    }
+  },
+  drawScale(){
+    const port = PORT(), cx = W/2, cy = port ? H*0.42 : H*0.46, L = Math.min(W*0.36, port ? 220 : 300);
+    const ang = -0.10*Math.min(1, this.t/1.5); // linke Seite schwerer: links tiefer
+    const s = clamp(L/18, 9, 16);
+    // Ständer
+    ctx.fillStyle = FLAT ? '#8796b0' : (() => {const gr = ctx.createLinearGradient(cx - 14, 0, cx + 14, 0); gr.addColorStop(0, '#6b7a94'); gr.addColorStop(.5, '#d8e0ec'); gr.addColorStop(1, '#5c6a83'); return gr;})();
+    ctx.fillRect(cx - 9, cy, 18, H*0.36); rrect(cx - 70, cy + H*0.36 - 6, 140, 18, 6); ctx.fill();
+    // Balken
+    const ex = Math.cos(ang)*L, ey = Math.sin(ang)*L;
+    ctx.strokeStyle = FLAT ? '#cfd8e8' : '#e2e8f2'; ctx.lineWidth = 8; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(cx - ex, cy - ey); ctx.lineTo(cx + ex, cy + ey); ctx.stroke(); ctx.lineCap = 'butt';
+    ball(cx, cy, 10, '#c9d3e2');
+    const pan = (px, py, items, lab, mass) => {
+      const hang = 90;
+      ctx.strokeStyle = '#aab8d4'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px - 60, py + hang); ctx.moveTo(px, py); ctx.lineTo(px + 60, py + hang); ctx.stroke();
+      ctx.fillStyle = FLAT ? '#9aa8c0' : (() => {const gr = ctx.createLinearGradient(0, py + hang - 4, 0, py + hang + 14); gr.addColorStop(0, '#eef2f8'); gr.addColorStop(1, '#7d8ba3'); return gr;})();
+      ctx.beginPath(); ctx.ellipse(px, py + hang + 4, 78, 13, 0, 0, TAU); ctx.fill();
+      let x = px - (items.length - 1)*30;
+      for (const it of items){cluster(it[0], it[1], x, py + hang - clusterR(it[0] + it[1], s) - 2, s, this.t*0.6); x += 60;}
+      label(lab, px, py + hang + 36, 17, '#fff', 'center', 800);
+      label(mass, px, py + hang + 58, 15, '#ffd666', 'center', 700);
+    };
+    pan(cx - ex, cy - ey, [[1,1],[1,2]], 'Deuterium + Tritium', '5,030 151 u');
+    pan(cx + ex, cy + ey, [[2,2],[0,1]], 'Helium-4 + Neutron', '5,011 268 u');
+    label('Unterschied: 0,018 883 u  →  17,6 MeV Energie', cx, port ? 26 + 50 : H*0.12 + 40, 18, '#8fe0b0', 'center', 800);
+    label('Ausschlag stark übertrieben', cx, H - 20, 12, '#8798b8', 'center');
+  }
+};
+/* ===================== Reiter 3: Sonne ===================== */
+/* Vereinfachte Proton-Proton-Kette in drei Schritten; Schritte 1 und 2 laufen in Wirklichkeit je zweimal ab. */
+const PP = [
+  {in:[[1,0],[1,0]], out:[[1,1]], light:['e+','nu'], E:'0,42 MeV',
+   eq:() => `${nucHTML(1,1,'H')} + ${nucHTML(1,1,'H')} → ${nucHTML(2,1,'H')} + ${H_EP()} + ${H_NU}`,
+   txt:'Schritt 1: Zwei Protonen verschmelzen. Eines verwandelt sich dabei in ein Neutron, es entsteht Deuterium. Ein Positron und ein Neutrino fliegen weg. Dieser Schritt ist extrem selten: Ein Proton wartet im Mittel Milliarden Jahre darauf. Weil es im Sonnenkern unvorstellbar viele Protonen gibt, passiert es trotzdem ständig.'},
+  {in:[[1,1],[1,0]], out:[[2,1]], light:['gamma'], E:'5,5 MeV',
+   eq:() => `${nucHTML(2,1,'H')} + ${nucHTML(1,1,'H')} → ${nucHTML(3,2,'He')} + γ`,
+   txt:'Schritt 2: Das Deuterium fängt schnell ein weiteres Proton ein. Es entsteht Helium-3, die Energie wird als γ-Strahlung abgegeben.'},
+  {in:[[2,1],[2,1]], out:[[2,2],[1,0],[1,0]], light:[], E:'12,9 MeV',
+   eq:() => `${nucHTML(3,2,'He')} + ${nucHTML(3,2,'He')} → ${nucHTML(4,2,'He')} + 2 ${nucHTML(1,1,'H')}`,
+   txt:'Schritt 3: Zwei Helium-3-Kerne verschmelzen zu Helium-4. Zwei Protonen werden wieder frei. Dafür müssen die Schritte 1 und 2 vorher je zweimal passiert sein.'},
+  {in:[], out:[], light:[], E:'26,7 MeV',
+   eq:() => `4 ${nucHTML(1,1,'H')} → ${nucHTML(4,2,'He')} + 2 ${H_EP()} + 2 ${H_NU} + Energie`,
+   txt:'Bilanz: Aus 4 Protonen wird 1 Heliumkern. Frei werden insgesamt 26,7 MeV. Der Heliumkern ist leichter als die 4 Protonen, die fehlende Masse ist zu Energie geworden.'}
+];
+const Sun = {
+  key:'sonne', title:'Sonne',
+  init(){this.step = 0; this.t = 0; this.auto = true; this.nu = true; this.since = 0; this.light = []; this.jig = [];
+    for (let i = 0; i < 14; i++) this.jig.push({a:rnd()*TAU, r:0.35 + rnd()*0.55, v:(rnd() < .5 ? -1 : 1)*(0.3 + rnd()*0.5), Z:1, N:i < 3 ? 1 : 0});},
+  panel(){
+    return `<h2>Kernfusion in der Sonne</h2>
+    <div class="row"><button class="btn main" id="s_next">Nächster Schritt</button><button class="btn" id="s_bil">Bilanz</button></div>
+    ${sw('s_auto', 'Automatisch weiter', this.auto)}
+    ${sw('s_nu', 'Neutrinos zeigen', this.nu)}
+    <div class="info" id="s_txt"></div>
+    <div class="info" id="s_mass"></div>
+    <details><summary>Die Sonne in Zahlen</summary><div>• Temperatur im Kern: etwa 15 Millionen Kelvin, an der Oberfläche etwa 5500 °C.<br>• Jede Sekunde werden rund 600 Millionen Tonnen Wasserstoff zu Helium.<br>• Dabei verliert die Sonne jede Sekunde etwa 4 Millionen Tonnen Masse, die als Energie abgestrahlt wird.<br>• Der Vorrat reicht noch für etwa 5 Milliarden Jahre.</div></details>
+    <details><summary>Was ist hier vereinfacht?</summary><div>• Die Proton-Proton-Kette hat noch weitere Nebenwege. Hier ist nur der wichtigste gezeigt.<br>• Die Positronen treffen sofort auf Elektronen und zerstrahlen. Auch diese Energie ist in den 26,7 MeV enthalten.<br>• Die Neutrinos fliegen fast ungehindert durch die Sonne und nehmen etwa 2 % der Energie mit.<br>• Die Sonne und die Lupe sind nicht maßstäblich.</div></details>`;
+  },
+  bind(){
+    $("#s_next").onclick = () => this.go(this.step >= 3 ? 1 : this.step + 1);
+    $('#s_bil').onclick = () => this.go(4);
+    $('#s_auto').onchange = e => {this.auto = e.target.checked;};
+    $('#s_nu').onchange = e => {this.nu = e.target.checked;};
+    this.go(this.step || 1);
+  },
+  enter(){setHint(''); this.since = 0;},
+  go(k){
+    this.step = k; this.t = 0; this.light = [];
+    const st = PP[k - 1]; setEq(`${st.eq()}<span class="small">frei: ${st.E}</span>`);
+    const el = $('#s_txt'); if (el) el.textContent = st.txt;
+  },
+  geo(){
+    const port = PORT();
+    if (port){const R = Math.min(W*0.2, H*0.15); return {sx:W*0.25, sy:H*0.2, R, lx:W*0.56, ly:H*0.62, lr:Math.min(W*0.4, H*0.33), port};}
+    const R = Math.min(H*0.33, W*0.17); return {sx:W*0.21, sy:H*0.58, R, lx:W*0.69, ly:H*0.56, lr:Math.min(H*0.37, W*0.27), port};
+  },
+  update(dt){
+    this.t += dt; this.since += dt;
+    for (const j of this.jig) j.a += j.v*dt;
+    for (const p of this.light) p.update(dt);
+    if (this.auto && this.t > (this.step === 4 ? 6 : 4.2)) this.go(this.step >= 4 ? 1 : this.step + 1);
+    if ((this.mt = (this.mt || 0) + dt) > 0.25){this.mt = 0; const el = $('#s_mass'); if (el) el.innerHTML = `Seit du diesen Reiter geöffnet hast (${fmtInt(this.since)} s), hat die Sonne etwa <b>${fmtInt(this.since*4.26)} Millionen Tonnen</b> Masse in Energie umgewandelt.`;}
+  },
+  draw(){
+    const g = this.geo();
+    // Sonne mit aufgeschnittenem Viertel
+    if (FLAT){ctx.fillStyle = '#ffb02e'; ctx.beginPath(); ctx.arc(g.sx, g.sy, g.R, 0, TAU); ctx.fill();}
+    else {glow(g.sx, g.sy, g.R*1.5, 'rgba(255,170,60,.35)');
+      const gr = ctx.createRadialGradient(g.sx - g.R*.3, g.sy - g.R*.3, g.R*.1, g.sx, g.sy, g.R);
+      gr.addColorStop(0, '#fff3b0'); gr.addColorStop(.5, '#ffb52e'); gr.addColorStop(1, '#e0601a');
+      ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(g.sx, g.sy, g.R, 0, TAU); ctx.fill();}
+    // Schnitt
+    ctx.save(); ctx.beginPath(); ctx.moveTo(g.sx, g.sy); ctx.arc(g.sx, g.sy, g.R, -Math.PI/2, 0); ctx.closePath(); ctx.clip();
+    const zones = [[1, '#c94a12', 'Konvektionszone'], [0.7, '#e8792a', 'Strahlungszone'], [0.25, '#fff6c8', 'Kern']];
+    for (const z of zones){ctx.fillStyle = z[1]; ctx.beginPath(); ctx.arc(g.sx, g.sy, g.R*z[0], 0, TAU); ctx.fill();}
+    if (!FLAT) glow(g.sx, g.sy, g.R*0.32, 'rgba(255,255,255,.7)');
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(g.sx, g.sy - g.R); ctx.lineTo(g.sx, g.sy); ctx.lineTo(g.sx + g.R, g.sy); ctx.stroke();
+    label('Kern: 15 Mio. K', g.sx + g.R*0.12, g.sy - g.R*0.1, 12.5, '#5a2a00', 'left', 800);
+    label('Oberfläche: 5500 °C', g.sx, g.sy + g.R + 18, 13, '#ffd7a8', 'center', 700);
+    // Lupe
+    const lx = g.lx, ly = g.ly, lr = g.lr;
+    ctx.strokeStyle = 'rgba(255,240,200,.35)'; ctx.lineWidth = 1.5; ctx.setLineDash([5,5]);
+    ctx.beginPath(); ctx.moveTo(g.sx + g.R*0.12, g.sy - g.R*0.12); ctx.lineTo(lx + (g.port ? 0 : -lr*0.95), ly - (g.port ? lr*0.95 : lr*0.3)); ctx.stroke(); ctx.setLineDash([]);
+    ctx.save(); ctx.beginPath(); ctx.arc(lx, ly, lr, 0, TAU);
+    const lg = ctx.createRadialGradient(lx, ly, lr*0.1, lx, ly, lr); lg.addColorStop(0, FLAT ? '#3a2a1a' : '#5a3412'); lg.addColorStop(1, FLAT ? '#2a1e12' : '#2a160a');
+    ctx.fillStyle = lg; ctx.fill(); ctx.clip();
+    const s = clamp(lr/16, 7, 15);
+    for (const j of this.jig) cluster(j.Z, j.N, lx + Math.cos(j.a)*lr*j.r, ly + Math.sin(j.a*1.3)*lr*j.r*0.8, s*0.8, 0, 0.35);
+    this.drawStep(lx, ly, lr, s);
+    ctx.restore();
+    ctx.strokeStyle = FLAT ? '#cfd8e8' : '#e8edf5'; ctx.lineWidth = FLAT ? 3 : 8; ctx.beginPath(); ctx.arc(lx, ly, lr + (FLAT ? 1 : 4), 0, TAU); ctx.stroke();
+    label('Blick in den Sonnenkern', lx, ly - lr - 18, 14, '#ffd7a8', 'center', 700);
+  },
+  drawStep(lx, ly, lr, s){
+    const st = PP[this.step - 1], t = this.t;
+    if (this.step === 4){
+      // Bilanz: 4 Protonen → Helium-4
+      const k = Math.min(1, t/2);
+      const pos = [[-1,-1],[1,-1],[-1,1],[1,1]];
+      if (k < 1) pos.forEach(p => cluster(1, 0, lx + p[0]*lr*0.45*(1 - k), ly + p[1]*lr*0.35*(1 - k), s));
+      else {cluster(2, 2, lx, ly, s, t); flash(lx, ly, 40 + (t - 2)*120, Math.max(0, 1 - (t - 2)/1.5)*0.8);
+        label('26,7 MeV', lx, ly - lr*0.4, 22, '#ffe6b0', 'center', 800);}
+      label('4 Protonen', lx, ly + lr*0.62, 15, '#fff', 'center', 700);
+      label('→ 1 Heliumkern', lx, ly + lr*0.62 + 20, 15, '#fff', 'center', 700);
+      return;
+    }
+    const T1 = 1.3;
+    if (t < T1){
+      const k = t/T1, d = lr*0.6*(1 - k) + clusterR(st.in[0][0] + st.in[0][1], s);
+      cluster(st.in[0][0], st.in[0][1], lx - d, ly, s, t*2); cluster(st.in[1][0], st.in[1][1], lx + d, ly, s, -t*2);
+    } else {
+      const k = Math.min(1, (t - T1)/1.5);
+      if (!this.light.length && st.light.length){
+        st.light.forEach((kind, i) => {const a = -Math.PI/2 + (i ? 0.7 : -0.7); const v = kind === 'nu' ? 170 : 120; const e = new Emitted(kind, lx, ly, Math.cos(a)*v, Math.sin(a)*v, s); this.light.push(e);});
+        this.light.done = true;
+      }
+      flash(lx, ly, 30 + k*lr, (1 - k)*0.8);
+      const n = st.out.length;
+      st.out.forEach((o, i) => {
+        const a = n === 1 ? Math.PI/2 : Math.PI/2 + (i - (n - 1)/2)*1.1, d = n === 1 ? 0 : k*lr*0.5;
+        const x = lx + Math.cos(a)*d*(i === 0 && n > 1 ? 0 : 1), y = ly + (i === 0 && n > 1 ? 0 : Math.sin(a)*d);
+        cluster(o[0], o[1], x, y, s, t);
+        if (k >= 1 || n === 1){const nm = o[0] === 2 ? (o[1] === 2 ? 'Helium-4' : 'Helium-3') : o[1] ? 'Deuterium' : 'Proton'; label(nm, x, y + clusterR(o[0] + o[1], s) + 16, 14, '#fff', 'center', 700);}
+      });
+      for (const p of this.light){if (p.kind === 'nu' && !this.nu) continue; p.draw();}
+      label(st.E, lx, ly - lr*0.75, 20, '#ffe6b0', 'center', 800);
+    }
+  }
+};
+/* ===================== Reiter 4: Fusionsreaktor ===================== */
+/* Energiebilanz des Plasmas pro m³: dw/dt = p_Heiz + p_α − w/τ, w = 3·n·k·T.
+   Fusionsleistung p = n²/4 · <σv>(T) · 17,6 MeV (D-T, je zur Hälfte D und T), davon 1/5 als α-Heizung im Plasma.
+   Einschlusszeit τ = 3 s, sinkt bei großer Leistung (vereinfachte Skalierung wie bei Tokamaks), ohne Magnetfeld 3 ms. */
+const SV = [[1,5.5e-27],[2,2.6e-25],[5,1.3e-23],[10,1.1e-22],[20,4.2e-22],[50,8.7e-22],[100,8.5e-22],[200,6e-22]];
+function sigv(T){if (T <= 1) return 5.5e-27*Math.pow(Math.max(T, 0), 6);
+  for (let i = 1; i < SV.length; i++){if (T <= SV[i][0]){const [a, b] = SV[i-1], [c, d] = SV[i]; const f = Math.log(T/a)/Math.log(c/a); return Math.exp(Math.log(b) + f*Math.log(d/b));}} return 6e-22;}
+const VOL = 840, KEV = 1.602e-16, EFUS = 2.82e-12;
+const Reactor = {
+  key:'reaktor', title:'Fusionsreaktor',
+  init(){this.type = 'tok'; this.heat = 0; this.n = 1; this.field = true; this.T = 0; this.pf = 0; this.t = 0; this.parts = []; this.neut = []; this.sparks = [];
+    for (let i = 0; i < 160; i++) this.parts.push(this.newPart());},
+  newPart(){return {phi:rnd()*TAU, th:rnd()*TAU, rho:0.15 + rnd()*0.45, v:(0.6 + rnd()*0.6)*(rnd() < .5 ? -1 : 1), g:rnd()*TAU, out:0};},
+  panel(){
+    return `<h2>Fusionsreaktor</h2>
+    ${seg('r_type', [['tok','Tokamak'],['ste','Stellarator']], this.type)}
+    ${slider('r_heat', 'Heizleistung', 0, 150, 5, this.heat)}
+    ${slider('r_n', 'Dichte des Plasmas', 0.5, 1.5, 0.1, this.n)}
+    ${sw('r_field', 'Magnetfeld an', this.field)}
+    <div class="info" id="r_info"></div>
+    <div class="info" id="r_type_info"></div>
+    <details><summary>Wie funktioniert das?</summary><div>Ein Gas aus Deuterium und Tritium wird auf über 100 Millionen Grad erhitzt. Die Atome verlieren dabei ihre Elektronen, es entsteht ein <b>Plasma</b> aus geladenen Teilchen.<br>Kein Material hält diese Temperatur aus. Deshalb hält ein starkes <b>Magnetfeld</b> das Plasma von der Wand fern: Geladene Teilchen laufen auf Schraubenbahnen um die Feldlinien.<br>Die Neutronen aus der Fusion sind nicht geladen. Sie fliegen durch das Magnetfeld in die Wand und erhitzen sie. Mit dieser Wärme könnte man wie in anderen Kraftwerken Strom erzeugen.</div></details>
+    <details><summary>Zündung</summary><div>Die Heliumkerne aus der Fusion bleiben im Plasma und heizen es weiter auf. Wenn das reicht, um alle Verluste auszugleichen, brennt das Plasma von selbst weiter, ohne Heizung. Das nennt man <b>Zündung</b>. Probiere es mit großer Dichte aus.<br>Q gibt an, wie viel mehr Fusionsleistung herauskommt, als man zum Heizen hineinsteckt. ITER soll Q = 10 erreichen.</div></details>
+    <details><summary>Ist das gefährlich?</summary><div>Schaltest du das Magnetfeld ab, berührt das Plasma die Wand und kühlt in Sekundenbruchteilen ab. Die Fusion hört sofort auf. Eine Kettenreaktion wie bei der Kernspaltung gibt es nicht.<br>Tritium ist radioaktiv (Halbwertszeit 12,3 Jahre), und die Neutronen machen die Wand radioaktiv. Diese Strahlung klingt aber viel schneller ab als der Abfall aus Kernkraftwerken.</div></details>
+    <details><summary>Was ist hier vereinfacht?</summary><div>• Gezeigt werden einige hundert Teilchen, in Wirklichkeit sind es etwa 10<sup>20</sup> pro Kubikmeter.<br>• Die Werte (840 m³ Plasma, Einschlusszeit 3 s) sind an ITER angelehnt. Die Rechnung ist eine einfache Energiebilanz.<br>• Ein echter Reaktor muss außerdem ständig Brennstoff nachfüllen und Helium abführen.<br>• Bisher liefert noch kein Fusionskraftwerk Strom ins Netz. ITER und Wendelstein 7-X sind Forschungsanlagen.</div></details>`;
+  },
+  bind(){
+    bindSeg('r_type', k => {this.type = k; this.typeInfo();});
+    const h = $('#r_heat'), d = $('#r_n');
+    const upd = () => {this.heat = +h.value; this.n = +d.value; $('#r_heat_v').textContent = fmtInt(this.heat) + ' MW'; $('#r_n_v').textContent = fmt(this.n, 1) + ' · 10²⁰ pro m³';};
+    h.oninput = upd; d.oninput = upd; upd();
+    $('#r_field').onchange = e => {this.field = e.target.checked;};
+    this.typeInfo();
+  },
+  typeInfo(){const el = $('#r_type_info'); if (!el) return;
+    el.innerHTML = this.type === 'tok' ? '<b>Tokamak:</b> ein Ring mit geraden Magnetspulen. Zusätzlich fließt ein starker Strom im Plasma, der die Feldlinien verdrillt. Beispiel: <b>ITER</b> in Südfrankreich, wird gerade gebaut.' :
+    '<b>Stellarator:</b> Die Spulen selbst sind verbogen und verdrillt, deshalb braucht das Plasma keinen eigenen Strom. Das ist schwerer zu bauen, läuft aber gleichmäßiger. Beispiel: <b>Wendelstein 7-X</b> in Greifswald.';},
+  enter(){setHint(''); setEq('');},
+  update(dt){
+    this.t += dt;
+    const sub = 10, h = dt*2/sub; // Zeitraffer × 2
+    for (let i = 0; i < sub; i++){
+      const n = this.n*1e20, w = 3*n*this.T*KEV;
+      const pf = n*n/4*sigv(this.T)*EFUS, pa = pf/5, ph = this.heat*1e6/VOL;
+      const Ptot = (ph + pa)*VOL/1e6;
+      const tau = this.field ? 3*Math.min(1, Math.pow(Math.max(Ptot, 1)/120, -0.69)) : 0.003;
+      const w2 = Math.max(0, w + (ph + pa - w/tau)*h);
+      this.T = w2/(3*n*KEV); this.pf = pf*VOL/1e6;
+    }
+    // Teilchen
+    for (const p of this.parts){
+      p.phi += p.v*dt*(0.4 + Math.min(1.6, Math.sqrt(this.T)/2)); p.g += dt*14;
+      if (!this.field){p.out += dt*(0.8 + rnd()); if (p.rho + p.out >= 1 && !p.hit){p.hit = true; if (this.sparks.length < 40) this.sparks.push({phi:p.phi, th:p.th, t:0});}}
+      else if (p.out > 0){p.out = Math.max(0, p.out - dt*0.5); p.hit = false;}
+      p.th += dt*0.6*(this.type === 'ste' ? 1.4 : 1);
+    }
+    this.sparks = this.sparks.filter(s => (s.t += dt) < 0.5);
+    // Neutronen
+    const rate = Math.min(40, this.pf/25);
+    if (rnd() < rate*dt) this.neut.push({phi:rnd()*TAU, d:0, a:rnd()*TAU});
+    this.neut = this.neut.filter(q => (q.d += dt*2.2) < 1);
+    if ((this.it = (this.it || 0) + dt) > 0.2){this.it = 0; this.info();}
+  },
+  info(){
+    const el = $('#r_info'); if (!el) return; const Tk = this.T*11.6e6;
+    const Q = this.heat > 0 ? this.pf/this.heat : null;
+    let st;
+    if (!this.field && Tk < 1e6) st = 'Ohne Magnetfeld berührt das Plasma die Wand und kühlt sofort ab.';
+    else if (Tk < 3e6) st = this.heat ? 'Das Plasma wird aufgeheizt …' : 'Kein heißes Plasma. Stell die Heizung an.';
+    else if (this.heat === 0 && this.pf > 50) st = '<span class="badge b-ok">gezündet</span> Das Plasma brennt von selbst.';
+    else if (this.heat === 0) st = 'Das Plasma kühlt ab.';
+    else st = 'Q = ' + (Q < 10 ? fmt(Q, 1) : fmtInt(Q));
+    el.innerHTML = `Plasmatemperatur: <b>${fmtInt(Tk/1e6)} Mio. K</b><br>Fusionsleistung: <b>${fmtInt(this.pf)} MW</b><br>Heizleistung: <b>${fmtInt(this.heat)} MW</b><br>${st}`;
+  },
+  geo(){const port = PORT(); const cx = port ? W*0.45 : W*0.43, cy = port ? H*0.42 : H*0.5, R = Math.min(port ? W*0.32 : W*0.28, H*(port ? 0.6 : 0.75)); return {cx, cy, R, a:R*0.27, ty:0.42, port};},
+  /* Punkt im Torus: Winkel phi um die Achse, Querschnittswinkel th, rel. Radius rho (0..1) */
+  pt(g, phi, th, rho){
+    const ct = Math.sqrt(1 - g.ty*g.ty);
+    let off = 0; if (this.type === 'ste') off = 0.22*Math.sin(5*phi);
+    const r = rho*g.a, R = g.R + Math.cos(th)*r;
+    return [g.cx + Math.cos(phi)*R, g.cy + Math.sin(phi)*R*g.ty - (Math.sin(th)*r + off*g.a)*ct, Math.sin(phi)];
+  },
+  draw(){
+    const g = this.geo(), Tk = this.T*11.6e6, hot = clamp(Tk/1.5e8, 0, 1.4);
+    // Gefäß hinten
+    this.vessel(g, true);
+    this.coils(g, true);
+    // Plasma
+    if (Tk > 2e6){
+      ctx.save(); ctx.globalCompositeOperation = FLAT ? 'source-over' : 'lighter';
+      const col = hot < 0.5 ? `rgba(255,${Math.round(90 + hot*200)},${Math.round(140 + hot*100)},` : `rgba(${Math.round(255 - (hot - .5)*120)},${Math.round(190 + (hot - .5)*60)},255,`;
+      const spread = this.field ? 0.55 : 1;
+      for (let i = 0; i < 72; i++){const phi = i/72*TAU; const p = this.pt(g, phi, 0, 0);
+        glow(p[0], p[1], g.a*spread*(0.75 + 0.25*p[2]), col + (FLAT ? 0.18 : 0.34)*Math.min(1, hot*2) + ')');}
+      ctx.restore();
+    }
+    // Teilchen
+    const alpha = clamp(Tk/2e7, 0.15, 1);
+    for (const p of this.parts){
+      const rho = Math.min(1, p.rho + p.out), rg = this.field ? 0.05 : 0.15;
+      const q = this.pt(g, p.phi, p.th, rho);
+      const x = q[0] + Math.cos(p.g)*g.a*rg, y = q[1] + Math.sin(p.g)*g.a*rg*0.6;
+      ctx.fillStyle = `rgba(255,${hot > .5 ? 230 : 160},${hot > .5 ? 255 : 120},${alpha})`; ctx.beginPath(); ctx.arc(x, y, 2.2, 0, TAU); ctx.fill();
+    }
+    for (const s of this.sparks){const q = this.pt(g, s.phi, s.th, 1); glow(q[0], q[1], 8 + s.t*40, `rgba(255,200,120,${0.8 - s.t*1.6})`);}
+    for (const nq of this.neut){const q = this.pt(g, nq.phi, nq.a, 0); const x = q[0] + Math.cos(nq.a)*nq.d*g.a*2.2, y = q[1] + Math.sin(nq.a)*nq.d*g.a*1.4; ball(x, y, 3.5, COL.n, 1 - nq.d);}
+    // Gefäß vorne (durchsichtig)
+    this.vessel(g, false);
+    this.coils(g, false);
+    label(this.type === 'tok' ? 'Tokamak' : 'Stellarator', g.cx, g.cy - g.R*g.ty - g.a*1.6 - 10, 18, '#dbe5f7', 'center', 800);
+    if (!this.field) label('Magnetfeld aus!', g.cx, g.cy + g.R*g.ty + g.a*1.5 + 14, 18, '#ff8a7a', 'center', 800);
+    this.thermo(g);
+  },
+  vessel(g, back){
+    const N = 48;
+    for (let i = 0; i < N; i++){
+      const phi = i/N*TAU, s = Math.sin(phi); if (back ? s > 0.05 : s <= 0.05) continue;
+      ctx.beginPath();
+      for (let j = 0; j <= 24; j++){const th = j/24*TAU; const p = this.pt(g, phi, th, 1.12); j ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]);}
+      ctx.strokeStyle = back ? 'rgba(160,175,200,.35)' : 'rgba(200,215,235,.22)'; ctx.lineWidth = back ? 1.5 : 1; ctx.stroke();
+    }
+    // Umrisse
+    ctx.save(); ctx.strokeStyle = back ? 'rgba(170,185,210,.55)' : 'rgba(210,222,240,.45)'; ctx.lineWidth = FLAT ? 1.5 : 2.5;
+    for (const [th, rh] of [[Math.PI/2, 1.12], [-Math.PI/2, 1.12], [0, 1.12], [Math.PI, 1.12]]){
+      ctx.beginPath(); let first = true;
+      for (let j = 0; j <= 96; j++){const phi = j/96*TAU, s = Math.sin(phi); const p = this.pt(g, phi, th, rh); if (back ? s > 0.05 : s <= 0.05){first = true; continue;} first ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1]); first = false;}
+      ctx.stroke();
+    }
+    ctx.restore();
+  },
+  coils(g, back){
+    const N = this.type === 'tok' ? 16 : 20, ct = Math.sqrt(1 - g.ty*g.ty);
+    for (let i = 0; i < N; i++){
+      const phi = i/N*TAU + 0.1, s = Math.sin(phi); if (back ? s > 0 : s <= 0) continue;
+      const er = [Math.cos(phi), Math.sin(phi)*g.ty], et = [-Math.sin(phi), Math.cos(phi)*g.ty];
+      const c = this.pt(g, phi, 0, 0);
+      ctx.beginPath();
+      for (let j = 0; j <= 40; j++){
+        const th = j/40*TAU; let tw = 0; if (this.type === 'ste') tw = 0.35*Math.sin(th + 5*phi);
+        const rx = Math.cos(th)*g.a*1.35, rz = Math.sin(th)*g.a*(this.type === 'tok' ? 1.7 : 1.45);
+        const x = c[0] + er[0]*rx + et[0]*tw*g.a, y = c[1] + er[1]*rx + et[1]*tw*g.a - rz*ct;
+        j ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      const lw = clamp(g.a*0.16, 3, 9);
+      if (!FLAT){ctx.strokeStyle = back ? 'rgba(120,70,30,.55)' : 'rgba(90,50,20,.95)'; ctx.lineWidth = lw + 2; ctx.stroke();}
+      ctx.strokeStyle = FLAT ? (back ? 'rgba(220,140,70,.4)' : '#d98a46') : (back ? 'rgba(214,140,70,.5)' : '#e09a52'); ctx.lineWidth = FLAT ? 2.5 : lw; ctx.stroke();
+      if (!FLAT && !back){ctx.strokeStyle = 'rgba(255,220,170,.55)'; ctx.lineWidth = lw*0.3; ctx.stroke();}
+    }
+  },
+  thermo(g){
+    const port = g.port, x = port ? W - 90 : W - 96, y0 = port ? 40 : 60, h = port ? H*0.5 : H - 140, Tmax = 3e8;
+    const Y = T => y0 + h - T/Tmax*h, Tk = Math.min(Tmax, this.T*11.6e6);
+    ctx.fillStyle = 'rgba(255,255,255,.08)'; rrect(x - 12, y0 - 4, 24, h + 8, 10); ctx.fill();
+    const gr = ctx.createLinearGradient(0, y0 + h, 0, y0); gr.addColorStop(0, '#ff5a3d'); gr.addColorStop(.5, '#ff9ad0'); gr.addColorStop(1, '#c8d8ff');
+    ctx.fillStyle = FLAT ? '#ff7a6b' : gr; rrect(x - 7, Y(Tk), 14, y0 + h - Y(Tk), 6); ctx.fill();
+    label('Temperatur', x, y0 - 18, 12, '#dbe5f7', 'center', 700);
+    for (const [T, t] of [[0, '0'], [1.5e7, 'Sonnenkern'], [1.5e8, '150 Mio. K'], [3e8, '300 Mio. K']]){ctx.strokeStyle = '#8fa3c7'; ctx.beginPath(); ctx.moveTo(x + 12, Y(T)); ctx.lineTo(x + 16, Y(T)); ctx.stroke(); label(t, x + 18, Y(T), 11, '#aab8d4', 'left');}
+  }
+};
+/* ===================== Reiter 5: Spaltung und Fusion ===================== */
+const CMP = [
+  ['Brennstoff', 'Uran-235, aus Uranerz gewonnen', 'Deuterium aus Meerwasser, Tritium wird im Reaktor aus Lithium erzeugt', 'fuel'],
+  ['Energie pro Reaktion', 'etwa 200 MeV', '17,6 MeV', 'e1'],
+  ['Energie pro kg Brennstoff', 'wie 2800 t Steinkohle', 'wie 11 500 t Steinkohle', 'ekg'],
+  ['Abfall', 'radioaktive Spaltprodukte und andere Stoffe, teils viele tausend Jahre gefährlich', 'Helium ist harmlos. Tritium und die Reaktorwand sind radioaktiv, klingen aber in etwa 100 Jahren weitgehend ab', 'waste'],
+  ['Kettenreaktion', 'ja, muss ständig geregelt werden', 'nein, bei einer Störung erlischt das Plasma', 'chain'],
+  ['Stand heute', 'Kraftwerke liefern seit den 1950er-Jahren Strom', 'Forschungsanlagen, noch kein Strom im Netz', 'now'],
+  ['Als Waffe', 'Atombombe', 'Wasserstoffbombe (mit einer Atombombe als Zünder)', 'bomb']
+];
+const Compare = {
+  key:'vergleich', title:'Spaltung und Fusion',
+  init(){this.t = 0; this.sel = 1;},
+  panel(){
+    return `<h2>Spaltung und Fusion</h2>
+    <button class="btn main" id="c_go">Beide noch einmal starten</button>
+    <div class="info">Tippe auf eine Zeile der Tabelle, um sie hervorzuheben.</div>
+    <div class="info" id="c_det"></div>
+    <details><summary>Die Wasserstoffbombe</summary><div>In einer Wasserstoffbombe zündet zuerst eine Atombombe, die mit Kernspaltung arbeitet. Sie erzeugt für einen winzigen Moment Temperaturen und Drücke wie im Inneren eines Sterns. Dadurch verschmelzen Deuterium und Tritium, und es wird noch viel mehr Energie frei.<br>Wasserstoffbomben können hundert- bis tausendmal stärker sein als die Atombomben, die 1945 auf Hiroshima und Nagasaki abgeworfen wurden. Sie wurden ab 1952 getestet, im Krieg aber nie eingesetzt.<br>In einem Fusionsreaktor ist so eine Explosion nicht möglich: Dort ist nur sehr wenig Brennstoff gleichzeitig im Plasma, weniger als ein Gramm.</div></details>
+    <details><summary>Warum gibt es noch keine Fusionskraftwerke?</summary><div>Das Plasma muss über 100 Millionen Grad heiß sein und lange genug zusammengehalten werden. Das gelingt bisher nur für Sekunden bis Minuten, und meist steckt man mehr Energie hinein, als herauskommt. Außerdem müssen Wände entwickelt werden, die den Neutronenbeschuss lange aushalten.</div></details>`;
+  },
+  bind(){$('#c_go').onclick = () => {this.t = 0;}; this.detail();},
+  enter(){
+    setHint(''); setEq('');
+    let box = $('#cmp'); if (!box){box = document.createElement('div'); box.id = 'cmp'; $('#stage').appendChild(box);}
+    box.innerHTML = `<table><tr><th></th><th class="cs">Kernspaltung</th><th class="cf">Kernfusion</th></tr>` +
+      CMP.map((r, i) => `<tr data-i="${i}"><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('') + `</table>`;
+    box.querySelectorAll('tr[data-i]').forEach(tr => tr.onclick = () => {this.sel = +tr.dataset.i; this.mark(); this.detail();});
+    this.mark();
+  },
+  leave(){const b = $('#cmp'); if (b) b.remove();},
+  mark(){document.querySelectorAll('#cmp tr[data-i]').forEach(tr => tr.classList.toggle('on', +tr.dataset.i === this.sel));},
+  detail(){
+    const el = $('#c_det'); if (!el) return;
+    const D = {
+      fuel:'Uran muss aus Erz gewonnen und angereichert werden. Deuterium gibt es fast unbegrenzt: In jedem Liter Meerwasser stecken etwa 33 mg. Tritium kommt in der Natur kaum vor und muss im Reaktor aus Lithium erzeugt werden.',
+      e1:'Eine einzelne Spaltung liefert mehr Energie als eine einzelne Fusion. Der Urankern hat aber 235 Nukleonen, D und T zusammen nur 5.',
+      ekg:'Pro Kilogramm Brennstoff liefert die Fusion etwa viermal so viel Energie wie die Spaltung und mehrere Millionen Mal so viel wie das Verbrennen von Kohle.',
+      waste:'Bei der Spaltung entstehen radioaktive Spaltprodukte wie Caesium-137 und Strontium-90 sowie langlebige schwere Kerne. Bei der Fusion entsteht Helium. Radioaktiv sind dort das Tritium (Halbwertszeit 12,3 Jahre) und die Bauteile, die von Neutronen getroffen werden.',
+      chain:'Bei der Spaltung setzt jede Spaltung neue Neutronen frei, die weitere Spaltungen auslösen. Das muss geregelt werden. Bei der Fusion gibt es so etwas nicht: Fällt die Heizung oder das Magnetfeld aus, kühlt das Plasma ab und die Fusion stoppt.',
+      now:'Kernkraftwerke gibt es seit den 1950er-Jahren. In Deutschland wurden die letzten 2023 abgeschaltet. Fusionsanlagen wie ITER und Wendelstein 7-X sind Forschungsanlagen.',
+      bomb:'Beide Arten von Kernreaktion wurden auch für Waffen genutzt. Mehr dazu unten bei „Die Wasserstoffbombe“.'
+    };
+    el.innerHTML = `<b>${CMP[this.sel][0]}:</b> ${D[CMP[this.sel][3]]}`;
+  },
+  update(dt){this.t += dt; if (this.t > 6) this.t = 0;},
+  draw(){
+    const port = PORT(), top = port ? 10 : 14, hh = port ? H*0.36 : H*0.36;
+    const halves = [[W*0.25, 'Kernspaltung', '#ffb27a'], [W*0.75, 'Kernfusion', '#8fe0b0']];
+    const cy = top + hh*0.55, s = clamp(hh/34, 3, 7), t = this.t, hl = CMP[this.sel][3];
+    ctx.strokeStyle = 'rgba(255,255,255,.12)'; ctx.beginPath(); ctx.moveTo(W/2, top); ctx.lineTo(W/2, top + hh); ctx.stroke();
+    halves.forEach(h => label(h[1], h[0], top + 14, 17, h[2], 'center', 800));
+    // Spaltung
+    {const cx = halves[0][0], k = Math.min(1, t/1.2);
+      if (t < 1.2){cluster(92, 143, cx, cy, s, t*0.5); ball(cx - W*0.2 + k*(W*0.2 - clusterR(235, s)), cy, Math.max(4, s), COL.n);
+        if (hl === 'fuel') label('Uran-235', cx, cy + clusterR(235, s) + 14, 14, '#ffd666', 'center', 800);}
+      else {const d = Math.min(1, (t - 1.2)/1.2)*W*0.11;
+        cluster(56, 85, cx - d, cy - d*0.2, s, t*0.4); cluster(36, 56, cx + d, cy + d*0.25, s, -t*0.4);
+        for (let i = 0; i < 3; i++){const a = -1 + i*1.1; ball(cx + Math.cos(a)*d*1.9, cy + Math.sin(a)*d*1.6, Math.max(4, s), COL.n);}
+        flash(cx, cy, 20 + d*2, Math.max(0, 1 - (t - 1.2)/1.2)*0.8);
+        const big = hl === 'e1' || hl === 'ekg';
+        label(hl === 'ekg' ? '8 · 10¹³ J pro kg' : '≈ 200 MeV', cx, top + hh - 10, big ? 20 : 15, big ? '#ffd666' : '#ffe6b0', 'center', 800);
+        if (hl === 'waste') label('radioaktive Spaltprodukte', cx, cy + clusterR(141, s) + 10, 14, '#ff9a8e', 'center', 800);
+        if (hl === 'chain') label('neue Neutronen → nächste Spaltung', cx, cy - clusterR(141, s) - 22, 13, '#ff9a8e', 'center', 700);}
+    }
+    // Fusion
+    {const cx = halves[1][0], s2 = s*2.2;
+      if (t < 1.2){const d = (1 - t/1.2)*W*0.14 + clusterR(3, s2); cluster(1, 1, cx - d, cy, s2, t); cluster(1, 2, cx + d, cy, s2, -t);
+        if (hl === 'fuel'){label('Deuterium', cx - d, cy + clusterR(3, s2) + 14, 14, '#ffd666', 'center', 800); label('Tritium', cx + d, cy + clusterR(3, s2) + 14, 14, '#ffd666', 'center', 800);}}
+      else {const d = Math.min(1, (t - 1.2)/1.2);
+        cluster(2, 2, cx - d*W*0.04, cy + d*8, s2, t); ball(cx + d*W*0.18, cy - d*hh*0.2, Math.max(4, s2*0.9), COL.n);
+        flash(cx, cy, 20 + d*90, (1 - d)*0.8);
+        const big = hl === 'e1' || hl === 'ekg';
+        label(hl === 'ekg' ? '3 · 10¹⁴ J pro kg' : '17,6 MeV', cx, top + hh - 10, big ? 20 : 15, big ? '#ffd666' : '#ffe6b0', 'center', 800);
+        if (hl === 'waste') label('Helium: harmlos', cx - d*W*0.04, cy + clusterR(4, s2) + 18, 14, '#8fe0b0', 'center', 800);
+        if (hl === 'chain') label('keine Kettenreaktion', cx, cy - clusterR(4, s2) - 22, 13, '#8fe0b0', 'center', 700);}
+    }
+    // Platz für die Tabelle
+    const box = $('#cmp'); if (box){box.style.top = (top + hh + 6) + 'px';}
+  }
+};
+/* ===================== Steuerung ===================== */
+const SCENES = [Fuse, Energy, Sun, Reactor, Compare];
+let cur = null, applyFS = null;
+function resize(){
+  const r = $('#stage').getBoundingClientRect();
+  DPR = Math.min(2, window.devicePixelRatio || 1);
+  cv.width = Math.round(r.width*DPR); cv.height = Math.round(r.height*DPR);
+  cv.style.width = r.width + 'px'; cv.style.height = r.height + 'px';
+  W = r.width; H = r.height; ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  spriteCache.clear();
+}
+function show(sc){
+  if (cur && cur.leave) cur.leave();
+  cur = sc;
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.k === sc.key));
+  const tb = document.querySelector('#tabs button.on'); if (tb && tb.scrollIntoView) try{tb.scrollIntoView({block:'nearest', inline:'center'});}catch(e){}
+  $('#panel').innerHTML = sc.panel(); $('#panel').scrollTop = 0;
+  sc.bind(); if (sc.enter) sc.enter();
+  try{localStorage.setItem('fusionslabor_tab', sc.key);}catch(e){}
+}
+function start(){
+  const tabs = $('#tabs');
+  SCENES.forEach((s, i) => {s.init(); const b = document.createElement('button'); b.textContent = s.title; b.dataset.k = s.key; b.onclick = () => show(s); tabs.appendChild(b);});
+  resize(); window.addEventListener('resize', () => {resize(); if (typeof applyFS === 'function') applyFS(); if (cur){if (cur.layer !== undefined) cur.layer = null; cur.dots = null; cur.ldots = null;}});
+  cv.addEventListener('pointerdown', e => {const r = cv.getBoundingClientRect(); if (cur && cur.tap) cur.tap(e.clientX - r.left, e.clientY - r.top);});
+  const pref = (k, d) => {try{const v = localStorage.getItem('fusionslabor_' + k); return v === null ? d : v === '1';}catch(e){return d;}};
+  const save = (k, v) => {try{localStorage.setItem('fusionslabor_' + k, v ? '1' : '0');}catch(e){}};
+  // Schriftstufen 0–4 (A− / A+); Stufe 2 = bisheriges „groß“, auf dem Handy kleiner skaliert
+  const FSL = [0.85, 1, 1.25, 1.4, 1.55], PZL = [1, 1, 1, 1.1, 1.2];
+  let lvl = NaN; try{lvl = parseInt(localStorage.getItem('fusionslabor_fs'), 10);}catch(e){}
+  if (!(lvl >= 0 && lvl < FSL.length)) lvl = PHONE() ? 1 : (pref('big', true) ? 2 : 1);
+  let panel = pref('panel', true);
+  const fsOf = () => FSL[lvl]*(PHONE() ? 0.72 : 1);
+  applyFS = () => {FS = fsOf(); const st = document.documentElement.style; st.setProperty('--fs', FS); st.setProperty('--pz', PHONE() ? 1 : PZL[lvl]);
+    $('#t_fsm').disabled = lvl <= 0; $('#t_fsp').disabled = lvl >= FSL.length - 1;};
+  const apply = () => {applyFS();
+    document.querySelector('main').classList.toggle('nopanel', !panel); $('#t_panel').classList.toggle('on', panel);
+    resize(); if (cur){cur.dots = null; cur.ldots = null;}};
+  const step = d => {lvl = clamp(lvl + d, 0, FSL.length - 1); try{localStorage.setItem('fusionslabor_fs', lvl);}catch(e){} apply();};
+  $('#t_fsm').onclick = () => step(-1); $('#t_fsp').onclick = () => step(1);
+  FLAT = pref('flat', false); const vbtn = () => {$('#t_view').textContent = FLAT ? '2D' : '3D';}; vbtn();
+  $('#t_view').onclick = () => {FLAT = !FLAT; save('flat', FLAT); vbtn(); spriteCache.clear();};
+  $('#t_panel').onclick = () => {panel = !panel; save('panel', panel); apply();};
+  $('#t_full').onclick = () => {const d = document, el = d.documentElement;
+    const on = d.fullscreenElement || d.webkitFullscreenElement;
+    try{if (on){(d.exitFullscreen || d.webkitExitFullscreen).call(d);} else {(el.requestFullscreen || el.webkitRequestFullscreen).call(el);}}catch(e){}
+    setTimeout(resize, 400);};
+  ['fullscreenchange','webkitfullscreenchange'].forEach(ev => document.addEventListener(ev, () => setTimeout(() => {resize(); if (cur){cur.dots = null; cur.ldots = null;}}, 100)));
+  apply();
+  let k = null; try{k = localStorage.getItem('fusionslabor_tab');}catch(e){}
+  show(SCENES.find(s => s.key === k) || SCENES[0]);
+  let last = performance.now();
+  const loop = now => {
+    const dt = Math.min(0.05, (now - last)/1000); last = now;
+    if (cur){cur.update(dt); ctx.clearRect(0, 0, W, H); cur.draw();}
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+start();
+</script>
+<!-- KI-Hinweis: einheitlich in allen Simulationen, immer sichtbar unten rechts -->
+<style>
+#ki-hinweis{position:fixed;right:0;bottom:0;z-index:2147483000;pointer-events:none;
+  font:10px/16px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  color:#5b6270;background:rgba(243,244,246,.92);border-top:1px solid rgba(0,0,0,.08);border-left:1px solid rgba(0,0,0,.08);
+  border-top-left-radius:6px;padding:0 max(7px,env(safe-area-inset-right)) env(safe-area-inset-bottom) 8px;white-space:nowrap}
+.ki-platz::after{content:"";display:block;height:20px;flex:none}
+@media print{#ki-hinweis{position:static;text-align:right;border:0;background:none}}
+</style>
+<div id="ki-hinweis" role="note">Mit KI erstellt · Physik nicht geprüft · Ergebnisse kritisch prüfen</div>
+<script>
+/* Scrollbereiche, die bis unter den Hinweis reichen, bekommen unten 20 px Luft,
+   damit ihr letzter Inhalt nicht dauerhaft vom Hinweis verdeckt wird. */
+(function(){
+  var hin=document.getElementById('ki-hinweis');
+  function platz(){
+    var alt=document.querySelectorAll('.ki-platz');
+    for(var i=0;i<alt.length;i++)alt[i].classList.remove('ki-platz');
+    var vw=innerWidth,vh=innerHeight,hb=hin.getBoundingClientRect();
+    var els=document.body.querySelectorAll('*');
+    function passt(el){
+      var cs=getComputedStyle(el);
+      if(cs.display==='block'||cs.display==='flow-root')return true;
+      return cs.display==='flex'&&/column/.test(cs.flexDirection);
+    }
+    for(var j=0;j<els.length;j++){
+      var el=els[j];if(el===hin||el.closest('svg'))continue;
+      var oy=getComputedStyle(el).overflowY;
+      if(oy!=='auto'&&oy!=='scroll')continue;
+      var r=el.getBoundingClientRect();
+      if(r.height<40||r.bottom<vh-hb.height-4||r.right<hb.left+20||r.left>vw)continue;
+      if(passt(el))el.classList.add('ki-platz');
+    }
+    var se=document.scrollingElement||document.documentElement;
+    if(se.scrollHeight>vh+2&&passt(document.body))document.body.classList.add('ki-platz');
+  }
+  var t;function spaeter(){clearTimeout(t);t=setTimeout(platz,150);}
+  addEventListener('resize',spaeter);addEventListener('load',spaeter);
+  document.addEventListener('click',spaeter,true);
+  platz();
+})();
+</script>
+</body>
+</html>
