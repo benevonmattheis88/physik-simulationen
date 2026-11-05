@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Änderungen · Physik-Simulationen</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --text:#1d2330; --muted:#5b6475; --line:#dde1e8; --accent:#1f5fbf;
+          --neu-bg:#e8f1ff; --neu-rand:#1f5fbf; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#14171d; --card:#1d2129; --text:#e7eaf0; --muted:#9aa3b2; --line:#2e3440; --accent:#7fb0ff;
+            --neu-bg:#1c2a44; --neu-rand:#7fb0ff; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text);
+         font:17px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+  main { max-width:960px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { font-size:1.9em; margin:0 0 4px; }
+  .lead { color:var(--muted); margin:0 0 24px; }
+  a { color:var(--accent); }
+  section.sim { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 16px;
+                margin:0 0 14px; scroll-margin-top:12px; }
+  section.sim h2 { font-size:1.25em; margin:0 0 2px; }
+  section.sim .links { font-size:.9em; margin:0 0 8px; }
+  section.sim .links a { margin-right:12px; }
+  ul.eintraege { list-style:none; padding:0; margin:0; }
+  ul.eintraege li { border-left:3px solid var(--line); padding:3px 0 5px 10px; margin-bottom:6px; }
+  ul.eintraege li.neu { border-left-color:var(--neu-rand); background:var(--neu-bg); border-radius:0 6px 6px 0; }
+  .datum { color:var(--muted); font-size:.88em; }
+  .marke { display:inline-block; font-size:.75em; font-weight:700; color:#fff; background:var(--neu-rand);
+           border-radius:4px; padding:0 6px; margin-left:6px; vertical-align:1px; }
+  @media (prefers-color-scheme: dark) { .marke { color:#14171d; } }
+  h3.frueher { font-size:.9em; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:12px 0 6px; }
+  .filter { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 16px; margin:0 0 18px; }
+  .filter p { margin:0; }
+  footer { margin-top:40px; color:var(--muted); font-size:.85em; }
+  noscript p { color:var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <p><a href="index.html">← Zur Startseite</a></p>
+  <h1>Änderungen an den Simulationen</h1>
+  <p class="lead">Was sich an welcher Simulation wann geändert hat, das Neueste oben.</p>
+  <div id="filter" class="filter" hidden></div>
+  <div id="liste"></div>
+  <noscript><p>Diese Liste braucht JavaScript.</p></noscript>
+  <footer><a href="index.html">Startseite</a> · <a href="versionen.html">Ältere Versionen</a> · <a href="datenschutz.html">Datenschutz</a></footer>
+</main>
+
+<!--
+  ÄNDERUNGSDATEN
+  Jede Änderung an einer Simulation bekommt hier einen Eintrag (neueste unten anhängen).
+  zeit: Zeitpunkt des Zusammenführens (Merge) auf main, mit Zeitzone
+  sims: betroffene Simulationen (Kürzel aus "simulationen" unten)
+  text: kurze Beschreibung in einfachen Worten
+  pr:   Nummer des Pull Requests (optional)
+  Die Startseite liest diese Daten und zeigt Besuchern, was seit ihrem letzten Besuch neu ist.
+-->
+<script type="application/json" id="aenderungsdaten">
+{
+  "simulationen": {
+    "bewegungsdiagramme": { "titel": "Bewegungsdiagramme",        "pfad": "mechanik/oberstufe/Bewegungsdiagramme.html" },
+    "gravitationslabor":  { "titel": "Gravitationslabor",         "pfad": "mechanik/oberstufe/Gravitationslabor.html" },
+    "kreisbewegung":      { "titel": "Kreisbewegung",             "pfad": "mechanik/oberstufe/Kreisbewegung.html" },
+    "kurvenlabor":        { "titel": "Kurvenlabor",               "pfad": "mechanik/oberstufe/Kurvenlabor.html" },
+    "stosslabor":         { "titel": "Stoßlabor",                 "pfad": "mechanik/oberstufe/Stosslabor.html" },
+    "stromkreis-labor":   { "titel": "Stromkreis-Labor",          "pfad": "elektrizitaet/mittelstufe/Stromkreis_Labor.html" },
+    "ersatzwiderstand":   { "titel": "Ersatzwiderstand herleiten", "pfad": "elektrizitaet/mittelstufe/Ersatzwiderstand_herleiten.html" },
+    "energiefluss":       { "titel": "Energiefluss-Baukasten (KPK)", "pfad": "energie/mittelstufe/Energiefluss_Baukasten.html" },
+    "kernlabor":          { "titel": "Kernlabor",                 "pfad": "kernphysik/mittelstufe/Kernlabor.html" },
+    "fusionslabor":       { "titel": "Fusionslabor",              "pfad": "kernphysik/mittelstufe/Fusionslabor.html" },
+    "prisma-labor":       { "titel": "Prisma-Labor",              "pfad": "optik/mittelstufe/Prisma_Labor.html" }
+  },
+  "eintraege": [
+    { "zeit": "2026-10-28T15:21:35+01:00", "sims": ["kreisbewegung","kurvenlabor","stosslabor","stromkreis-labor","ersatzwiderstand","kernlabor"], "text": "Erste Fassung auf dieser Seite veröffentlicht.", "pr": 1 },
+    { "zeit": "2026-10-28T15:58:16+01:00", "sims": ["stosslabor"], "text": "Schriftgröße A−/A+, Bedienfeld ausblendbar, Vollbild-Knopf, eigenes Handy-Layout mit Drehhinweis.", "pr": 3 },
+    { "zeit": "2026-10-28T15:58:51+01:00", "sims": ["kreisbewegung"], "text": "Neue 3D-Ansicht, Schriftgröße A−/A+, Vollbild, eigenes Layout für Handy und iPad hochkant.", "pr": 4 },
+    { "zeit": "2026-10-28T15:59:19+01:00", "sims": ["ersatzwiderstand"], "text": "Herleitungen als durchgehende Gleichungskette, Reihenschaltung Schritt für Schritt selbst herleiten.", "pr": 5 },
+    { "zeit": "2026-10-28T16:03:02+01:00", "sims": ["kreisbewegung"], "text": "Kraftpfeile mit zwei festen Maßstäben, zu lange Pfeile werden gekürzt dargestellt.", "pr": 7 },
+    { "zeit": "2026-10-28T16:04:37+01:00", "sims": ["kurvenlabor"], "text": "Schriftgröße A−/A+, Vollbild, ausblendbares Bedienfeld, Handy- und Hochkant-Layout, plastischer 3D-Look.", "pr": 6 },
+    { "zeit": "2026-10-28T16:05:05+01:00", "sims": ["ersatzwiderstand"], "text": "„Weiter“ im letzten Schritt führt zum nächsten Reiter.", "pr": 8 },
+    { "zeit": "2026-10-28T22:02:15+01:00", "sims": ["stromkreis-labor"], "text": "Nach dem Einfügen eines Messgeräts ist wieder das Werkzeug „Auswahl“ aktiv.", "pr": 12 },
+    { "zeit": "2026-10-28T22:26:12+01:00", "sims": ["stromkreis-labor"], "text": "Energieflussdiagramm nach KPK mit Trägerpfeilen (eigener Knopf „+ KPK-Energie“), Netzgerät lässt sich umpolen.", "pr": 13 },
+    { "zeit": "2026-10-29T14:09:36+01:00", "sims": ["prisma-labor"], "text": "Neue Simulation: Lichtbrechung und Farbzerlegung am Prisma.", "pr": 14 },
+    { "zeit": "2026-10-29T15:12:09+01:00", "sims": ["gravitationslabor"], "text": "Neue Simulation: Gravitationsgesetz im Labor und im Weltall erforschen, mit Messwertliste.", "pr": 15 },
+    { "zeit": "2026-10-29T15:48:45+01:00", "sims": ["gravitationslabor"], "text": "Messrauschen ist von Anfang an eingeschaltet, Weltall-Ansicht ist von Anfang an maßstabsgetreu.", "pr": 16 },
+    { "zeit": "2026-10-29T16:30:38+01:00", "sims": ["kreisbewegung","kurvenlabor","stosslabor","gravitationslabor","stromkreis-labor","ersatzwiderstand","kernlabor","prisma-labor"], "text": "Dauerhafter grauer KI-Hinweis unten rechts.", "pr": 17 },
+    { "zeit": "2026-10-29T17:19:41+01:00", "sims": ["bewegungsdiagramme"], "text": "Neue Simulation: t-s-, t-v- und t-a-Diagramm entstehen live.", "pr": 18 },
+    { "zeit": "2026-10-29T17:32:11+01:00", "sims": ["bewegungsdiagramme"], "text": "Markierung des aktuellen Orts an der s-Achse.", "pr": 19 },
+    { "zeit": "2026-10-29T17:46:26+01:00", "sims": ["stromkreis-labor"], "text": "Kabelquerschnitt wählbar, positive Ladungsträger sind jetzt die Standardeinstellung.", "pr": 20 },
+    { "zeit": "2026-10-29T20:49:00+01:00", "sims": ["stromkreis-labor"], "text": "Werkzeug „Knoten“, Entfernen-Knopf in der Warnung, Schrift A−/A+, Drehhinweis am Handy, Messreihe als Tabelle (CSV) speichern, Spannung in 0,1-V-Schritten, KPK-Pfeile mit Leistung.", "pr": 22 },
+    { "zeit": "2026-10-29T20:52:06+01:00", "sims": ["stromkreis-labor"], "text": "Der Knopf „Ansicht“ heißt jetzt „Einstellungen“.", "pr": 24 },
+    { "zeit": "2026-10-29T21:06:49+01:00", "sims": ["kernlabor"], "text": "Schriftgröße A−/A+ in fünf Stufen, eigenes Layout für iPad hochkant.", "pr": 23 },
+    { "zeit": "2026-10-29T21:31:43+01:00", "sims": ["energiefluss"], "text": "Neue Simulation: Energieflussdiagramme nach KPK selbst zusammensetzen.", "pr": 25 },
+    { "zeit": "2026-10-29T21:55:13+01:00", "sims": ["energiefluss"], "text": "Weitere KPK-Regeln beim Prüfen, Trägerstromstärke, Pfeile docken an Träger an, feiner einstellbare Leistung.", "pr": 26 },
+    { "zeit": "2026-10-29T22:07:02+01:00", "sims": ["energiefluss"], "text": "Trägerstromstärke beschriftet als P = U · I = 1 V · 10 A.", "pr": 27 },
+    { "zeit": "2026-11-02T06:42:36+01:00", "sims": ["kurvenlabor"], "text": "Kettenkarussell mit festem Kraftmaßstab: Kraftpfeile wachsen jetzt mit der Masse.", "pr": 28 },
+    { "zeit": "2026-11-04T14:56:16+01:00", "sims": ["fusionslabor"], "text": "Neue Simulation zur Kernfusion: Energieberg und Tunneleffekt, Bindungsenergie, Sonne, Fusionsreaktor, Vergleich mit der Spaltung.", "pr": 29 },
+    { "zeit": "2026-11-05T10:55:53+01:00", "sims": ["kernlabor"], "text": "Neuer Reiter „Spaltung: Ablauf“: Kernspaltung Schritt für Schritt abspielen (auch als Einzelseite).", "pr": 30 },
+    { "zeit": "2026-11-05T11:13:00+01:00", "sims": ["kernlabor"], "text": "„Spaltung: Ablauf“: im letzten Schritt „Weiter zum Anfang“ mit Zoom zum nächsten Kern.", "pr": 31 }
+  ]
+}
+</script>
+
+<script>
+(function () {
+  var REPO = 'https://github.com/benevonmattheis88/physik-simulationen';
+  var daten = JSON.parse(document.getElementById('aenderungsdaten').textContent);
+  var q = new URLSearchParams(location.search);
+  var seit = q.get('seit') ? Date.parse(q.get('seit')) : NaN;
+  var nurSim = q.get('sim');
+  if (nurSim && !daten.simulationen[nurSim]) nurSim = null;
+
+  function datumText(ms) {
+    var d = new Date(ms);
+    return d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
+  }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+  // Einträge je Simulation sammeln, neueste zuerst
+  var jeSim = {};
+  daten.eintraege.forEach(function (e) {
+    var t = Date.parse(e.zeit);
+    e.sims.forEach(function (id) { (jeSim[id] = jeSim[id] || []).push({ t:t, e:e }); });
+  });
+  Object.keys(jeSim).forEach(function (id) { jeSim[id].sort(function (a, b) { return b.t - a.t; }); });
+
+  var ids = Object.keys(daten.simulationen).filter(function (id) { return jeSim[id]; });
+  ids.sort(function (a, b) { return jeSim[b][0].t - jeSim[a][0].t; });
+  if (nurSim) ids = [nurSim];
+
+  var filter = document.getElementById('filter');
+  if (nurSim) {
+    filter.hidden = false;
+    filter.innerHTML = '<p>' + (isNaN(seit) ? '' : 'Blau markiert ist, was seit deinem letzten Besuch am <strong>' + datumText(seit) + '</strong> neu ist. ') +
+      '<a href="aenderungen.html' + (isNaN(seit) ? '' : '?seit=' + encodeURIComponent(q.get('seit'))) + '">Änderungen aller Simulationen anzeigen</a></p>';
+  }
+
+  function eintragHtml(x) {
+    var neu = !isNaN(seit) && x.t > seit;
+    return '<li' + (neu ? ' class="neu"' : '') + '><span class="datum">' + datumText(x.t) + '</span>' +
+      (neu ? '<span class="marke">neu</span>' : '') + '<br>' + esc(x.e.text) + '</li>';
+  }
+
+  var html = '';
+  ids.forEach(function (id) {
+    var s = daten.simulationen[id];
+    var liste = jeSim[id];
+    var neue = liste.filter(function (x) { return !isNaN(seit) && x.t > seit; });
+    var alte = liste.filter(function (x) { return isNaN(seit) || x.t <= seit; });
+    html += '<section class="sim" id="' + id + '"><h2>' + esc(s.titel) + '</h2>' +
+      '<p class="links"><a href="' + s.pfad + '">▶ Simulation öffnen</a>' +
+      '<a href="' + REPO + '/commits/main/' + s.pfad + '" target="_blank" rel="noopener">↗ GitHub-Verlauf</a></p>';
+    if (neue.length) html += '<ul class="eintraege">' + neue.map(eintragHtml).join('') + '</ul>';
+    if (neue.length && alte.length) html += '<h3 class="frueher">Frühere Änderungen</h3>';
+    if (alte.length) html += '<ul class="eintraege">' + alte.map(eintragHtml).join('') + '</ul>';
+    html += '</section>';
+  });
+  document.getElementById('liste').innerHTML = html;
+  if (!nurSim && location.hash) { var z = document.getElementById(location.hash.slice(1)); if (z) z.scrollIntoView(); }
+})();
+</script>
+</body>
+</html>

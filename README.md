@@ -17,6 +17,7 @@ index.html                    Startseite mit allen Simulationen
 CNAME                         eigene Adresse (simulationen.familiemueller.space) für GitHub Pages
 datenschutz.html              Datenschutzhinweis
 versionen.html                Ältere Versionen: archivierte Stände und Links zum GitHub-Verlauf
+aenderungen.html              Änderungsliste aller Simulationen (Daten für „Neu seit deinem letzten Besuch“)
 mechanik/
   oberstufe/
     Bewegungsdiagramme.html
@@ -51,4 +52,5 @@ archiv/                       eingefrorene ältere Stände, gleiche Ordnerstrukt
 - In Moodle als Aktivität „Link/URL“ mit Anzeige „Im neuen Fenster“ einbinden, oder die Datei herunterladen und als Aktivität „Datei“ hochladen.
 - Dateien bitte nicht umbenennen oder verschieben, sonst funktionieren Links und QR-Codes nicht mehr.
 - Ältere Stände: Seite „Ältere Versionen“ (`versionen.html`, verlinkt von der Startseite). Archivierte Stände in `archiv/` laufen direkt im Browser und werden nicht mehr verändert (außer KI-Hinweis), ihre Links bleiben fest. Alle übrigen Stände findet man im GitHub-Verlauf der jeweiligen Datei.
+- Startseite: Wer schon einmal da war, sieht oben „Neu seit deinem letzten Besuch“ mit den seitdem geänderten Simulationen. Der Besuchszeitpunkt bleibt nur im eigenen Browser. **Jede Änderung an einer Simulation bekommt einen Eintrag in `aenderungen.html`** (Datenblock `aenderungsdaten`: Zeitpunkt, Simulation, kurzer Text).
 - Änderungen an `Kernlabor.html` müssen auch in die Dateien in `Kernlabor_einzeln/` übernommen werden.

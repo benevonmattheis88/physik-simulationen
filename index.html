@@ -40,6 +40,20 @@
   .versionen-link a { display:inline-block; padding:6px 12px; border:1px solid var(--line); border-radius:8px;
                       background:var(--card); color:var(--accent); text-decoration:none; font-weight:600; }
   .versionen-link a:hover { text-decoration:underline; }
+  .neu-box { background:var(--card); border:1px solid var(--line); border-left:6px solid var(--accent);
+             border-radius:10px; padding:10px 16px 12px; margin:0 0 24px; }
+  .neu-box[hidden] { display:none; }
+  .neu-kopf { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+  .neu-box h2 { font-size:1.1em; margin:0; padding:0; border:0; }
+  .neu-box ul { list-style:none; padding:0; margin:8px 0 0; display:flex; flex-wrap:wrap; gap:8px; }
+  .neu-box li a { display:inline-block; padding:8px 14px; border:1px solid var(--line); border-radius:8px;
+                  background:var(--bg); color:var(--accent); text-decoration:none; font-weight:600; }
+  .neu-box li a:hover { text-decoration:underline; }
+  .neu-box .neu-sim { font-size:.75em; font-weight:700; color:#fff; background:var(--accent); border-radius:4px;
+                      padding:0 6px; margin-left:6px; vertical-align:1px; }
+  @media (prefers-color-scheme: dark) { .neu-box .neu-sim { color:#14171d; } }
+  .neu-box button { font:inherit; font-size:.88em; padding:6px 12px; border:1px solid var(--line); border-radius:8px;
+                    background:var(--card); color:var(--muted); cursor:pointer; }
   footer { margin-top:40px; color:var(--muted); font-size:.85em; }
   footer a { color:var(--accent); }
 </style>
@@ -54,6 +68,14 @@
   </div>
 
   <p class="versionen-link"><a href="versionen.html">🕘 Ältere Versionen der Simulationen</a></p>
+
+  <section id="neu-box" class="neu-box" hidden aria-live="polite">
+    <div class="neu-kopf">
+      <h2 id="neu-titel">Neu seit deinem letzten Besuch</h2>
+      <button type="button" id="neu-gelesen">✓ Gesehen, ausblenden</button>
+    </div>
+    <ul id="neu-liste"></ul>
+  </section>
 
   <h2>Mechanik</h2>
   <h3>Oberstufe</h3>
@@ -128,7 +150,57 @@
       <a class="dl" href="optik/mittelstufe/Prisma_Labor.html" download="Prisma_Labor.html">⬇ HTML-Datei herunterladen</a></li>
   </ul>
 
-  <footer>Stand: 29.10.2026 · <a href="versionen.html">Ältere Versionen</a> · <a href="datenschutz.html">Datenschutz</a></footer>
+  <footer>Stand: 05.11.2026 · <a href="aenderungen.html">Alle Änderungen</a> · <a href="versionen.html">Ältere Versionen</a> · <a href="datenschutz.html">Datenschutz</a></footer>
 </main>
+<script>
+/* „Neu seit deinem letzten Besuch“: Der Zeitpunkt des letzten Besuchs liegt nur im eigenen Browser (localStorage).
+   Die Änderungsdaten stehen in aenderungen.html. Erstbesucher sehen nichts. Ein Besuch endet nach 30 Minuten Pause. */
+(function () {
+  var PAUSE = 30 * 60 * 1000, K_ZULETZT = 'startseite_zuletzt', K_VERGLEICH = 'startseite_vergleich';
+  var jetzt = Date.now(), vergleich = null;
+  try {
+    var zuletzt = parseInt(localStorage.getItem(K_ZULETZT), 10);
+    if (!isNaN(zuletzt)) {
+      if (jetzt - zuletzt > PAUSE) { vergleich = zuletzt; localStorage.setItem(K_VERGLEICH, String(zuletzt)); }
+      else { var v = parseInt(localStorage.getItem(K_VERGLEICH), 10); if (!isNaN(v)) vergleich = v; }
+    }
+    localStorage.setItem(K_ZULETZT, String(jetzt));
+  } catch (e) { return; }
+  if (vergleich === null || !window.fetch) return;
+
+  fetch('aenderungen.html', { cache: 'no-cache' }).then(function (r) { return r.text(); }).then(function (text) {
+    var doc = new DOMParser().parseFromString(text, 'text/html');
+    var daten = JSON.parse(doc.getElementById('aenderungsdaten').textContent);
+    var neueste = {}, erste = {};
+    daten.eintraege.forEach(function (e) {
+      var t = Date.parse(e.zeit);
+      e.sims.forEach(function (id) {
+        if (!(id in erste) || t < erste[id]) erste[id] = t;
+        if (t > vergleich && (!(id in neueste) || t > neueste[id])) neueste[id] = t;
+      });
+    });
+    var ids = Object.keys(neueste).filter(function (id) { return daten.simulationen[id]; })
+                .sort(function (a, b) { return neueste[b] - neueste[a]; });
+    if (!ids.length) return;
+    var seit = new Date(vergleich).toISOString();
+    var ul = document.getElementById('neu-liste');
+    ids.forEach(function (id) {
+      var li = document.createElement('li'), a = document.createElement('a');
+      a.href = 'aenderungen.html?sim=' + encodeURIComponent(id) + '&seit=' + encodeURIComponent(seit) + '#' + id;
+      a.textContent = daten.simulationen[id].titel;
+      if (erste[id] > vergleich) { var m = document.createElement('span'); m.className = 'neu-sim'; m.textContent = 'neu'; a.appendChild(m); }
+      li.appendChild(a); ul.appendChild(li);
+    });
+    document.getElementById('neu-titel').textContent = 'Neu seit deinem letzten Besuch am ' +
+      new Date(vergleich).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
+    var box = document.getElementById('neu-box');
+    box.hidden = false;
+    document.getElementById('neu-gelesen').onclick = function () {
+      try { localStorage.setItem(K_VERGLEICH, String(Date.now())); } catch (e) {}
+      box.hidden = true;
+    };
+  }).catch(function () {});
+})();
+</script>
 </body>
 </html>
