@@ -1201,7 +1201,7 @@ const STEPS = [
   {t:'Verformung', d:2.2, txt:'Der Zwischenkern gerät ins <b>Schwingen</b> und wird in die Länge gezogen, ähnlich wie ein schwingender Wassertropfen.'},
   {t:'Spaltung', d:1.4, txt:'Der Kern <b>zerplatzt</b> in zwei mittelschwere Bruchstücke, hier <b>Barium-144</b> und <b>Krypton-89</b>. Dabei werden <b>3 sehr schnelle Neutronen</b> frei (mehr als 10 000 km/s).'},
   {t:'Abbremsen und Wärme', d:2.6, txt:'Die Bruchstücke sind positiv geladen und <b>stoßen sich ab</b>. Sie können nicht frei wegfliegen, sondern werden im Kristallgitter schnell <b>abgebremst</b>. Ihre Bewegungsenergie wird zu <b>Wärme</b>: Die Atome des Gitters schwingen stärker.'},
-  {t:'Kettenreaktion und Zerfall', d:3.2, txt:'Ein Neutron wird abgebremst und trifft den nächsten Uran-235-Kern. Es kann ihn spalten: <b>Kettenreaktion</b>. Die Bruchstücke sind <b>radioaktiv</b> und zerfallen weiter, meist durch β⁻-Strahlung.'}
+  {t:'Kettenreaktion und Zerfall', d:3.2, txt:'Ein Neutron wird abgebremst und fliegt auf den nächsten Uran-235-Kern zu. Es kann ihn spalten: <b>Kettenreaktion</b>. Die Bruchstücke sind <b>radioaktiv</b> und zerfallen weiter, meist durch β⁻-Strahlung.<br>Mit „Weiter zum Anfang“ zoomst du zum nächsten Kern: Für ihn beginnt alles wieder bei Schritt 1.'}
 ];
 const ease = t => t < .5 ? 2*t*t : 1 - 2*(1 - t)*(1 - t);
 const easeOut = t => 1 - Math.pow(1 - t, 3);
@@ -1240,12 +1240,28 @@ const Steps = {
     if (!this.keys){this.keys = e => {if (cur !== this) return; if (e.key === 'ArrowRight' || e.key === ' '){e.preventDefault(); this.next();} else if (e.key === 'ArrowLeft') this.go(Math.max(0, this.k - 1), false);}; window.addEventListener('keydown', this.keys);}
   },
   tap(){this.next();},
-  next(){if (this.k < STEPS.length - 1) this.go(this.k + 1, true); else this.go(0, false);},
-  go(k, anim){this.k = k; this.p = anim ? 0 : 1; this.t = 0; this.ui();},
+  next(){if (this.loop) return; if (this.k < STEPS.length - 1) this.go(this.k + 1, true); else this.startLoop();},
+  go(k, anim){if (!(k === 1 && anim)) this.nx0 = null; this.loop = null; this.k = k; this.p = anim ? 0 : 1; this.t = 0; this.ui();},
+  /* Schleife: Kamera zoomt zum nächsten Kern, der dann zum Kern von Schritt 1 wird */
+  startLoop(){
+    if (this.p < 1){this.p = 1;}
+    [this.n235, this.other[0]] = [this.other[0], this.n235];
+    this.n235.excite = 0; this.n235.deform = 0; this.other[0].excite = 0;
+    this.loop = {u:0}; this.ui();
+  },
+  loopGeo(){
+    const g = this.geo(), s = g.s, M = Math.min(W, H*1.3), a = this.nang[0];
+    const st = [g.cx + Math.cos(a)*0.6*M*0.55, g.cy + Math.sin(a)*0.6*M*0.42];
+    const op = [W*0.86, g.cy - H*0.3], Ro = packRadius(235)*s*0.55, S1 = 1/0.55;
+    let dx = op[0] - st[0], dy = op[1] - st[1]; const dl = Math.hypot(dx, dy) || 1; dx /= dl; dy /= dl;
+    const E = [op[0] - dx*(Ro + 6), op[1] - dy*(Ro + 6)], len = Math.max(1, Math.hypot(E[0] - st[0], E[1] - st[1]));
+    const D = Math.max(20, Math.min(0.5*(g.cx - g.R - 51), S1*len*0.55)), f1 = 1 - D/(S1*len);
+    return {g, st, op, Ro, S1, E, len, f1, th:Math.atan2(dy, dx)};
+  },
   ui(){
     document.querySelectorAll('#a_list button').forEach(b => b.classList.toggle('on', +b.dataset.i === this.k));
     const el = $('#a_txt'); if (el) el.innerHTML = `<b>Schritt ${this.k + 1}: ${STEPS[this.k].t}</b><br>${STEPS[this.k].txt}`;
-    const nx = $('#a_next'); if (nx) nx.textContent = this.k < STEPS.length - 1 ? 'Weiter ▶' : 'Von vorn ↺';
+    const nx = $('#a_next'); if (nx){nx.textContent = this.k < STEPS.length - 1 ? 'Weiter ▶' : 'Weiter zum Anfang ↻'; nx.disabled = !!this.loop;}
     const bk = $('#a_back'); if (bk) bk.disabled = this.k === 0;
     const U5 = nucHTML(235, 92, 'U'), U6 = nucHTML(236, 92, 'U', true), BA = nucHTML(144, 56, 'Ba'), KR = nucHTML(89, 36, 'Kr');
     setEq([
@@ -1265,13 +1281,17 @@ const Steps = {
     this.t += dt;
     const d = STEPS[this.k].d;
     if (this.p < 1 && d > 0) this.p = Math.min(1, this.p + dt*(this.slow ? 0.35 : 1)/d);
+    if (this.loop){
+      this.loop.u = Math.min(1, this.loop.u + dt*(this.slow ? 0.35 : 1)/3.2);
+      if (this.loop.u >= 1){const q = this.loopGeo(); this.nx0 = q.g.cx - q.S1*(q.Ro + 6 + (1 - q.f1)*q.len); this.loop = null; this.k = 0; this.p = 1; this.ui();}
+    }
     for (const n of [this.n235, this.n236, this.ba, this.kr, ...this.other]) n.update(dt);
   },
   /* Zustandsgrößen aus Schritt und Fortschritt */
   state(){
     const k = this.k, p = this.p, g = this.geo();
     const st = {nx:null, nuc:'235', deform:0, excite:0, frag:0, fd:0, nr:0, heat:0, chain:0, beta:0, absorb:0};
-    const nStart = 40, nEnd = g.cx - g.R - 6;
+    const nStart = this.nxo != null ? this.nxo : this.nx0 != null ? this.nx0 : 40, nEnd = g.cx - g.R - 6;
     if (k === 0){st.nx = nStart;}
     else if (k === 1){const a = Math.min(1, p/0.75); st.nx = lerp(nStart, nEnd, ease(a)); if (p >= 0.75){st.nx = null; st.nuc = '236'; st.absorb = (p - 0.75)/0.25; st.excite = 0.25*st.absorb;}}
     else if (k === 2){st.nuc = '236'; st.excite = 0.25 + p*0.6; st.deform = Math.min(0.95, Math.pow(p, 1.6)*0.95) + 0.05*Math.sin(this.t*16)*(1 - p*0.7);}
@@ -1285,15 +1305,40 @@ const Steps = {
     return st;
   },
   draw(){
+    if (!this.loop){this.scene({}); this.dotsDraw(); return;}
+    const q = this.loopGeo(), u = this.loop.u, e = ease(u), C = [q.g.cx, q.g.cy];
+    const S = Math.pow(q.S1, e), ph = -q.th*e, Q = [lerp(C[0], q.op[0], e), lerp(C[1], q.op[1], e)];
+    const cam = () => {ctx.translate(C[0], C[1]); ctx.scale(S, S); ctx.rotate(ph); ctx.translate(-Q[0], -Q[1]);};
+    const fr = lerp(0.15, q.f1, e);
+    // alte Szene (Schritt 6) mit mitfahrender Kamera
+    ctx.save(); cam(); this.scene({hideOther0:true, frac:fr}); ctx.restore();
+    // Position des Zielkerns auf dem Bildschirm
+    const ox = (q.op[0] - Q[0])*S, oy = (q.op[1] - Q[1])*S, c = Math.cos(ph), sn = Math.sin(ph);
+    const nsx = C[0] + ox*c - oy*sn, nsy = C[1] + ox*sn + oy*c;
+    // neue Szene (Schritt 1) öffnet sich in einem wachsenden Kreis um den Zielkern
+    if (u > 0.35){
+      const w = Math.pow((u - 0.35)/0.65, 2), r = q.Ro*S + 10 + w*Math.hypot(W, H)*1.1;
+      const dist = Math.hypot(q.E[0] - q.st[0], q.E[1] - q.st[1])*(1 - fr) + q.Ro + 6;
+      ctx.save(); ctx.beginPath(); ctx.arc(nsx, nsy, r, 0, TAU); ctx.clip(); ctx.clearRect(0, 0, W, H);
+      cam(); ctx.translate(q.op[0], q.op[1]); ctx.rotate(q.th); ctx.scale(1/q.S1, 1/q.S1); ctx.translate(-C[0], -C[1]);
+      const k0 = this.k, p0 = this.p; this.k = 0; this.p = 1; this.nxo = C[0] - q.S1*dist;
+      this.scene({hideMain:true});
+      this.k = k0; this.p = p0; this.nxo = null; ctx.restore();
+      ctx.strokeStyle = `rgba(255,214,102,${0.5*(1 - w)})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(nsx, nsy, r, 0, TAU); ctx.stroke();
+    }
+    this.n235.draw(nsx, nsy, q.g.s*0.55*S, lerp(0.85, 1, e));
+    this.dotsDraw();
+  },
+  scene(o){
     const g = this.geo(), st = this.state(), s = g.s;
     // Kristallgitter
-    const L = g.L, cols = Math.ceil(W/L) + 1, rows = Math.ceil(H/L) + 1;
-    for (let i = 0; i < cols; i++) for (let j = 0; j < rows; j++){
+    const L = g.L, cols = Math.ceil(W/L) + 1, rows = Math.ceil(H/L) + 1, mi = this.loop ? Math.ceil(cols*0.45) : 0, mj = this.loop ? Math.ceil(rows*0.6) : 0;
+    for (let i = -mi; i < cols + mi; i++) for (let j = -mj; j < rows + mj; j++){
       const x0 = (i + 0.5)*L - (W % L)/2, y0 = (j + 0.5)*L - (H % L)/2;
       if (Math.hypot(x0 - g.cx, y0 - g.cy) < g.R + L*0.6 && !st.frag) continue;
       const near = Math.exp(-Math.pow((y0 - g.cy)/(L*1.6), 2));
       const h = st.heat*(0.35 + 0.65*near), amp = 1 + h*6;
-      const x = x0 + Math.sin(this.t*(9 + i*1.3) + j)*amp*0.6, y = y0 + Math.cos(this.t*(8 + j*1.1) + i)*amp*0.6;
+      const x = x0 + Math.sin(this.t*(9 + Math.abs(i)*1.3) + j)*amp*0.6, y = y0 + Math.cos(this.t*(8 + j*1.1) + i)*amp*0.6;
       ball(x, y, Math.max(3, s*0.55), h > 0.3 ? '#c98a5a' : '#6f7b8f', 0.45 + h*0.3);
     }
     if (st.heat > 0){glow(g.cx, g.cy, W*0.45, `rgba(255,120,40,${0.12*st.heat})`); label('Wärme: Die Gitteratome schwingen stärker', g.cx, g.cy + g.R + 64, 15, `rgba(255,190,140,${Math.min(1, st.heat*1.5)})`, 'center', 700);}
@@ -1301,17 +1346,16 @@ const Steps = {
     // weitere Urankerne
     const op = [[W*0.86, g.cy - H*0.3], [W*0.12, g.cy + H*0.3]];
     this.other.forEach((n, i) => {
-      const hit = i === 0 && st.chain > 0.82;
-      if (hit){n.excite = 0.6; n.exciteDecay = 0;} else n.excite = 0;
-      n.draw(op[i][0], op[i][1], s*0.55, 0.85);
+      n.excite = 0;
+      if (!(i === 0 && o.hideOther0)) n.draw(op[i][0], op[i][1], s*0.55, 0.85);
       nucText(235, 92, 'U', op[i][0], op[i][1] + packRadius(235)*s*0.55 + 18, 15, '#dbe5f7', 'center');
-      if (hit) label('nächste Spaltung …', op[i][0], op[i][1] - packRadius(235)*s*0.55 - 14, 15, '#ffd666', 'center', 800);
+      if (i === 0 && st.chain > 0.4) label('nächster Kern', op[i][0], op[i][1] - packRadius(235)*s*0.55 - 14, 15, '#ffd666', 'center', 800);
     });
     // Kern(e)
     if (!st.frag){
       const n = st.nuc === '235' ? this.n235 : this.n236;
       n.deform = st.deform; n.excite = st.excite; n.exciteDecay = 0;
-      n.draw(g.cx, g.cy, s);
+      if (!o.hideMain) n.draw(g.cx, g.cy, s);
       if (st.absorb > 0 && st.absorb < 1){ctx.strokeStyle = `rgba(255,255,255,${1 - st.absorb})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(g.cx - g.R, g.cy, 8 + st.absorb*30, 0, TAU); ctx.stroke();}
       nucText(st.nuc === '235' ? 235 : 236, 92, 'U', g.cx, g.cy + g.R*(1 - st.deform*0.3) + 34, 28, st.nuc === '235' ? SFILM.u235 : SFILM.u236, 'center');
       if (st.nuc === '236') label('Zwischenkern, instabil', g.cx, g.cy - g.R*(1 - st.deform*0.3) - 22, 15, '#ff9a8e', 'center', 700);
@@ -1340,9 +1384,9 @@ const Steps = {
       this.nang.forEach((a, i) => {
         let x = g.cx + Math.cos(a)*st.nr*Math.min(W, H*1.3)*0.55, y = g.cy + Math.sin(a)*st.nr*Math.min(W, H*1.3)*0.42;
         if (i === 0 && st.chain > 0){
-          const c = easeOut(Math.min(1, st.chain/0.85)), tx = op[0][0] - packRadius(235)*s*0.55 - 6, ty = op[0][1];
+          const Ro = packRadius(235)*s*0.55 + 6, dl = Math.hypot(op[0][0] - x, op[0][1] - y) || 1;
+          const tx = op[0][0] - (op[0][0] - x)/dl*Ro, ty = op[0][1] - (op[0][1] - y)/dl*Ro, c = o.frac != null ? o.frac : 0.15*easeOut(st.chain);
           x = lerp(x, tx, c); y = lerp(y, ty, c);
-          if (st.chain > 0.82) return;
         }
         ball(x, y, Math.max(6, s*0.95), COL.n);
         if (this.k === 3 || this.k === 4 || (this.k === 5 && i === 0)) label(this.k === 5 ? 'abgebremst' : 'schnell', x, y - 18, 13, '#dfe6ef', 'center', 700);
@@ -1354,6 +1398,8 @@ const Steps = {
       ball(st.nx, g.cy, Math.max(7, s*0.95), COL.n); label('Neutron', st.nx, g.cy - 22, 15, '#dfe6ef', 'center', 700);
       label('langsam', st.nx, g.cy + 24, 13, '#9fb0d0', 'center');
     }
+  },
+  dotsDraw(){
     // Schrittanzeige
     const n = STEPS.length, w = Math.min(W - 40, 360), x0 = (W - w)/2, y0 = H - 14;
     for (let i = 0; i < n; i++){const x = x0 + w*i/(n - 1), on = i === this.k, done = i < this.k || (on && this.p >= 1);
