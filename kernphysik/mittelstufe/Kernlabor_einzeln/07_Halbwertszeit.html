@@ -1192,6 +1192,174 @@ const Fission = {
   }
 };
 
+/* ===================== Reiter: Spaltung Schritt für Schritt ===================== */
+/* Der Ablauf wie auf dem Arbeitsblatt (Filmleiste). Jeder Zustand ergibt sich aus Schritt k und Fortschritt p (0..1),
+   so kann man vor- und zurückspringen. Zwischen zwei Schritten wird animiert. */
+const STEPS = [
+  {t:'Ausgangslage', d:0, txt:'Ein <b>langsames Neutron</b> (etwa 2 km/s) fliegt auf einen Uran-235-Kern zu. Das Uran sitzt in einem Brennstab, umgeben von den Atomen des Kristallgitters.'},
+  {t:'Einfang', d:1.8, txt:'Das Neutron wird vom Kern <b>eingefangen</b>. Es entsteht kurzzeitig der Zwischenkern <b>Uran-236</b>. Er ist instabil.'},
+  {t:'Verformung', d:2.2, txt:'Der Zwischenkern gerät ins <b>Schwingen</b> und wird in die Länge gezogen, ähnlich wie ein schwingender Wassertropfen.'},
+  {t:'Spaltung', d:1.4, txt:'Der Kern <b>zerplatzt</b> in zwei mittelschwere Bruchstücke, hier <b>Barium-144</b> und <b>Krypton-89</b>. Dabei werden <b>3 sehr schnelle Neutronen</b> frei (mehr als 10 000 km/s).'},
+  {t:'Abbremsen und Wärme', d:2.6, txt:'Die Bruchstücke sind positiv geladen und <b>stoßen sich ab</b>. Sie können nicht frei wegfliegen, sondern werden im Kristallgitter schnell <b>abgebremst</b>. Ihre Bewegungsenergie wird zu <b>Wärme</b>: Die Atome des Gitters schwingen stärker.'},
+  {t:'Kettenreaktion und Zerfall', d:3.2, txt:'Ein Neutron wird abgebremst und trifft den nächsten Uran-235-Kern. Es kann ihn spalten: <b>Kettenreaktion</b>. Die Bruchstücke sind <b>radioaktiv</b> und zerfallen weiter, meist durch β⁻-Strahlung.'}
+];
+const ease = t => t < .5 ? 2*t*t : 1 - 2*(1 - t)*(1 - t);
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+const SFILM = {u235:'#ffffff', u236:'#ff6b5a', frag:'#8fb8ff'};
+const Steps = {
+  key:'ablauf', title:'Spaltung: Ablauf',
+  init(){
+    this.k = 0; this.p = 1; this.slow = false; this.t = 0;
+    this.n235 = new Nucleus(92, 143, 235); this.n236 = new Nucleus(92, 144, 236);
+    this.ba = new Nucleus(56, 88, 144); this.kr = new Nucleus(36, 53, 89); this.ba.spin = 0.12; this.kr.spin = -0.12;
+    this.other = [new Nucleus(92, 143, 7), new Nucleus(92, 143, 11)]; this.other.forEach(n => n.spin = 0.1);
+    this.nang = [-0.5, 0.95, 2.35];
+  },
+  panel(){
+    return `<h2>Spaltung Schritt für Schritt</h2>
+    <div class="row"><button class="btn" id="a_back">◀ Zurück</button><button class="btn main" id="a_next">Weiter ▶</button></div>
+    <div class="list" id="a_list">${STEPS.map((s, i) => `<button class="btn" data-i="${i}">${i + 1}. ${s.t}</button>`).join('')}</div>
+    <div class="row"><button class="btn sm" id="a_again">Schritt wiederholen</button><button class="btn sm" id="a_reset">Von vorn</button></div>
+    ${sw('a_slow', 'Zeitlupe', this.slow)}
+    <div class="info big" id="a_txt"></div>
+    <details><summary>Tipp für den Unterricht</summary><div>Ein Tippen auf das Bild geht ebenfalls einen Schritt weiter. Mit einer Tastatur gehen auch die Pfeiltasten.<br>Die Schritte entsprechen der Filmleiste auf dem Arbeitsblatt. Das Bild mit dem langgezogenen Kern und der Beschriftung „Uran-235“ passt nicht: Verformt wird erst der Zwischenkern Uran-236.</div></details>
+    <details><summary>Woher kommt die Energie?</summary><div>Die Bruchstücke sind zusammen etwas leichter als der Uran-236-Kern. Diese fehlende Masse ist als Energie frei geworden (E = m · c²), etwa <b>200 MeV</b> pro Spaltung. Den größten Teil nehmen die Bruchstücke als Bewegungsenergie mit. Beim Abbremsen im Gitter wird daraus Wärme.</div></details>
+    <details><summary>Was ist hier vereinfacht?</summary><div>• Atome und Kerne sind nicht maßstäblich. In Wirklichkeit ist ein Atom etwa 100 000-mal so groß wie sein Kern.<br>• Das Abbremsen der Neutronen geschieht in einem Kernkraftwerk vor allem im Wasser (Moderator), nicht im Brennstab.<br>• Statt Barium-144 und Krypton-89 können auch viele andere Bruchstücke entstehen, mit 2 oder 3 Neutronen.<br>• Die Bewegungen sind stark verlangsamt.</div></details>`;
+  },
+  bind(){
+    $('#a_next').onclick = () => this.next();
+    $('#a_back').onclick = () => this.go(Math.max(0, this.k - 1), false);
+    $('#a_again').onclick = () => this.go(this.k, this.k > 0);
+    $('#a_reset').onclick = () => this.go(0, false);
+    $('#a_slow').onchange = e => {this.slow = e.target.checked;};
+    document.querySelectorAll('#a_list button').forEach(b => b.onclick = () => {const i = +b.dataset.i; this.go(i, i === this.k + 1);});
+    this.ui();
+  },
+  enter(){
+    setHint('');
+    if (!this.keys){this.keys = e => {if (cur !== this) return; if (e.key === 'ArrowRight' || e.key === ' '){e.preventDefault(); this.next();} else if (e.key === 'ArrowLeft') this.go(Math.max(0, this.k - 1), false);}; window.addEventListener('keydown', this.keys);}
+  },
+  tap(){this.next();},
+  next(){if (this.k < STEPS.length - 1) this.go(this.k + 1, true); else this.go(0, false);},
+  go(k, anim){this.k = k; this.p = anim ? 0 : 1; this.t = 0; this.ui();},
+  ui(){
+    document.querySelectorAll('#a_list button').forEach(b => b.classList.toggle('on', +b.dataset.i === this.k));
+    const el = $('#a_txt'); if (el) el.innerHTML = `<b>Schritt ${this.k + 1}: ${STEPS[this.k].t}</b><br>${STEPS[this.k].txt}`;
+    const nx = $('#a_next'); if (nx) nx.textContent = this.k < STEPS.length - 1 ? 'Weiter ▶' : 'Von vorn ↺';
+    const bk = $('#a_back'); if (bk) bk.disabled = this.k === 0;
+    const U5 = nucHTML(235, 92, 'U'), U6 = nucHTML(236, 92, 'U', true), BA = nucHTML(144, 56, 'Ba'), KR = nucHTML(89, 36, 'Kr');
+    setEq([
+      `${H_N()} + ${U5}<span class="small">langsames Neutron und Uran-235</span>`,
+      `${H_N()} + ${U5} → ${U6}<span class="small">Zwischenkern Uran-236</span>`,
+      `${U6}<span class="small">instabil: schwingt und verformt sich</span>`,
+      `${U6} → ${BA} + ${KR} + 3 ${H_N()}<span class="small">zwei Bruchstücke und drei schnelle Neutronen</span>`,
+      `${U6} → ${BA} + ${KR} + 3 ${H_N()} + Energie<span class="small">etwa 200 MeV, wird zu Wärme</span>`,
+      `${BA} + ${KR} + 3 ${H_N()}<span class="small">Neutronen → weitere Spaltungen · Bruchstücke radioaktiv</span>`
+    ][this.k]);
+  },
+  geo(){
+    const port = PORT(), s = Math.min(port ? 11 : 14, Math.min(W*(PHONE() ? 0.34 : 0.45), H*0.5)/2/packRadius(236));
+    return {cx:W*0.5, cy:H*(port ? 0.52 : 0.56), s, R:packRadius(236)*s, L:Math.max(44, s*7), port};
+  },
+  update(dt){
+    this.t += dt;
+    const d = STEPS[this.k].d;
+    if (this.p < 1 && d > 0) this.p = Math.min(1, this.p + dt*(this.slow ? 0.35 : 1)/d);
+    for (const n of [this.n235, this.n236, this.ba, this.kr, ...this.other]) n.update(dt);
+  },
+  /* Zustandsgrößen aus Schritt und Fortschritt */
+  state(){
+    const k = this.k, p = this.p, g = this.geo();
+    const st = {nx:null, nuc:'235', deform:0, excite:0, frag:0, fd:0, nr:0, heat:0, chain:0, beta:0, absorb:0};
+    const nStart = 40, nEnd = g.cx - g.R - 6;
+    if (k === 0){st.nx = nStart;}
+    else if (k === 1){const a = Math.min(1, p/0.75); st.nx = lerp(nStart, nEnd, ease(a)); if (p >= 0.75){st.nx = null; st.nuc = '236'; st.absorb = (p - 0.75)/0.25; st.excite = 0.25*st.absorb;}}
+    else if (k === 2){st.nuc = '236'; st.excite = 0.25 + p*0.6; st.deform = Math.min(0.95, Math.pow(p, 1.6)*0.95) + 0.05*Math.sin(this.t*16)*(1 - p*0.7);}
+    else {
+      st.frag = 1;
+      const d3 = g.R*0.55 + W*0.05;
+      if (k === 3){st.fd = lerp(g.R*0.55, d3, easeOut(p)); st.nr = easeOut(p)*0.6; st.flash = 1 - p;}
+      else {const d4 = d3 + W*0.14; st.fd = k === 4 ? lerp(d3, d4, easeOut(p)) : d4; st.nr = 0.6; st.heat = k === 4 ? p : 1;
+        if (k === 5){st.chain = p; st.beta = p;}}
+    }
+    return st;
+  },
+  draw(){
+    const g = this.geo(), st = this.state(), s = g.s;
+    // Kristallgitter
+    const L = g.L, cols = Math.ceil(W/L) + 1, rows = Math.ceil(H/L) + 1;
+    for (let i = 0; i < cols; i++) for (let j = 0; j < rows; j++){
+      const x0 = (i + 0.5)*L - (W % L)/2, y0 = (j + 0.5)*L - (H % L)/2;
+      if (Math.hypot(x0 - g.cx, y0 - g.cy) < g.R + L*0.6 && !st.frag) continue;
+      const near = Math.exp(-Math.pow((y0 - g.cy)/(L*1.6), 2));
+      const h = st.heat*(0.35 + 0.65*near), amp = 1 + h*6;
+      const x = x0 + Math.sin(this.t*(9 + i*1.3) + j)*amp*0.6, y = y0 + Math.cos(this.t*(8 + j*1.1) + i)*amp*0.6;
+      ball(x, y, Math.max(3, s*0.55), h > 0.3 ? '#c98a5a' : '#6f7b8f', 0.45 + h*0.3);
+    }
+    if (st.heat > 0){glow(g.cx, g.cy, W*0.45, `rgba(255,120,40,${0.12*st.heat})`); label('Wärme: Die Gitteratome schwingen stärker', g.cx, g.cy + g.R + 64, 15, `rgba(255,190,140,${Math.min(1, st.heat*1.5)})`, 'center', 700);}
+    if (this.k === 0 || this.k === 1) label('Atome des Kristallgitters (nicht maßstäblich)', W - 12, H - 30, 12, '#8798b8', 'right');
+    // weitere Urankerne
+    const op = [[W*0.86, g.cy - H*0.3], [W*0.12, g.cy + H*0.3]];
+    this.other.forEach((n, i) => {
+      const hit = i === 0 && st.chain > 0.82;
+      if (hit){n.excite = 0.6; n.exciteDecay = 0;} else n.excite = 0;
+      n.draw(op[i][0], op[i][1], s*0.55, 0.85);
+      nucText(235, 92, 'U', op[i][0], op[i][1] + packRadius(235)*s*0.55 + 18, 15, '#dbe5f7', 'center');
+      if (hit) label('nächste Spaltung …', op[i][0], op[i][1] - packRadius(235)*s*0.55 - 14, 15, '#ffd666', 'center', 800);
+    });
+    // Kern(e)
+    if (!st.frag){
+      const n = st.nuc === '235' ? this.n235 : this.n236;
+      n.deform = st.deform; n.excite = st.excite; n.exciteDecay = 0;
+      n.draw(g.cx, g.cy, s);
+      if (st.absorb > 0 && st.absorb < 1){ctx.strokeStyle = `rgba(255,255,255,${1 - st.absorb})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(g.cx - g.R, g.cy, 8 + st.absorb*30, 0, TAU); ctx.stroke();}
+      nucText(st.nuc === '235' ? 235 : 236, 92, 'U', g.cx, g.cy + g.R*(1 - st.deform*0.3) + 34, 28, st.nuc === '235' ? SFILM.u235 : SFILM.u236, 'center');
+      if (st.nuc === '236') label('Zwischenkern, instabil', g.cx, g.cy - g.R*(1 - st.deform*0.3) - 22, 15, '#ff9a8e', 'center', 700);
+    } else {
+      const ay = g.port ? 0.35 : 0.18;
+      const pb = [g.cx - st.fd, g.cy - st.fd*ay], pk = [g.cx + st.fd, g.cy + st.fd*ay];
+      this.ba.draw(pb[0], pb[1], s); this.kr.draw(pk[0], pk[1], s);
+      const rb = packRadius(144)*s, rk = packRadius(89)*s;
+      nucText(144, 56, 'Ba', pb[0], pb[1] + rb + 30, 26, SFILM.frag, 'center');
+      nucText(89, 36, 'Kr', pk[0], pk[1] + rk + 30, 26, SFILM.frag, 'center');
+      if (this.k === 3 && this.p < 1 || this.k === 4 && this.p < 0.6){
+        arrow(pb[0] - rb - 6, pb[1], pb[0] - rb - 46, pb[1] - 46*ay, '#ffd7a8'); arrow(pk[0] + rk + 6, pk[1], pk[0] + rk + 46, pk[1] + 46*ay, '#ffd7a8');
+      }
+      if (this.k >= 4) label(this.k === 4 && this.p < 1 ? 'Abstoßung · Abbremsen im Gitter' : 'abgebremst', g.cx, g.cy - g.R - 40, 15, '#ffd7a8', 'center', 700);
+      if (st.flash > 0){glow(g.cx, g.cy, 40 + (1 - st.flash)*W*0.4, `rgba(255,236,170,${st.flash*0.7})`); label('Energie', g.cx, g.cy, 30, `rgba(255,236,170,${st.flash})`, 'center', 800);}
+      // β⁻-Zerfall der Bruchstücke
+      if (st.beta > 0.3){
+        const b = (st.beta - 0.3)/0.7;
+        [[pb, rb, -2.4], [pk, rk, 0.7]].forEach(([p0, r0, a]) => {
+          const dd = r0 + 10 + b*60; ball(p0[0] + Math.cos(a)*dd, p0[1] + Math.sin(a)*dd, 5, COL.e, 1 - b*0.5);
+          symText('e', '', '−', p0[0] + Math.cos(a)*dd, p0[1] + Math.sin(a)*dd - 14, 18, '#9cc4ff', 'center');
+          label('radioaktiv', p0[0], p0[1] - r0 - 14, 14, '#ff9a8e', 'center', 800);
+        });
+      }
+      // schnelle Neutronen
+      this.nang.forEach((a, i) => {
+        let x = g.cx + Math.cos(a)*st.nr*Math.min(W, H*1.3)*0.55, y = g.cy + Math.sin(a)*st.nr*Math.min(W, H*1.3)*0.42;
+        if (i === 0 && st.chain > 0){
+          const c = easeOut(Math.min(1, st.chain/0.85)), tx = op[0][0] - packRadius(235)*s*0.55 - 6, ty = op[0][1];
+          x = lerp(x, tx, c); y = lerp(y, ty, c);
+          if (st.chain > 0.82) return;
+        }
+        ball(x, y, Math.max(6, s*0.95), COL.n);
+        if (this.k === 3 || this.k === 4 || (this.k === 5 && i === 0)) label(this.k === 5 ? 'abgebremst' : 'schnell', x, y - 18, 13, '#dfe6ef', 'center', 700);
+        if (this.k === 3 && this.p < 1){const ln = 22; ctx.strokeStyle = 'rgba(223,230,239,.5)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x - Math.cos(a)*10, y - Math.sin(a)*10); ctx.lineTo(x - Math.cos(a)*(10 + ln), y - Math.sin(a)*(10 + ln)); ctx.stroke();}
+      });
+    }
+    // einfallendes Neutron
+    if (st.nx !== null){
+      ball(st.nx, g.cy, Math.max(7, s*0.95), COL.n); label('Neutron', st.nx, g.cy - 22, 15, '#dfe6ef', 'center', 700);
+      label('langsam', st.nx, g.cy + 24, 13, '#9fb0d0', 'center');
+    }
+    // Schrittanzeige
+    const n = STEPS.length, w = Math.min(W - 40, 360), x0 = (W - w)/2, y0 = H - 14;
+    for (let i = 0; i < n; i++){const x = x0 + w*i/(n - 1), on = i === this.k, done = i < this.k || (on && this.p >= 1);
+      ctx.fillStyle = on ? '#ffd666' : done ? '#5aa0ff' : 'rgba(255,255,255,.25)'; ctx.beginPath(); ctx.arc(x, y0, on ? 7 : 5, 0, TAU); ctx.fill();}
+  }
+};
 /* ===================== Reiter 6: Kettenreaktion und kritische Masse ===================== */
 /* Modell für schnelle Neutronen in einer Uran-Metallkugel (Dichte 19 g/cm³).
    Wirkungsquerschnitte in barn (effektive Werte für schnelle Neutronen). */
