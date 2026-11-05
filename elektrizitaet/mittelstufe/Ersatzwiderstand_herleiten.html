@@ -15,6 +15,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 #app{display:grid;grid-template-rows:auto minmax(0,1fr);height:100vh;height:100dvh}
 #top{display:flex;align-items:center;gap:.5rem;padding:.35rem .6rem;background:#1f2a3d;color:#fff;min-width:0}
 #top.hidden{display:none}
+#top .tlong{display:none}
 #top h1{font-size:1rem;margin:0 .4rem 0 0;white-space:nowrap;color:#cfe0ff;font-weight:700}
 .tabs{display:flex;gap:.3rem;flex:1 1 auto;min-width:0}
 .tab{border:0;border-radius:.55rem;background:#2d3b54;color:#e8eefb;padding:.4rem .75rem;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -124,6 +125,36 @@ table.cmp .eqi{font-family:"Cambria Math","STIX Two Math","Times New Roman",seri
 .field .lab{font-family:"Cambria Math","STIX Two Math","Times New Roman",serif;font-size:1.15rem;min-width:3.5rem;text-align:right}
 .numin.right{border-color:var(--ok);background:var(--ok-bg)}.numin.wrong{border-color:var(--bad);background:var(--bad-bg)}
 .stars{color:#d97706;letter-spacing:.05em}
+/* Übersicht */
+#page4.on{display:block;overflow:auto;-webkit-overflow-scrolling:touch}
+#page4 .scroll{max-width:62rem;margin:0 auto;overflow:visible}
+.sumhead{display:flex;justify-content:space-between;align-items:center;gap:.8rem;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:.8rem;padding:.6rem .9rem;margin-bottom:.6rem}
+.sumhead h2{margin:0 0 .3rem}
+.sumhead .meta{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;font-size:.85rem;color:var(--muted)}
+.sumname{font:inherit;font-size:1rem;padding:.3rem .5rem;border:1.5px solid var(--line);border-radius:.5rem;width:14rem;max-width:100%;-webkit-user-select:text;user-select:text}
+.big{text-align:center}
+.big .st{font-size:2.4rem;letter-spacing:.08em;line-height:1;color:#d97706}
+.big .pt{font-size:.85rem;color:var(--muted);font-weight:600}
+.st .off{color:#d6dbe4}
+.sumgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.6rem}
+.sumgrid .card{margin:0}
+.sumgrid h3{display:flex;justify-content:space-between;gap:.4rem;align-items:baseline}
+.sumgrid h3 .st{font-size:1.15rem;color:#d97706;white-space:nowrap}
+.chips{display:flex;flex-wrap:wrap;gap:.3rem}
+.chip{display:inline-flex;flex-direction:column;align-items:center;min-width:3.1rem;border-radius:.5rem;padding:.2rem .3rem;border:1.5px solid;font-size:.78rem;line-height:1.2;text-align:center}
+.chip b{font-size:1rem}
+.chip.g{background:#dcfce7;border-color:#16a34a;color:#14532d}
+.chip.y{background:#fef3c7;border-color:#d97706;color:#78350f}
+.chip.r{background:#fee2e2;border-color:#dc2626;color:#7f1d1d}
+.chip.n{background:#f1f3f7;border-color:#cfd6e2;color:#6b7385}
+.sumlegend{display:flex;flex-wrap:wrap;gap:.3rem .9rem;align-items:center;font-size:.8rem;color:var(--muted);margin-top:.6rem}
+.sumlegend .chip{min-width:0;flex-direction:row;padding:0 .35rem;font-size:.75rem}
+.p1{font-size:.85rem;border-radius:.45rem;padding:.05rem .45rem;border:1.5px solid;white-space:nowrap}
+.p1.g{background:#dcfce7;border-color:#16a34a;color:#14532d}.p1.n{background:#f1f3f7;border-color:#cfd6e2;color:#6b7385}
+.chip .tm{font-size:.7rem;opacity:.85;font-variant-numeric:tabular-nums}
+.sumfast{margin-top:.6rem;font-size:.9rem;background:#fff;border:1px solid var(--line);border-radius:.6rem;padding:.35rem .7rem}
+.sumfast.warn{background:#fff7d6;border-color:#e0b100}
+.sumtip{margin-top:.6rem;font-size:.9rem;background:#eef4ff;border:1px solid #bfd2fb;border-radius:.6rem;padding:.4rem .7rem}
 /* SVG */
 svg text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:19px;fill:#1d2433}
 svg .sym{font-style:italic}
@@ -178,12 +209,35 @@ svg .val{font-weight:600}
  .card{padding:.5rem .6rem}
  table.cmp{font-size:.78rem}
  .phases .ph{font-size:.68rem;padding:.1rem .45rem}
+ .sumgrid{grid-template-columns:1fr;gap:.4rem}
+ #page4 .scroll{padding:.4rem .45rem}
+ .sumhead{flex-wrap:nowrap;padding:.4rem .55rem;margin-bottom:.4rem;gap:.4rem}
+ .sumhead h2{font-size:.95rem;margin-bottom:.2rem}
+ .sumhead .meta{font-size:.68rem;gap:.15rem .4rem}
+ .sumname{width:10rem;padding:.2rem .4rem;font-size:.9rem}
+ .big .st{font-size:1.5rem}
+ .big .pt{font-size:.68rem}
+ .sumgrid .card{padding:.35rem .5rem}
+ .sumgrid h3{font-size:.9rem;margin:0 0 .3rem}
+ .chips{gap:.2rem}
+ .chip{min-width:2.35rem;padding:.05rem .15rem;font-size:.62rem;line-height:1.15}
+ .chip b{font-size:.82rem}
+ .chip .tm{font-size:.6rem}
+ .sumgrid .note{display:none}
+ .sumfast,.sumtip{font-size:.75rem;margin-top:.4rem;padding:.3rem .5rem}
+ .sumlegend{font-size:.65rem;gap:.15rem .5rem;margin-top:.4rem}
 }
 /* Handy quer: Hinweis zum Drehen */
 @media (orientation:landscape) and (max-height:500px) and (pointer:coarse){
  body:not(.norotate) #rotate{display:flex;position:fixed;inset:0;z-index:100;background:rgba(15,23,42,.92);color:#fff;align-items:center;justify-content:center;text-align:center;padding:1rem}
  #rotate .rbox{max-width:26rem}
  #rotate .btn{color:#1d2433;margin-top:.5rem}
+}
+/* iPad hochkant: Übersicht zweispaltig, Titel weg, damit die vier Reiter passen */
+@media (orientation:portrait) and (min-width:641px) and (max-width:900px){
+ #top h1{display:none}
+ .sumgrid{grid-template-columns:1fr 1fr}
+ .sumgrid .card:first-child{grid-column:1 / -1}
 }
 @media (orientation:portrait){
  .page{grid-template-columns:1fr;grid-template-rows:minmax(0,42fr) minmax(0,58fr)}
@@ -199,6 +253,7 @@ svg .val{font-weight:600}
    <button class="tab on" data-tab="1">1 · Parallel<span class="tlong">: Herleitung</span></button>
    <button class="tab" data-tab="2">2 · Reihe<span class="tlong">: selbst herleiten</span></button>
    <button class="tab" data-tab="3">3 · Übungen</button>
+   <button class="tab" data-tab="4">4 · Übersicht</button>
   </div>
   <button class="tool" id="aminus" title="Schrift kleiner">A−</button>
   <button class="tool" id="aplus" title="Schrift größer">A+</button>
@@ -278,6 +333,11 @@ svg .val{font-weight:600}
     <button class="btn primary" id="tnext">Nächste ▶</button>
    </div>
   </div>
+ </div>
+
+ <!-- ===================== Übersicht ===================== -->
+ <div class="page" id="page4">
+  <div class="scroll" id="scroll4"><div id="sum"></div></div>
  </div>
 </div>
 <div id="rotate"><div class="rbox"><div style="font-size:3rem">📱↻</div><p><b>Bitte dreh dein Handy ins Hochformat.</b></p><p>Auf dem Handy ist das Programm für das Hochformat gebaut.</p><button class="btn" id="rotOk">Trotzdem quer weiter</button></div></div>
@@ -402,8 +462,8 @@ document.getElementById('showTop').onclick=()=>document.getElementById('top').cl
 let tab=1;
 function goTab(n){ tab=n;
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',+t.dataset.tab===n));
-  [1,2,3].forEach(k=>document.getElementById('page'+k).classList.toggle('on',tab===k));
-  if(tab===1) render1(); else if(tab===2) render2(); else render3(); }
+  [1,2,3,4].forEach(k=>document.getElementById('page'+k).classList.toggle('on',tab===k));
+  if(tab===1) render1(); else if(tab===2) render2(); else if(tab===3) render3(); else render4(); }
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>goTab(+b.dataset.tab));
 
 /* =================================================================
@@ -460,7 +520,7 @@ const STEPS=[
   c:`<p>Stell eigene Werte ein und beobachte: Wie verändert sich ${Rg}, wenn du ${R2} sehr groß machst? Was passiert bei zwei gleich großen Widerständen?</p>`}
 ];
 const P_EQ=9, P_EX=10, P_KW=13, P_OWN=15; // Schrittnummern: Ergebnis, Beispiel, Kehrwert, Selbst rechnen
-let step=0;
+let step=0, max1=0; // max1: weitester erreichter Schritt (für die Übersicht)
 
 function dLine(nr,eq,tag,cur){ return `<div class="ln ${cur?'cur':'old'}"><span class="nr">${nr}</span><span class="eq">${eq}</span><span class="tag">${tag}</span></div>`; }
 /* Zeile einer Gleichungskette: links steht R_ges nur in der ersten Zeile, sonst unsichtbar (damit die = untereinander stehen) */
@@ -533,7 +593,7 @@ let lastStepDrawn=-1;
 function render1(){
   const st=STEPS[step];
   document.getElementById('phases').innerHTML=PH.map((p,i)=>`<span class="ph ${i===st.ph?'on':''}">${p}</span>`).join('');
-  document.getElementById('stTitle').innerHTML=st.t;
+  document.getElementById('stTitle').innerHTML=st.t; max1=Math.max(max1,step);
   const b=document.getElementById('board1');
   b.innerHTML=st.board==='d'?boardDeriv(step):st.board==='e'?boardEx(step):boardOwn();
   if(step>=8&&st.board==='d') setTimeout(()=>b.querySelectorAll('.cx').forEach(e=>e.classList.add('on')),350);
@@ -551,7 +611,7 @@ document.getElementById('next').onclick=()=>{ if(step<STEPS.length-1){step++;ren
 document.getElementById('prev').onclick=()=>{ if(step>0){step--;render1();} };
 document.getElementById('restart').onclick=()=>{ step=0; render1(); };
 document.getElementById('dots').onclick=e=>{ const d=e.target.closest('.dot'); if(d){ step=+d.dataset.i; render1(); } };
-document.addEventListener('keydown',e=>{ if(tab===3||e.target.tagName==='INPUT') return; const k=tab===1?'':'2';
+document.addEventListener('keydown',e=>{ if(tab>2||e.target.tagName==='INPUT') return; const k=tab===1?'':'2';
   if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){ e.preventDefault(); document.getElementById('next'+k).click(); }
   if(e.key==='ArrowLeft'||e.key==='PageUp'){ e.preventDefault(); document.getElementById('prev'+k).click(); } });
 
@@ -627,7 +687,7 @@ const RS=[
   c:`<p><b>In der Reihenschaltung addieren sich die Widerstände.</b> ${Rg} ist größer als jeder Einzelwiderstand: Der Strom muss durch beide hindurch.</p>`}
 ];
 const R_LAST=RS.length-1, R_SOLVED=R_LAST-1; // Schritt mit dem Ergebnis
-const R2S=RS.map(()=>({ans:null,tries:0,tip:false,shown:false}));
+const R2S=RS.map(()=>({ans:null,tries:0,tip:false,shown:false,tipUsed:false,t0:null,dt:null}));
 let s2=0, reach2=0, numIn2='';
 const okIdx=st=>st.o.findIndex(o=>o.ok);
 function solved2(i){ const st=RS[i], z=R2S[i]; return !st.q||z.shown||(z.ans!==null&&st.o[z.ans].ok); }
@@ -692,6 +752,7 @@ function render2(){
   b.innerHTML=boardSeries(s2);
   if(s2>=R_SOLVED&&solved2(R_SOLVED)) setTimeout(()=>b.querySelectorAll('.cx').forEach(e=>e.classList.add('on')),350);
   const com=st.c?`<div class="comment">${st.c}</div>`:'';
+  if(st.q&&R2S[s2].t0===null&&tab===2) R2S[s2].t0=Date.now();
   document.getElementById('q2').innerHTML=st.q?qCard(s2):st.res?com+resultCard():'';
   document.getElementById('comment2').innerHTML=st.res?'':com;
   const d=document.getElementById('dots2'); d.dataset.pos=`${s2+1} / ${RS.length}`;
@@ -699,8 +760,8 @@ function render2(){
   document.getElementById('prev2').disabled=s2===0;
   const nx=document.getElementById('next2'); nx.disabled=!solved2(s2);
   nx.textContent=s2===0?'Los geht’s ▶':s2===R_LAST?'Weiter zu 3 · Übungen ▶':'Weiter ▶';
-  document.querySelectorAll('#q2 .opt').forEach(o=>o.onclick=()=>{ const z=R2S[s2]; z.ans=+o.dataset.j; z.tries++; if(solved2(s2)) z.tip=false; render2(); showFb(); });
-  const tp=document.getElementById('q2tip'); if(tp) tp.onclick=()=>{ R2S[s2].tip=!R2S[s2].tip; render2(); };
+  document.querySelectorAll('#q2 .opt').forEach(o=>o.onclick=()=>{ const z=R2S[s2]; z.ans=+o.dataset.j; z.tries++; if(z.dt===null) z.dt=(Date.now()-z.t0)/1000; if(solved2(s2)) z.tip=false; render2(); showFb(); });
+  const tp=document.getElementById('q2tip'); if(tp) tp.onclick=()=>{ R2S[s2].tip=!R2S[s2].tip; R2S[s2].tipUsed=true; render2(); };
   const so=document.getElementById('q2sol'); if(so) so.onclick=()=>{ R2S[s2].shown=true; render2(); showFb(); };
   const nb=document.getElementById('numBtn'); if(nb){ const inp=document.getElementById('numIn');
     nb.onclick=()=>{ numIn2=inp.value; render2(); }; inp.onkeydown=e=>{ if(e.key==='Enter') nb.click(); }; }
@@ -710,7 +771,7 @@ function render2(){
 function showFb(){ const f=[...document.querySelectorAll('#q2 .fb')].pop(); if(f) f.scrollIntoView({block:'nearest',behavior:'smooth'}); }
 document.getElementById('next2').onclick=()=>{ if(s2===R_LAST){ tI=0; goTab(3); document.getElementById('scroll3').scrollTop=0; } else if(solved2(s2)){ s2++; reach2=Math.max(reach2,s2); render2(); } };
 document.getElementById('prev2').onclick=()=>{ if(s2>0){ s2--; render2(); } };
-document.getElementById('restart2').onclick=()=>{ s2=0; reach2=0; numIn2=''; R2S.forEach(z=>Object.assign(z,{ans:null,tries:0,tip:false,shown:false})); render2(); };
+document.getElementById('restart2').onclick=()=>{ s2=0; reach2=0; numIn2=''; R2S.forEach(z=>Object.assign(z,{ans:null,tries:0,tip:false,shown:false,tipUsed:false,t0:null,dt:null})); render2(); };
 document.getElementById('dots2').onclick=e=>{ const d=e.target.closest('.dot'); if(d&&!d.disabled){ s2=+d.dataset.i; render2(); } };
 
 /* =================================================================
@@ -775,7 +836,7 @@ const TASKS=[
   tip:`Schau auf die Potenzialfarben: Welche Spannung liegt an jeder Lampe?`,
   sol:`Jede Lampe liegt an 12 V: <span class="eqi">${I1} = ${I2} = 0,12${AMP}</span>, <span class="eqi">${Ig} = 0,24${AMP}</span>, <span class="eqi">${Rg} = 50${OHM}</span>.`}
 ];
-const TS=TASKS.map(t=>({inp:t.f?t.f.map(()=>''):[],res:t.f?t.f.map(()=>null):[],mc:null,tries:0,tip:false,sol:false,done:false}));
+const TS=TASKS.map(t=>({inp:t.f?t.f.map(()=>''):[],res:t.f?t.f.map(()=>null):[],mc:null,tries:0,tip:false,sol:false,done:false,tipUsed:false,peek:false,t0:null,dt:null}));
 let tI=0;
 function parseNum(s){ s=String(s).trim().replace(/\s/g,'').replace(',','.').replace(/[^0-9.\-eE]/g,''); return s===''?NaN:parseFloat(s); }
 function judge(f,v){
@@ -787,7 +848,7 @@ function judge(f,v){
   return {ok:false,fb:'Das stimmt noch nicht. Prüf deinen Rechenweg oder hol dir einen Tipp.'};
 }
 function render3(){
-  const t=TASKS[tI], st=TS[tI];
+  const t=TASKS[tI], st=TS[tI]; if(st.t0===null&&tab===3) st.t0=Date.now();
   const stars=n=>'★'.repeat(n);
   let L='<div class="tl">';
   [1,2,3].forEach(lv=>{ L+=`<span class="lvl">${stars(lv)}</span>`; TASKS.forEach((x,i)=>{ if(x.lv===lv) L+=`<button class="tn ${i===tI?'on':''} ${TS[i].done?'ok':''}" data-i="${i}">${i+1}${TS[i].done?' ✓':''}</button>`; }); });
@@ -810,7 +871,7 @@ function render3(){
   document.getElementById('tbody').innerHTML=s;
   const n=TS.filter(x=>x.done).length;
   document.getElementById('tscore').innerHTML=`<span style="font-size:.9rem;color:var(--muted)">gelöst: <b>${n}</b> von ${TASKS.length}</span>`;
-  document.getElementById('tprev').disabled=tI===0; document.getElementById('tnext').disabled=tI===TASKS.length-1;
+  document.getElementById('tprev').disabled=tI===0; document.getElementById('tnext').textContent=tI===TASKS.length-1?'Zur Übersicht ▶':'Nächste ▶';
   // Schaltplan
   const o={lbl:t.lbl,U:t.U||12,R1:100,R2:300,nobox:true};
   if(t.type==='s'){ const r1=parseFloat(t.lbl.R1)||1,r2=parseFloat(t.lbl.R2); o.U2=t.phiM!==undefined?t.phiM:(t.U||12)*(isNaN(r2)?0.5:r2/(r1+r2)); }
@@ -819,13 +880,58 @@ function render3(){
   // Ereignisse
   document.querySelectorAll('#tlist .tn').forEach(b=>b.onclick=()=>{ tI=+b.dataset.i; render3(); });
   document.querySelectorAll('#tbody .numin').forEach(inp=>{ inp.oninput=()=>{ st.inp[+inp.dataset.k]=inp.value; }; inp.onkeydown=e=>{ if(e.key==='Enter') document.getElementById('tcheck').click(); }; });
-  const c=document.getElementById('tcheck'); if(c) c.onclick=()=>{ st.tries++; st.res=t.f.map((f,k)=>judge(f,parseNum(st.inp[k]))); if(st.res.every(r=>r.ok)) st.done=true; render3(); };
-  document.querySelectorAll('#tbody .opt').forEach(b=>b.onclick=()=>{ st.mc=+b.dataset.j; st.tries++; if(t.o[st.mc].ok) st.done=true; render3(); });
-  document.getElementById('ttip').onclick=()=>{ st.tip=!st.tip; render3(); };
-  document.getElementById('tsol').onclick=()=>{ st.sol=!st.sol; render3(); };
+  const c=document.getElementById('tcheck'); if(c) c.onclick=()=>{ const leer=st.inp.every(v=>String(v).trim()===''); if(!leer){ if(st.dt===null) st.dt=(Date.now()-st.t0)/1000; if(!st.done) st.tries++; } st.res=t.f.map((f,k)=>judge(f,parseNum(st.inp[k]))); if(st.res.every(r=>r.ok)) st.done=true; render3(); };
+  document.querySelectorAll('#tbody .opt').forEach(b=>b.onclick=()=>{ if(st.done) return; if(st.dt===null) st.dt=(Date.now()-st.t0)/1000; st.mc=+b.dataset.j; st.tries++; if(t.o[st.mc].ok) st.done=true; render3(); });
+  document.getElementById('ttip').onclick=()=>{ st.tip=!st.tip; if(!st.done) st.tipUsed=true; render3(); };
+  document.getElementById('tsol').onclick=()=>{ st.sol=!st.sol; if(!st.done) st.peek=true; render3(); };
 }
 document.getElementById('tprev').onclick=()=>{ if(tI>0){ tI--; render3(); document.getElementById('scroll3').scrollTop=0; } };
-document.getElementById('tnext').onclick=()=>{ if(tI<TASKS.length-1){ tI++; render3(); document.getElementById('scroll3').scrollTop=0; } };
+document.getElementById('tnext').onclick=()=>{ if(tI<TASKS.length-1){ tI++; render3(); document.getElementById('scroll3').scrollTop=0; } else goTab(4); };
+
+/* =================================================================
+   ÜBERSICHT: Ergebnisse auf einen Blick (für Screenshot/Moodle-Abgabe).
+   Nichts wird gespeichert oder verschickt; der Name steht nur in der Anzeige.
+   g = beim ersten Versuch richtig, y = nach mehreren Versuchen, r = Lösung angesehen, n = offen
+   ================================================================= */
+let sumName=''; const T_START=Date.now();
+/* Unter diesen Zeiten (Sekunden bis zur ersten Antwort) gilt eine Antwort als „sehr schnell“: kaum Bedenkzeit, evtl. geraten oder abgeschrieben */
+const FAST2=6, FAST3=20, FAST3MC=10;
+const secs=x=>x===null?'':x<60?Math.round(x)+' s':Math.floor(x/60)+' min '+String(Math.round(x%60)).padStart(2,'0')+' s';
+const GR={g:{p:2,s:'✓'},y:{p:1,s:'≈'},r:{p:0,s:'✗'},n:{p:0,s:'–'}};
+function grade2(i){ const z=R2S[i]; if(z.shown) return 'r'; if(!solved2(i)) return 'n'; return z.tries===1?'g':'y'; }
+function grade3(i){ const z=TS[i]; if(z.peek) return 'r'; if(!z.done) return 'n'; return z.tries===1?'g':'y'; }
+function starsOf(p,max){ const q=max?p/max:0, n=q>=.85?3:q>=.6?2:q>=.3?1:0; return '★'.repeat(n)+`<span class="off">${'★'.repeat(3-n)}</span>`; }
+const RLAB=['<i>I</i>','<i>U</i>','<i>U</i><sub>1</sub>, <i>U</i><sub>2</sub>','Start','<i>U</i> ersetzt','<i>U</i><sub>1</sub>, <i>U</i><sub>2</sub> ersetzt','ausklammern','Ergebnis'];
+function chip(gr,top,sub,tip,dt,fast){ return `<span class="chip ${gr}"><b>${top}</b><span>${GR[gr].s}${tip?' 💡':''}${fast?' ⚡':''}</span>${sub?`<span>${sub}</span>`:''}${dt!==undefined&&dt!==null?`<span class="tm">${secs(dt)}</span>`:''}</span>`; }
+function render4(){
+  const qs=RS.map((st,i)=>st.q?i:-1).filter(i=>i>=0);
+  const g2=qs.map(grade2), g3=TASKS.map((_,i)=>grade3(i));
+  const p2=g2.reduce((a,g)=>a+GR[g].p,0), m2=qs.length*2, p3=g3.reduce((a,g)=>a+GR[g].p,0), m3=TASKS.length*2;
+  const probe=numIn2!==''&&Math.abs(parseFloat(String(numIn2).replace(',','.'))-400)<0.5;
+  const p1done=max1>=STEPS.length-1;
+  const f2=qs.map(i=>R2S[i].dt!==null&&R2S[i].dt<FAST2), f3=TASKS.map((t,i)=>TS[i].dt!==null&&TS[i].dt<(t.mc?FAST3MC:FAST3));
+  const nFast=f2.filter(Boolean).length+f3.filter(Boolean).length, nAns=qs.filter(i=>R2S[i].dt!==null).length+TS.filter(x=>x.dt!==null).length;
+  const hm=d=>d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+  const now=new Date().toLocaleString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  let s=`<div class="sumhead"><div><h2>Meine Ergebnisse · Ersatzwiderstand</h2>
+    <div class="meta"><input class="sumname" id="sumName" value="${sumName.replace(/"/g,'&quot;')}" placeholder="Dein Name" autocomplete="off"><span>Stand: ${now}</span><span>· gearbeitet seit ${hm(new Date(T_START))} (${Math.round((Date.now()-T_START)/60000)} min)</span></div></div>
+    <div class="big"><div class="st">${starsOf(p2+p3,m2+m3)}</div><div class="pt">${p2+p3} von ${m2+m3} Punkten</div></div></div>
+   <div class="sumgrid">
+    <div class="card"><h3><span>1 · Parallel</span><span class="p1 ${p1done?'g':'n'}">${p1done?'✓':'–'} ${Math.min(max1+1,STEPS.length)} / ${STEPS.length} Schritte</span></h3>
+     <p class="note" style="margin:.2rem 0 0">${p1done?'Herleitung bis zum Ende durchgearbeitet.':'Herleitung noch nicht bis zum Ende durchgearbeitet.'} (ohne Punkte)</p></div>
+    <div class="card"><h3><span>2 · Reihe</span><span class="st">${starsOf(p2,m2)}</span></h3>
+     <div class="chips">${qs.map((i,k)=>chip(g2[k],k+1,RLAB[k],R2S[i].tipUsed,R2S[i].dt,f2[k])).join('')}${chip(probe?'g':'n','Probe',probe?'400 Ω':'')}</div>
+     <p class="note" style="margin:.4rem 0 0">${p2} von ${m2} Punkten</p></div>
+    <div class="card"><h3><span>3 · Übungen</span><span class="st">${starsOf(p3,m3)}</span></h3>
+     <div class="chips">${TASKS.map((t,i)=>chip(g3[i],i+1,'★'.repeat(t.lv),TS[i].tipUsed,TS[i].dt,f3[i])).join('')}</div>
+     <p class="note" style="margin:.4rem 0 0">${p3} von ${m3} Punkten · gelöst: ${TS.filter(x=>x.done).length} von ${TASKS.length}</p></div>
+   </div>
+   <div class="sumfast ${nFast?'warn':''}">⚡ Sehr schnell beantwortet: <b>${nFast}</b> von ${nAns} Antworten${nFast?' (kaum Bedenkzeit)':''}</div>
+   <div class="sumlegend"><span class="chip g">✓</span> beim ersten Versuch richtig (2 Punkte)<span class="chip y">≈</span> nach mehreren Versuchen (1 Punkt)<span class="chip r">✗</span> Lösung angesehen<span class="chip n">–</span> noch offen<span>💡 Tipp genutzt</span><span>⚡ sehr schnell (Reihe unter ${FAST2} s, Übungen unter ${FAST3} s)</span><span>Zeit = bis zur ersten Antwort</span></div>
+   <div class="sumtip">📷 Mach einen <b>Screenshot</b> von dieser Seite und gib ihn in Moodle ab. Hinweis: Die Ergebnisse werden nicht gespeichert. Wenn du die Seite neu lädst, beginnt alles von vorn.</div>`;
+  document.getElementById('sum').innerHTML=s;
+  const n=document.getElementById('sumName'); n.oninput=()=>{ sumName=n.value; };
+}
 
 /* Smartphone: Schaltplan umschalten/einklappen, Vollbild nur wenn möglich, Drehhinweis */
 document.querySelectorAll('.swap').forEach(b=>b.onclick=()=>b.closest('.left').classList.toggle('alt'));
@@ -833,7 +939,7 @@ document.querySelectorAll('.fold').forEach(b=>b.onclick=()=>b.closest('.left').c
 document.getElementById('rotOk').onclick=()=>document.body.classList.add('norotate');
 { const el=document.documentElement; if(!el.requestFullscreen&&!el.webkitRequestFullscreen) document.getElementById('fs').style.display='none'; }
 /* Start */
-applyFs(); render1(); render2(); render3();
+applyFs(); render1(); render2(); render3(); render4();
 </script>
 <!-- KI-Hinweis: einheitlich in allen Simulationen, immer sichtbar unten rechts -->
 <style>
