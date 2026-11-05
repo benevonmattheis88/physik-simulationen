@@ -40,6 +40,8 @@ kernphysik/
 optik/
   mittelstufe/
     Prisma_Labor.html
+  oberstufe/
+    Beugungslabor.html        Beugung an Einzelspalt, Doppelspalt und Gitter
 archiv/                       eingefrorene ältere Stände, gleiche Ordnerstruktur,
                               Dateiname mit Datum, z. B. Kurvenlabor_2026-10-28.html
 ```
