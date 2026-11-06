@@ -51,7 +51,7 @@ h2 { font-family: var(--display); font-weight: 700; font-size: 0.8rem; text-tran
 .presets { display: flex; flex-wrap: wrap; gap: 8px; }
 .presets button, .run button {
   font: 600 0.95rem var(--body); color: var(--ink); background: transparent; border: 1px solid var(--line);
-  border-radius: 6px; padding: 7px 12px; cursor: pointer;
+  border-radius: 6px; padding: 7px 12px; cursor: pointer; min-height: 2.75rem;
 }
 .presets button:hover, .run button:hover { border-color: var(--accent); }
 .presets button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--panel); }
@@ -64,8 +64,10 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .tools { display: flex; gap: 6px; margin-left: auto; align-self: center; flex-wrap: wrap; }
 .tools button {
   font: 700 0.95rem var(--body); color: var(--ink); background: var(--panel); border: 1px solid var(--line);
-  border-radius: 6px; min-width: 2.75rem; min-height: 2.75rem; padding: 0 10px; cursor: pointer;
+  border-radius: 10px; min-width: 44px; min-height: 44px; padding: 0 10px; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
 }
+.tools button svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .tools button:hover { border-color: var(--accent); }
 .tools .quick { display: none; }
 .tools .quick.go { background: var(--accent); border-color: var(--accent); color: var(--panel); }
@@ -81,7 +83,10 @@ body.nopanel .grid { grid-template-columns: minmax(0, 1fr); }
 .field input { grid-column: 1 / -1; width: 100%; }
 .c1 { color: var(--cart1); } .c2 { color: var(--cart2); }
 .note { font-size: 0.85rem; color: var(--muted); margin: 0; }
-.check { display: flex; gap: 8px; align-items: center; font-size: 0.95rem; }
+.check { display: flex; gap: 8px; align-items: center; font-size: 0.95rem; min-height: 2.2rem; }
+.check input { width: 1.4rem; height: 1.4rem; margin: 0; flex: 0 0 auto; }
+.dias { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+.dias h2 { margin-bottom: 4px; }
 .right { display: grid; gap: 16px; min-width: 0; }
 table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
 .tablebox { overflow-x: auto; }
@@ -100,11 +105,12 @@ td { font-family: var(--mono); font-size: 0.9rem; }
 .summary { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 12px; font-size: 0.95rem; }
 .summary b { font-family: var(--mono); }
 .vt canvas { width: 100%; height: 13rem; display: block; }
+@media (max-width: 640px) { .dias { grid-template-columns: minmax(0, 1fr); } }
 .legend { display: flex; gap: 16px; font-size: 0.85rem; color: var(--muted); margin-top: 6px; flex-wrap: wrap; }
 .swatch { display: inline-block; width: 14px; height: 3px; vertical-align: middle; margin-right: 6px; }
 /* iPad und Beamer im Querformat: alles auf einen Bildschirm */
 @media (min-width: 900px) and (orientation: landscape) {
-  body { padding-block: 12px; }
+  body { padding-block: 8px 16px; }
   .wrap { max-width: 1400px; grid-template-columns: 330px minmax(0, 1fr); grid-template-areas: "head head" "pre stage" "ctrl right"; gap: 12px; align-items: start; }
   header { grid-area: head; }
   h1 { font-size: 1.5rem; }
@@ -115,13 +121,22 @@ td { font-family: var(--mono); font-size: 0.9rem; }
   .ctrl { grid-area: ctrl; gap: 8px; }
   .right { grid-area: right; gap: 12px; }
   .panel { padding: 10px 12px; }
-  .stage canvas { height: 128px; }
-  .vt canvas { height: 135px; }
+  .stage canvas { height: 8.6rem; }
+  .vt canvas { height: 7.8rem; }
+  .bar .track { height: 13px; }
+  .summary { margin-top: 6px; }
+  .stage .note { margin-top: 2px; }
+  .presets { display: grid; grid-template-columns: 1fr 1fr; }
+  .presets button { min-height: 2.75rem; line-height: 1.15; }
+  .field { grid-template-columns: 8.2rem minmax(0, 1fr) 4.9rem; grid-template-areas: "l i o"; gap: 0 8px; }
+  .field label { grid-area: l; line-height: 1.15; } .field output { grid-area: o; text-align: right; } .field input { grid-area: i; grid-column: auto; height: 1.9rem; }
+  .ctrl .note { font-size: 0.8rem; }
+  .check { min-height: 2rem; }
   .legend { margin-top: 2px; }
   .vt h2, .right h2, .ctrl h2, .pre h2 { margin-bottom: 6px; }
   .presets { gap: 6px; }
-  .presets button { padding: 5px 9px; font-size: 0.85rem; }
-  .bars { gap: 5px; margin-top: 8px; }
+  .presets button { padding: 4px 9px; font-size: 0.85rem; }
+  .bars { gap: 3px; margin-top: 6px; }
   th, td { padding: 3px 8px; }
   header { flex-wrap: nowrap; align-items: center; }
   header p { flex: 1 1 auto; }
@@ -130,19 +145,25 @@ td { font-family: var(--mono); font-size: 0.9rem; }
   body.nopanel .right { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   body.nopanel .stage canvas { height: 13rem; }
   body.nopanel .vt canvas { height: 15rem; }
+  body.nopanel .right { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); }
 }
 /* iPad hochkant: kompakter, damit alles ohne Scrollen passt */
 @media (min-width: 641px) and (max-width: 900px) and (orientation: portrait) {
-  body { padding-block: 12px; }
+  body { padding-block: 8px 16px; }
   .wrap { gap: 12px; }
   header { flex-wrap: nowrap; align-items: center; }
   header p { flex: 1 1 auto; font-size: 0.85rem; }
   .tools { flex: 0 0 auto; flex-wrap: nowrap; }
-  .grid { grid-template-columns: minmax(0, 290px) minmax(0, 1fr); gap: 12px; }
-  .right { gap: 12px; }
+  .grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "ctrl bil" "vt vt"; gap: 12px; }
+  .right { display: contents; }
+  .ctrl { grid-area: ctrl; gap: 6px; } .bil { grid-area: bil; } .vt { grid-area: vt; }
+  .field { grid-template-columns: 7.6rem minmax(0, 1fr) 4.6rem; grid-template-areas: "l i o"; gap: 0 6px; }
+  .field label { grid-area: l; line-height: 1.15; font-size: 0.9rem; } .field output { grid-area: o; text-align: right; font-size: 0.82rem; } .field input { grid-area: i; grid-column: auto; height: 1.9rem; }
+  .ctrl .note { font-size: 0.8rem; }
   .panel { padding: 10px 12px; }
-  .stage canvas { height: 8.5rem; }
-  .vt canvas { height: 11rem; }
+  .stage canvas { height: 9rem; }
+  .vt canvas { height: 9.4rem; }
+  body.nopanel .grid { grid-template-areas: "bil" "vt"; }
   th, td { padding: 3px 4px; font-size: 0.78rem; }
   .bar { grid-template-columns: 9em 1fr 5.2em; font-size: 0.82rem; gap: 6px; }
 }
@@ -181,13 +202,14 @@ td { font-family: var(--mono); font-size: 0.9rem; }
       <button class="quick" id="qreset" title="Zurücksetzen">↺</button>
       <button id="aminus" title="Schrift kleiner">A−</button>
       <button id="aplus" title="Schrift größer">A+</button>
-      <button id="panelbtn" title="Bedienfeld aus- oder einblenden" aria-pressed="false">Bedienfeld aus</button>
-      <button id="fsbtn" title="Vollbild">⛶</button>
+      <button id="fsbtn" title="Vollbild"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      <button id="panelbtn" title="Bedienfeld aus- oder einblenden" aria-pressed="false"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button>
     </div>
   </header>
 
   <section class="panel stage" aria-label="Fahrbahn">
     <canvas id="track" role="img" aria-label="Fahrbahn mit Wagen 1 (gelb) und Wagen 2 (blau)"></canvas>
+    <p class="note">Jede graue Scheibe auf einem Wagen wiegt 0,25 kg. Vereinfachung: Am Ende der Fahrbahn bleiben die Wagen schlagartig stehen.</p>
   </section>
 
   <section class="panel pre">
@@ -210,6 +232,7 @@ td { font-family: var(--mono); font-size: 0.9rem; }
         <input id="k" type="range" min="0" max="1" step="0.05"></div>
       <p class="note">k = 1: ideal elastisch · k = 0: plastisch (Wagen haften aneinander) · dazwischen: teilelastisch</p>
       <label class="check"><input id="fric" type="checkbox"> Rollreibung wie an der echten Schiene</label>
+      <label class="check"><input id="parr" type="checkbox"> Impulspfeile an den Wagen</label>
       <div class="run">
         <button class="go" id="start">Stoß starten</button>
         <button id="reset">Zurücksetzen</button>
@@ -217,7 +240,7 @@ td { font-family: var(--mono); font-size: 0.9rem; }
     </section>
 
     <div class="right">
-      <section class="panel" aria-label="Bilanz">
+      <section class="panel bil" aria-label="Bilanz">
         <h2>Bilanz unmittelbar vor und nach dem Stoß</h2>
         <div class="tablebox">
           <table>
@@ -240,10 +263,12 @@ td { font-family: var(--mono); font-size: 0.9rem; }
         </div>
       </section>
 
-      <section class="panel vt" aria-label="v-t-Diagramm">
-        <h2>v-t-Diagramm</h2>
-        <canvas id="plot" role="img" aria-label="Geschwindigkeit beider Wagen über der Zeit"></canvas>
-        <div class="legend"><span><i class="swatch" style="background:var(--cart1)"></i>Wagen 1</span><span><i class="swatch" style="background:var(--cart2)"></i>Wagen 2</span><span>Zeit in s, Geschwindigkeit in m/s</span></div>
+      <section class="panel vt" aria-label="v-t- und p-t-Diagramm">
+        <div class="dias">
+          <div><h2>v-t-Diagramm</h2><canvas id="plot" role="img" aria-label="Geschwindigkeit beider Wagen über der Zeit"></canvas></div>
+          <div><h2>p-t-Diagramm</h2><canvas id="plotp" role="img" aria-label="Impuls beider Wagen und Gesamtimpuls über der Zeit"></canvas></div>
+        </div>
+        <div class="legend"><span><i class="swatch" style="background:var(--cart1)"></i>Wagen 1</span><span><i class="swatch" style="background:var(--cart2)"></i>Wagen 2</span><span><i class="swatch" style="background:repeating-linear-gradient(90deg,var(--ink) 0 5px,transparent 5px 8px)"></i>Gesamtimpuls</span><span>t in s, v in m/s, p in Ns</span></div>
       </section>
     </div>
   </div>
@@ -264,7 +289,7 @@ td { font-family: var(--mono); font-size: 0.9rem; }
     { id: "E", label: "E: elastisch m/2m", m1: 0.25, m2: 0.5, v1: 0.5, v2: 0, k: 1 },
     { id: "F", label: "F: Gegenstoß", m1: 0.25, m2: 0.25, v1: 0.5, v2: -0.3, k: 1 },
     { id: "G", label: "G: plastischer Gegenstoß", m1: 0.25, m2: 0.25, v1: 0.5, v2: -0.5, k: 0 },
-    { id: "HA", label: "Hausaufgabe", m1: 0.25, m2: 0.5, v1: 0.6, v2: 0, k: 0.8 }
+    { id: "HA", label: "H: teilelastisch m/2m", m1: 0.25, m2: 0.5, v1: 0.6, v2: 0, k: 0.8 }
   ];
   const $ = id => document.getElementById(id);
   const inputs = ["m1", "m2", "v1", "v2", "k"].reduce((o, id) => (o[id] = $(id), o), {});
@@ -340,7 +365,7 @@ td { font-family: var(--mono); font-size: 0.9rem; }
     state.samples.push([state.t, state.u1, state.u2]);
     draw(); plot();
     const still = state.u1 === 0 && state.u2 === 0;
-    if (state.t < 7 && !(still && state.hit)) raf = requestAnimationFrame(loop);
+    if (state.t < TMAX && !(still && state.hit)) raf = requestAnimationFrame(loop);
     else running = false;
   }
 
@@ -386,50 +411,97 @@ td { font-family: var(--mono); font-size: 0.9rem; }
       const x = pad + m * sx; g.fillRect(x, y + 30, 1, 6);
       g.fillText(fmt(m, 1), x, y + 34 + 12 * f);
     }
-    cart(g, pad + state.x1 * sx, y, CART * sx, css("--cart1"), "1", state.p.m1, state.u1, f);
-    cart(g, pad + state.x2 * sx, y, CART * sx, css("--cart2"), "2", state.p.m2, state.u2, f);
+    const pa = $("parr").checked;
+    cart(g, pad + state.x1 * sx, y, CART * sx, css("--cart1"), "1", state.p.m1, state.u1, f, pa);
+    cart(g, pad + state.x2 * sx, y, CART * sx, css("--cart2"), "2", state.p.m2, state.u2, f, pa);
+    g.textAlign = "left"; g.fillStyle = css("--muted"); g.font = Math.round(11 * f) + "px " + css("--body");
+    g.fillText(pa ? "dünner Pfeil: Geschwindigkeit v · breiter Pfeil: Impuls p" : "Pfeil: Geschwindigkeit v", pad, 4 + 11 * f);
   }
-  function cart(g, x, y, w, col, n, m, u, f) {
-    const h = 22 + (m - 0.25) * 16;
-    g.fillStyle = col; g.fillRect(x, y + 22 - h, w, h);
-    g.fillStyle = css("--panel"); g.font = "700 " + Math.round(13 * f) + "px " + css("--display"); g.textAlign = "center";
-    g.fillText(n, x + w / 2, y + 22 - h / 2 + 5);
+  // Pfeile mit festem Maßstab: 90 px je 1 m/s, 200 px je 1 Ns
+  const VPX = 90, PPX = 200;
+  function arrow(g, cx, ay, len, col, lw, head) {
+    if (Math.abs(len) < 1) return;
+    const dir = Math.sign(len);
+    g.strokeStyle = col; g.fillStyle = col; g.lineWidth = lw;
+    g.beginPath(); g.moveTo(cx, ay); g.lineTo(cx + len - dir * head * 0.5, ay); g.stroke();
+    g.beginPath(); g.moveTo(cx + len + dir * head * 0.6, ay); g.lineTo(cx + len - dir * head * 0.6, ay - head * 0.7); g.lineTo(cx + len - dir * head * 0.6, ay + head * 0.7); g.closePath(); g.fill();
+  }
+  function cart(g, x, y, w, col, n, m, u, f, pa) {
+    const hb = 20, base = y + 22;
+    g.fillStyle = col; g.fillRect(x, base - hb, w, hb);
+    // Zusatzgewichte: je 0,25 kg über der Grundmasse eine Scheibe
+    const nd = Math.max(0, Math.round((m - 0.25) / 0.25)), dh = 6, dw = w * 0.62;
+    for (let i = 0; i < nd; i++) {
+      const yy = base - hb - (i + 1) * (dh + 2);
+      g.fillStyle = css("--ink"); g.globalAlpha = 0.72; g.fillRect(x + (w - dw) / 2, yy, dw, dh); g.globalAlpha = 1;
+    }
+    const top = base - hb - nd * (dh + 2);
+    g.font = "700 " + Math.round(12 * f) + "px " + css("--display"); g.textAlign = "center";
+    const lab = n + " · " + fmt(m) + " kg";
+    g.fillStyle = css("--panel");
+    g.fillText(g.measureText(lab).width < w - 6 ? lab : n, x + w / 2, base - hb / 2 + 4 * f);
     g.fillStyle = css("--ink");
-    [0.22, 0.78].forEach(f => { g.beginPath(); g.arc(x + w * f, y + 24, 4, 0, 7); g.fill(); });
+    [0.22, 0.78].forEach(q => { g.beginPath(); g.arc(x + w * q, y + 24, 4, 0, 7); g.fill(); });
+    const cx = x + w / 2;
+    g.font = Math.round(12 * f) + "px " + css("--mono");
+    let ay = top - 9;
     if (Math.abs(u) > 0.005) {
-      const len = u * 90, ay = y + 2 - h;
-      g.strokeStyle = col; g.fillStyle = col; g.lineWidth = 3;
-      const cx = x + w / 2;
-      g.beginPath(); g.moveTo(cx, ay); g.lineTo(cx + len, ay); g.stroke();
-      const dir = Math.sign(len);
-      g.beginPath(); g.moveTo(cx + len + dir * 8, ay); g.lineTo(cx + len, ay - 5); g.lineTo(cx + len, ay + 5); g.fill();
-      g.font = Math.round(12 * f) + "px " + css("--mono"); g.fillText(fmt(u) + " m/s", cx + len / 2, ay - 8);
+      const len = u * VPX;
+      arrow(g, cx, ay, len, col, 3, 9);
+      g.fillStyle = col; g.fillText(fmt(u) + " m/s", cx + len / 2, ay - 8);
+    }
+    if (pa && Math.abs(u) > 0.005) {
+      ay -= 14 + 13 * f;
+      const len = m * u * PPX;
+      g.globalAlpha = 0.55; arrow(g, cx, ay, len, col, 8, 14); g.globalAlpha = 1;
+      g.fillStyle = col; g.fillText("p = " + fmt(m * u, 3) + " Ns", cx + len / 2, ay - 9);
     }
   }
 
-  function plot() {
-    const [g, W, H] = fit($("plot"));
+  // Diagramme mit festen Achsen; nur wenn Werte nicht hineinpassen, wird die Achse in Stufen erweitert (roter Hinweis)
+  const TMAX = 7;
+  function expected(p) {
+    const rel = p.v1 - p.v2, M = p.m1 + p.m2, P = p.m1 * p.v1 + p.m2 * p.v2;
+    if (rel <= 0) return { n1: p.v1, n2: p.v2 };
+    return { n1: (P - p.m2 * p.k * rel) / M, n2: (P + p.m1 * p.k * rel) / M };
+  }
+  function stage(base, need) { for (const s of [1, 2, 4]) if (need <= base * s + 1e-9) return base * s; return base * 4; }
+  function diagram(id, ymax, base, unit, series, dashed) {
+    const [g, W, H] = fit($(id));
     g.clearRect(0, 0, W, H);
     const f = rem(), l = 30 + 16 * f, r = 10, t = 10, b = 14 + 12 * f, pw = W - l - r, ph = H - t - b;
-    const p = state.p, vmax = Math.max(0.2, Math.abs(p.v1), Math.abs(p.v2)) * 1.4;
-    const tmax = Math.max(3, Math.ceil(state.t));
-    const X = s => l + s / tmax * pw, Y = v => t + (vmax - v) / (2 * vmax) * ph;
+    const X = s => l + s / TMAX * pw, Y = v => t + (ymax - v) / (2 * ymax) * ph;
     g.strokeStyle = css("--line"); g.fillStyle = css("--muted"); g.lineWidth = 1;
     g.font = Math.round(11 * f) + "px " + css("--mono"); g.textAlign = "right";
-    const stepV = vmax > 0.6 ? 0.2 : 0.1;
-    for (let v = -Math.floor(vmax / stepV) * stepV; v <= vmax + 1e-9; v += stepV) {
+    const small = ph < 130, n = small ? 4 : 5, st = ymax / n, lst = small ? st * 2 : st, dg = lst < 0.1 - 1e-9 ? 3 : lst < 1 - 1e-9 && Math.abs(lst * 10 - Math.round(lst * 10)) > 1e-9 ? 2 : 1;
+    for (let i = -n; i <= n; i++) {
+      const v = i * st;
       g.beginPath(); g.moveTo(l, Y(v)); g.lineTo(W - r, Y(v)); g.stroke();
-      g.fillText(fmt(Math.abs(v) < 1e-9 ? 0 : v, 1), l - 6, Y(v) + 4);
+      if (!small || i % 2 === 0) g.fillText(fmt(i === 0 ? 0 : v, dg), l - 6, Y(v) + 4);
     }
     g.textAlign = "center";
-    for (let s = 0; s <= tmax; s++) g.fillText(s, X(s), H - 8);
+    for (let s = 0; s <= TMAX; s++) g.fillText(s, X(s), H - 8);
     g.strokeStyle = css("--muted"); g.beginPath(); g.moveTo(l, Y(0)); g.lineTo(W - r, Y(0)); g.stroke();
-    [[1, "--cart1"], [2, "--cart2"]].forEach(([i, c]) => {
+    g.textAlign = "left"; g.fillText(unit, l + 4, t + 10 * f);
+    if (ymax > base + 1e-9) {
+      g.textAlign = "right"; g.fillStyle = "#c0392b"; g.font = "700 " + Math.round(11 * f) + "px " + css("--body");
+      g.fillText("Achse erweitert: ±" + fmt(ymax, ymax < 1 ? 1 : 0) + " statt ±" + fmt(base, base < 1 ? 1 : 0), W - r - 2, t + 10 * f);
+    }
+    g.save(); g.beginPath(); g.rect(l, t - 2, pw, ph + 4); g.clip();
+    series.forEach(([c, fy, dash]) => {
       if (!state.samples.length) return;
-      g.strokeStyle = css(c); g.lineWidth = 2.5; g.beginPath();
-      state.samples.forEach((s, j) => j ? g.lineTo(X(s[0]), Y(s[i])) : g.moveTo(X(s[0]), Y(s[i])));
+      g.strokeStyle = css(c); g.lineWidth = dash ? 2 : 2.5; g.setLineDash(dash ? [6, 4] : []); g.beginPath();
+      state.samples.forEach((s, j) => j ? g.lineTo(X(s[0]), Y(fy(s))) : g.moveTo(X(s[0]), Y(fy(s))));
       g.stroke();
     });
+    g.restore();
+  }
+  function plot() {
+    const p = state.p, e = expected(p);
+    const vneed = Math.max(Math.abs(p.v1), Math.abs(p.v2), Math.abs(e.n1), Math.abs(e.n2));
+    const pneed = Math.max(Math.abs(p.m1 * p.v1), Math.abs(p.m2 * p.v2), Math.abs(p.m1 * e.n1), Math.abs(p.m2 * e.n2), Math.abs(p.m1 * p.v1 + p.m2 * p.v2));
+    diagram("plot", stage(1, vneed), 1, "v in m/s", [["--cart1", s => s[1]], ["--cart2", s => s[2]]]);
+    diagram("plotp", stage(0.5, pneed), 0.5, "p in Ns", [["--cart1", s => p.m1 * s[1]], ["--cart2", s => p.m2 * s[2]], ["--ink", s => p.m1 * s[1] + p.m2 * s[2], true]]);
   }
 
   /* Direktlink: Stosslabor.html#fall-b öffnet diesen Fall; beim Umschalten zeigt die Adresse den Fall */
@@ -456,6 +528,7 @@ td { font-family: var(--mono); font-size: 0.9rem; }
     active = null; linkSet(""); showParams(); reset();
   }));
   $("fric").addEventListener("change", reset);
+  $("parr").addEventListener("change", draw);
   $("start").addEventListener("click", start);
   $("reset").addEventListener("click", reset);
   window.addEventListener("resize", () => { draw(); plot(); });
@@ -473,7 +546,6 @@ td { font-family: var(--mono); font-size: 0.9rem; }
   $("aminus").addEventListener("click", () => { fsI = Math.max(0, fsI - 1); applyFs(); });
   $("panelbtn").addEventListener("click", () => {
     const off = document.body.classList.toggle("nopanel");
-    $("panelbtn").textContent = off ? "Bedienfeld ein" : "Bedienfeld aus";
     $("panelbtn").setAttribute("aria-pressed", off);
     draw(); plot();
   });

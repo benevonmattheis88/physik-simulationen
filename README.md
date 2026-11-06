@@ -170,7 +170,7 @@ Hängt man an den Link einer Simulation `#` und den Namen eines Reiters an, öff
 | E: elastisch m/2m | https://simulationen.familiemueller.space/mechanik/oberstufe/Stosslabor.html#fall-e |
 | F: Gegenstoß | https://simulationen.familiemueller.space/mechanik/oberstufe/Stosslabor.html#fall-f |
 | G: plastischer Gegenstoß | https://simulationen.familiemueller.space/mechanik/oberstufe/Stosslabor.html#fall-g |
-| Hausaufgabe | https://simulationen.familiemueller.space/mechanik/oberstufe/Stosslabor.html#hausaufgabe |
+| H: teilelastisch m/2m (früher „Hausaufgabe“) | https://simulationen.familiemueller.space/mechanik/oberstufe/Stosslabor.html#hausaufgabe |
 
 ### Prisma-Labor
 
