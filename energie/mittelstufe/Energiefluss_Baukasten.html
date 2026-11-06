@@ -1192,16 +1192,29 @@
   }
   function buildTasks() {
     $("aufListe").innerHTML = TASKS.map((t, i) => `<button data-i="${i}">${esc(t.t)}</button>`).join("");
-    $("aufListe").querySelectorAll("button").forEach(b => b.onclick = () => {
-      U.task = +b.dataset.i;
-      $("aufListe").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
-      $("auftrag").innerHTML = `<b>Auftrag:</b> ${esc(TASKS[U.task].txt)}`;
-      $("auftrag").classList.remove("hidden"); $("aufBtns").classList.remove("hidden"); requestAnimationFrame(resize);
-      loadTask(U.task, "leer");
-    });
+    $("aufListe").querySelectorAll("button").forEach(b => b.onclick = () => openTask(+b.dataset.i));
   }
+  function openTask(i) {
+    U.task = i;
+    $("aufListe").querySelectorAll("button").forEach(x => x.classList.toggle("on", +x.dataset.i === i));
+    $("auftrag").innerHTML = `<b>Auftrag:</b> ${esc(TASKS[U.task].txt)}`;
+    $("auftrag").classList.remove("hidden"); $("aufBtns").classList.remove("hidden"); requestAnimationFrame(resize);
+    loadTask(U.task, "leer"); linkSet();
+  }
+  /* Direktlink: Datei.html#aufgaben öffnet die Aufgaben, #aufgabe-wasserkocher gleich eine Aufgabe; beim Umschalten zeigt die Adresse, was offen ist */
+  const slug = t => t.toLowerCase().replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  function linkKey() { return U.mode !== "auf" ? "frei" : U.task == null ? "aufgaben" : "aufgabe-" + slug(TASKS[U.task].t); }
+  function linkSet() { const k = linkKey(); try { if (location.hash !== "#" + k) history.replaceState(null, "", "#" + k); } catch (e) {} }
+  function linkOpen() {
+    let h = ""; try { h = decodeURIComponent(location.hash.slice(1)).toLowerCase(); } catch (e) {}
+    if (!h || h === linkKey()) return;
+    if (h === "frei") setMode("frei");
+    else if (h === "aufgaben") setMode("auf");
+    else { const i = TASKS.findIndex(t => "aufgabe-" + slug(t.t) === h); if (i >= 0) { setMode("auf"); openTask(i); } }
+  }
+  window.addEventListener("hashchange", linkOpen);
   function setMode(m) {
-    U.mode = m;
+    U.mode = m; linkSet();
     $("tabFrei").classList.toggle("on", m === "frei"); $("tabAuf").classList.toggle("on", m === "auf");
     $("aufSec").classList.toggle("hidden", m !== "auf");
     $("auftrag").classList.toggle("hidden", m !== "auf" || U.task == null);
@@ -1310,7 +1323,7 @@
   syncScale();
   setFs(+store.get("kpkbau_fs") || 1);
   lastW = sv.clientWidth; lastH = sv.clientHeight;
-  fit(); renderSel(); commit();
+  fit(); renderSel(); commit(); linkOpen();
 })();
 </script>
 <!-- KI-Hinweis: einheitlich in allen Simulationen, immer sichtbar unten rechts -->

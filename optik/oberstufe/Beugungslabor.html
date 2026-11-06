@@ -804,9 +804,22 @@
     }
     S.fkey = ""; drawStatic(); drawNear(S.tFrozen);
   }
+  /* Direktlink: Beugungslabor.html#doppelspalt öffnet diese Anordnung, #doppelspalt-herleitung gleich mit der Herleitung;
+     beim Umschalten zeigt die Adresse, was offen ist */
+  const LINKS = { einzel:"einzelspalt", doppel:"doppelspalt", gitter:"gitter" };
+  const linkKey = () => LINKS[S.mode] + (S.pane === "der" ? "-herleitung" : "");
+  function linkSet() { try { if (location.hash !== "#" + linkKey()) history.replaceState(null, "", "#" + linkKey()); } catch (e) {} }
+  function linkOpen() {
+    let h = ""; try { h = decodeURIComponent(location.hash.slice(1)).toLowerCase(); } catch (e) {}
+    const der = /-herleitung$/.test(h), m = Object.keys(LINKS).find(k => LINKS[k] === h.replace(/-herleitung$/, ""));
+    if (!m || h === linkKey()) return;
+    if (m !== S.mode) setMode(m);
+    if ((S.pane === "der") !== der) setPane(der ? "der" : "set");
+  }
+  window.addEventListener("hashchange", linkOpen);
   function setMode(m) {
     SCRW[S.mode] = +$("scrW").value;
-    S.mode = m; $("scrW").value = String(SCRW[m]); S.step = 0;
+    S.mode = m; $("scrW").value = String(SCRW[m]); S.step = 0; linkSet();
     S.fkey = ""; outs(); drawStatic(); drawNear(S.tFrozen);
   }
   function setFs(v) {
@@ -820,7 +833,7 @@
     store.set("beugung_view", v); drawStatic(); drawNear(S.tFrozen);
   }
   function setPane(pn) {
-    S.pane = pn; $("tabSet").classList.toggle("on", pn === "set"); $("tabDer").classList.toggle("on", pn === "der");
+    S.pane = pn; linkSet(); $("tabSet").classList.toggle("on", pn === "set"); $("tabDer").classList.toggle("on", pn === "der");
     $("pSet1").classList.toggle("hidden", pn !== "set"); $("pSet2").classList.toggle("hidden", pn !== "set"); $("pDer").classList.toggle("hidden", pn !== "der");
     if (pn === "der") { $("cbGang").checked = true; renderDer(); }
     drawNear(S.tFrozen);
@@ -886,7 +899,7 @@
   $("scrW").value = String(SCRW[S.mode]);
   setView(store.get("beugung_view") === "sym" ? "sym" : "3d");
   setFs(+store.get("beugung_fs") || 1);
-  outs(); resize();
+  outs(); resize(); linkOpen();
   requestAnimationFrame(loop);
 })();
 </script>

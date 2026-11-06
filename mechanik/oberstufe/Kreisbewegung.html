@@ -469,8 +469,13 @@
       S.data.map(d => `<tr><td>${fmt(d.m, 2)}</td><td>${fmt(d.r, 2)}</td><td>${fmt(d.w, 1)}</td><td>${fmt(d.v, 2)}</td><td>${fmt(d.F, 3)}</td></tr>`).join("") + "</table>";
   }
 
+  /* Direktlink: Kreisbewegung.html#kraft öffnet diesen Reiter; beim Umschalten zeigt die Adresse den Reiter */
+  const LINKS = { desc:"beschreiben", force:"kraft" };
+  function linkGet() { let h = ""; try { h = decodeURIComponent(location.hash.slice(1)).toLowerCase(); } catch (e) {} return Object.keys(LINKS).find(k => LINKS[k] === h); }
+  function linkSet(k) { try { if (location.hash !== "#" + LINKS[k]) history.replaceState(null, "", "#" + LINKS[k]); } catch (e) {} }
+  window.addEventListener("hashchange", () => { const k = linkGet(); if (k && k !== S.mode) setMode(k); });
   function setMode(m) {
-    S.mode = m;
+    S.mode = m; linkSet(m);
     $("tabDesc").classList.toggle("on", m === "desc"); $("tabForce").classList.toggle("on", m === "force");
     document.querySelectorAll(".force").forEach(e => e.classList.toggle("hidden", m !== "force"));
     $("plotwrap").style.display = m === "force" ? "flex" : "none";
@@ -542,7 +547,7 @@
   }
   setView(store.get("kreis_view") === "sym" ? "sym" : "3d");
   setFs(+store.get("kreis_fs") || 1);
-  setMode("desc");
+  setMode(linkGet() || "desc");
   requestAnimationFrame(loop);
 })();
 </script>

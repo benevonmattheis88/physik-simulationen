@@ -635,8 +635,13 @@
     document.querySelectorAll(".mono").forEach(e => e.classList.toggle("hidden", S.light !== "mono"));
     document.body.classList.toggle("noscr", !p.strip);
   }
+  /* Direktlink: Prisma_Labor.html#einfarbig öffnet diesen Reiter; beim Umschalten zeigt die Adresse den Reiter */
+  const LINKS = { white:"weisses-licht", mono:"einfarbig" };
+  function linkGet() { let h = ""; try { h = decodeURIComponent(location.hash.slice(1)).toLowerCase(); } catch (e) {} return Object.keys(LINKS).find(k => LINKS[k] === h); }
+  function linkSet(k) { try { if (location.hash !== "#" + LINKS[k]) history.replaceState(null, "", "#" + LINKS[k]); } catch (e) {} }
+  window.addEventListener("hashchange", () => { const k = linkGet(); if (k && k !== S.light) setLight(k); });
   function setLight(l) {
-    S.light = l; $("tabWhite").classList.toggle("on", l === "white"); $("tabMono").classList.toggle("on", l === "mono");
+    S.light = l; linkSet(l); $("tabWhite").classList.toggle("on", l === "white"); $("tabMono").classList.toggle("on", l === "mono");
     outs(); resize();
   }
   function setFs(v) {
@@ -711,7 +716,7 @@
   if (window.ResizeObserver) { const ro = new ResizeObserver(resize); ro.observe(cv); ro.observe(sc); }
   setView(store.get("prisma_view") === "sym" ? "sym" : "3d");
   setFs(+store.get("prisma_fs") || 1);
-  setLight("white");
+  setLight(linkGet() || "white");
 })();
 </script>
 <!-- KI-Hinweis: einheitlich in allen Simulationen, immer sichtbar unten rechts -->

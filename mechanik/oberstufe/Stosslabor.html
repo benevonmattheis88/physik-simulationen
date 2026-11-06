@@ -432,8 +432,13 @@ td { font-family: var(--mono); font-size: 0.9rem; }
     });
   }
 
+  /* Direktlink: Stosslabor.html#fall-b öffnet diesen Fall; beim Umschalten zeigt die Adresse den Fall */
+  const linkOf = pr => pr.id === "HA" ? "hausaufgabe" : "fall-" + pr.id.toLowerCase();
+  function linkSet(k) { try { if (location.hash !== (k ? "#" + k : "")) history.replaceState(null, "", k ? "#" + k : location.pathname + location.search); } catch (e) {} }
+  function linkGet() { let h = ""; try { h = decodeURIComponent(location.hash.slice(1)).toLowerCase(); } catch (e) {} return PRESETS.find(pr => linkOf(pr) === h); }
+  window.addEventListener("hashchange", () => { const pr = linkGet(); if (pr && pr.id !== active) applyPreset(pr); });
   function applyPreset(pr) {
-    active = pr.id;
+    active = pr.id; linkSet(linkOf(pr));
     ["m1", "m2", "v1", "v2", "k"].forEach(key => inputs[key].value = pr[key]);
     document.querySelectorAll("#presets button").forEach(b => b.setAttribute("aria-pressed", b.dataset.id === pr.id));
     showParams(); reset();
@@ -448,7 +453,7 @@ td { font-family: var(--mono); font-size: 0.9rem; }
   });
   Object.values(inputs).forEach(i => i.addEventListener("input", () => {
     document.querySelectorAll("#presets button").forEach(b => b.setAttribute("aria-pressed", "false"));
-    showParams(); reset();
+    active = null; linkSet(""); showParams(); reset();
   }));
   $("fric").addEventListener("change", reset);
   $("start").addEventListener("click", start);
@@ -483,7 +488,7 @@ td { font-family: var(--mono); font-size: 0.9rem; }
   });
   $("rotok").addEventListener("click", () => document.body.classList.add("norotate"));
   document.documentElement.style.setProperty("--fs", FS[fsI]);
-  applyPreset(PRESETS[0]);
+  applyPreset(linkGet() || PRESETS[0]);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { draw(); plot(); });
 })();
 </script>

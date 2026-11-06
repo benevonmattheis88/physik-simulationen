@@ -1125,7 +1125,7 @@ function show(sc){
   const tb = document.querySelector('#tabs button.on'); if (tb && tb.scrollIntoView) try{tb.scrollIntoView({block:'nearest', inline:'center'});}catch(e){}
   $('#panel').innerHTML = sc.panel(); $('#panel').scrollTop = 0;
   sc.bind(); if (sc.enter) sc.enter();
-  try{localStorage.setItem('fusionslabor_tab', sc.key);}catch(e){}
+  try{localStorage.setItem('fusionslabor_tab', sc.key);}catch(e){} try{if (location.hash !== '#' + sc.key) history.replaceState(null, '', '#' + sc.key);}catch(e){} // Direktlink: Adresse zeigt den Reiter
 }
 function start(){
   const tabs = $('#tabs');
@@ -1157,7 +1157,7 @@ function start(){
   ['fullscreenchange','webkitfullscreenchange'].forEach(ev => document.addEventListener(ev, () => setTimeout(() => {resize(); if (cur){cur.dots = null; cur.ldots = null;}}, 100)));
   apply();
   let k = null; try{k = localStorage.getItem('fusionslabor_tab');}catch(e){}
-  show(SCENES.find(s => s.key === k) || SCENES[0]);
+  const fromHash = () => {let h = ''; try{h = decodeURIComponent(location.hash.slice(1)).toLowerCase();}catch(e){} return SCENES.find(s => s.key === h);}; window.addEventListener('hashchange', () => {const s = fromHash(); if (s && s !== cur) show(s);}); show(fromHash() || SCENES.find(s => s.key === k) || SCENES[0]); // Direktlink: Datei.html#reiter öffnet diesen Reiter
   let last = performance.now();
   const loop = now => {
     const dt = Math.min(0.05, (now - last)/1000); last = now;
