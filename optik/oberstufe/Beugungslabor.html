@@ -38,7 +38,9 @@
   .row input[type=range] { flex:1; min-width:0; height:1.9rem; }
   .row output { flex:0 0 5.4rem; text-align:right; font-variant-numeric:tabular-nums; }
   .row .kb { flex:1; display:flex; gap:6px; }
-  .row .kb button { flex:1; min-height:2.2rem; padding:.2rem; }
+  .row .kb button { flex:1; min-height:2.2rem; padding:.2rem; min-width:0; }
+  .row .kb select { flex:0 0 4.2rem; padding:.2rem; font-size:.95rem; }
+  .row .kb select.on { background:var(--blue); color:#fff; }
   #lam { background:linear-gradient(90deg,#5a0070 0%,#7a00c8 5%,#2a3bff 18%,#00b4ff 30%,#00e070 40%,#c8ff00 50%,#ffd000 55%,#ff7000 64%,#ff0000 75%,#7a0000 100%);
          border-radius:6px; -webkit-appearance:none; appearance:none; height:1.3rem !important; }
   #lam::-webkit-slider-thumb { -webkit-appearance:none; width:1.7rem; height:1.7rem; border-radius:50%; background:var(--lc,#fff); border:3px solid #fff; box-shadow:0 0 0 1px #333, 0 1px 4px rgba(0,0,0,.5); }
@@ -163,12 +165,13 @@
       <div class="row"><label>Wellenlänge λ</label><input id="lam" type="range" min="380" max="780" step="1" value="532"><output id="lamo"></output></div>
       <div id="lamName"><span id="swatch"></span><span id="lamTxt"></span></div>
       <div class="row m-einzel"><label>Spaltbreite b</label><input id="bS" type="range" min="50" max="500" step="5" value="200"><output id="bSo"></output></div>
-      <div class="row m-doppel"><label>Spaltabstand g</label><input id="gD" type="range" min="100" max="1000" step="10" value="500"><output id="gDo"></output></div>
+      <div class="row m-doppel"><label>Spaltabstand g</label><input id="gD" type="range" min="100" max="1000" step="10" value="300"><output id="gDo"></output></div>
       <div class="row m-doppel"><label>Spaltbreite b</label><input id="bD" type="range" min="10" max="200" step="5" value="100"><output id="bDo"></output></div>
       <div class="row m-gitter"><label>Gitterkonstante g</label><input id="gG" type="range" min="1" max="10" step="0.01" value="3.33"><output id="gGo"></output></div>
       <div class="small m-gitter" id="gGlines" style="margin:-.2rem 0 0 8.2rem"></div>
       <div class="row"><label>Schirmabstand a</label><input id="a" type="range" min="0.2" max="5" step="0.05" value="1.5"><output id="ao"></output></div>
-      <div class="row"><label id="kLab">Ordnung k</label><div class="kb" id="kb"><button data-k="1" class="on">1</button><button data-k="2">2</button><button data-k="3">3</button></div></div>
+      <div class="row"><label id="kLab">Ordnung k</label><div class="kb" id="kb"><button data-k="0">0</button><button data-k="1" class="on">1</button><button data-k="2">2</button><button data-k="3">3</button><button data-k="4">4</button><select id="kMore" title="höhere Ordnungen"></select></div></div>
+      <div class="row"><label>Zoom Nahaufnahme</label><div class="kb" id="zb"><button data-z="0">weit</button><button data-z="1">mittel</button><button data-z="2" class="on">nah</button></div></div>
       <div class="row"><label>Schirmausschnitt</label>
         <select id="scrW">
           <option value="2">2 m breit</option>
@@ -189,7 +192,8 @@
         <label><input id="cbGang" type="checkbox" checked>Gangunterschied</label>
         <label><input id="cbCurve" type="checkbox">Intensitätskurve</label>
         <label><input id="cbRun" type="checkbox" checked>Wellen bewegen</label>
-        <label><input id="cbAvg" type="checkbox">Helligkeit (gemittelt)</label>
+        <label><input id="cbField" type="checkbox">Interferenzbild</label>
+        <label id="lbAvg"><input id="cbAvg" type="checkbox">Helligkeit (gemittelt)</label>
       </div>
       <div class="btns"><button id="reset">Zurücksetzen</button></div>
       <div id="expl"></div>
@@ -217,9 +221,9 @@
     get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
     set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   };
-  const DEF = { lam:532, bS:200, gD:500, bD:100, gG:3.33, a:1.5 };
+  const DEF = { lam:532, bS:200, gD:300, bD:100, gG:3.33, a:1.5 };
   const SCRW = { einzel:0.02, doppel:0.02, gitter:2 };
-  const S = { mode:"gitter", view:"3d", fs:1, k:1, pane:"set", step:0, coarse:false, field:null, fkey:"", t0:performance.now(), tFrozen:0, dragA:false };
+  const S = { mode:"gitter", view:"3d", fs:1, k:1, zoom:2, pane:"set", step:0, coarse:false, field:null, fkey:"", t0:performance.now(), tFrozen:0, dragA:false };
   const NAME = { einzel:"Einzelspalt", doppel:"Doppelspalt", gitter:"Gitter" };
   const fmt = (x, d) => (isFinite(x) ? x.toFixed(d).replace(".", ",") : "–");
   const deg = r => r * 180 / Math.PI;
@@ -259,7 +263,7 @@
     const p = { mode:S.mode, lam:+$("lam").value, bS:+$("bS").value, gD:+$("gD").value, bD:+$("bD").value, gG:+$("gG").value,
                 a:+$("a").value, k:S.k, scrW:+$("scrW").value,
                 near:$("cbNear").checked, far:$("cbFar").checked, scr:$("cbScr").checked,
-                gang:$("cbGang").checked, curve:$("cbCurve").checked, run:$("cbRun").checked, avg:$("cbAvg").checked };
+                gang:$("cbGang").checked, curve:$("cbCurve").checked, run:$("cbRun").checked, avg:$("cbAvg").checked, field:$("cbField").checked };
     p.L = p.lam * 1e-9;                                                   // Wellenlänge in m
     if (p.mode === "einzel") { p.b = p.bS * 1e-6; p.d = p.b; }
     else if (p.mode === "doppel") { p.g = p.gD * 1e-6; p.b = p.bD * 1e-6; p.d = p.g; }
@@ -284,6 +288,7 @@
   }
   // Ordnungen: Maxima (Doppelspalt, Gitter) bzw. Minima (Einzelspalt)
   function order(p, k) {
+    if (k === 0) return { k:0, s:0, th:0, dEx:0, dAp:0, dev:0 };
     const s = k * p.L / p.d;
     if (s >= 1) return null;
     const th = Math.asin(s), dEx = p.a * Math.tan(th), dAp = k * p.L * p.a / p.d;
@@ -326,15 +331,16 @@
   // ---------- Nahaufnahme: Wellenfeld nach Huygens ----------
   function nearGeo(W, H, p) {
     const m = p.mode;
-    const Hh = m === "gitter" ? 10 : m === "doppel" ? 700 : 400;           // halbe Bildhöhe in µm (fester Maßstab)
+    const ZH = { gitter:[10, 5, 3], doppel:[700, 400, 220], einzel:[400, 250, 160] };
+    const Hh = ZH[m][S.zoom];                                               // halbe Bildhöhe in µm (feste Zoomstufen)
     const F = m === "gitter" ? 1 : m === "doppel" ? 100 : 50;              // Vergrößerung der gezeichneten Wellenlänge
-    const k = H / (2 * Hh), lamM = p.lam / 1000 * F, x0 = Math.round(Math.min(W * 0.18, 150));
+    const k = H / (2 * Hh), lamM = p.lam / 1000 * F, x0 = Math.round(Math.min(W * 0.22, 170));
     let slits = [];
     if (m === "einzel") slits = [{ c:0, b:p.bS }];
     else if (m === "doppel") slits = [{ c:p.gD / 2, b:p.bD }, { c:-p.gD / 2, b:p.bD }];
     else {
       const R = Hh + (W - x0) / k * 0.8, J = Math.floor(R / p.gG);
-      for (let j = -J; j <= J; j++) slits.push({ c:j * p.gG, b:GB * p.gG });
+      for (let j = -J - 1; j <= J; j++) slits.push({ c:(j + 0.5) * p.gG, b:GB * p.gG });
     }
     return { Hh, F, k, lamM, x0, slits };
   }
@@ -378,28 +384,58 @@
   let img = null;
   function drawNear(tNow) {
     const W = cN.clientWidth, H = cN.clientHeight; if (!W || !H) return;
-    const p = P(), three = S.view === "3d", F = computeField(W, H, p), G = F.G, fz = 14 * S.fs;
-    const { nx, ny, Ar, Ai, Am } = F;
-    if (off.width !== nx || off.height !== ny || !img) { off.width = nx; off.height = ny; img = octx.createImageData(nx, ny); }
-    const ph = 2 * Math.PI * tNow, c = Math.cos(ph), s = Math.sin(ph);
-    const lc = rgbArr(p.lam), ld = colDark(p.lam), D = img.data;
-    const bg = three ? [12, 15, 20] : [252, 253, 254];
-    const tc = three ? lc : ld;
-    for (let i = 0, n = nx * ny; i < n; i++) {
-      let b;
-      if (p.avg) b = Am[i] * Am[i];
-      else { const v = Ar[i] * c + Ai[i] * s; b = (v + Am[i]) * 0.5; }
-      if (b > 1) b = 1;
-      const o = i * 4;
-      D[o] = bg[0] + (tc[0] - bg[0]) * b; D[o + 1] = bg[1] + (tc[1] - bg[1]) * b; D[o + 2] = bg[2] + (tc[2] - bg[2]) * b; D[o + 3] = 255;
+    const p = P(), three = S.view === "3d", fz = 14 * S.fs;
+    let G;
+    const X = x => G.x0 + x * G.k, Y = y => H / 2 - y * G.k;
+    if (p.field) {
+      const F = computeField(W, H, p); G = F.G;
+      const { nx, ny, Ar, Ai, Am } = F;
+      if (off.width !== nx || off.height !== ny || !img) { off.width = nx; off.height = ny; img = octx.createImageData(nx, ny); }
+      const ph = 2 * Math.PI * tNow, c = Math.cos(ph), s = Math.sin(ph);
+      const lc = rgbArr(p.lam), ld = colDark(p.lam), D = img.data;
+      const bg = three ? [12, 15, 20] : [252, 253, 254];
+      const tc = three ? lc : ld;
+      for (let i = 0, n = nx * ny; i < n; i++) {
+        let b;
+        if (p.avg) b = Am[i] * Am[i];
+        else { const v = Ar[i] * c + Ai[i] * s; b = (v + Am[i]) * 0.5; }
+        if (b > 1) b = 1;
+        const o = i * 4;
+        D[o] = bg[0] + (tc[0] - bg[0]) * b; D[o + 1] = bg[1] + (tc[1] - bg[1]) * b; D[o + 2] = bg[2] + (tc[2] - bg[2]) * b; D[o + 3] = 255;
+      }
+      octx.putImageData(img, 0, 0);
+      nctx.imageSmoothingEnabled = true;
+      nctx.clearRect(0, 0, W, H);
+      nctx.drawImage(off, 0, 0, nx * F.cs, ny * F.cs);
+    } else {
+      // ohne Interferenzbild: nur Wellenberge der ankommenden Welle und der Elementarwellen (schnell)
+      G = nearGeo(W, H, p);
+      nctx.fillStyle = three ? "#0c0f14" : "#fcfdfe"; nctx.fillRect(0, 0, W, H);
+      const lam = G.lamM, fr = tNow - Math.floor(tNow), lcs = three ? (a => col(p.lam, a)) : (a => "rgba(" + colDark(p.lam).join(",") + "," + a + ")");
+      nctx.lineWidth = Math.max(1.5, Math.min(3, lam * G.k * 0.12));
+      nctx.strokeStyle = lcs(0.9);
+      for (let n = 0; ; n--) {
+        const x = (n + fr) * lam; if (X(x) < 0) break; if (x > 0) continue;
+        nctx.beginPath(); nctx.moveTo(X(x), 0); nctx.lineTo(X(x), H); nctx.stroke();
+      }
+      const Rmax = Math.hypot(W - G.x0, H) / G.k;
+      let srcs = [];
+      G.slits.forEach(sl => {
+        if (Math.abs(sl.c) - sl.b / 2 > G.Hh + Rmax) return;
+        if (p.mode === "einzel") srcs.push(sl.c + sl.b / 2, sl.c, sl.c - sl.b / 2); else srcs.push(sl.c);
+      });
+      const aBase = srcs.length > 6 ? 0.32 : srcs.length > 2 ? 0.45 : 0.6;
+      nctx.save(); nctx.beginPath(); nctx.rect(G.x0, 0, W - G.x0, H); nctx.clip();
+      for (let n = 0; ; n++) {
+        const r = (n + fr) * lam; if (r > Rmax) break;
+        const a = aBase * Math.max(0.25, 1 - 0.6 * r / Rmax);
+        nctx.strokeStyle = lcs(a);
+        srcs.forEach(yc => { nctx.beginPath(); nctx.arc(X(0), Y(yc), r * G.k, -Math.PI / 2, Math.PI / 2); nctx.stroke(); });
+      }
+      nctx.restore();
     }
-    octx.putImageData(img, 0, 0);
-    nctx.imageSmoothingEnabled = true;
-    nctx.clearRect(0, 0, W, H);
-    nctx.drawImage(off, 0, 0, nx * F.cs, ny * F.cs);
 
     // Blende mit Spalten
-    const X = x => G.x0 + x * G.k, Y = y => H / 2 - y * G.k;
     const ivs = G.slits.map(sl => [Y(sl.c + sl.b / 2), Y(sl.c - sl.b / 2)]).sort((u, v) => u[0] - v[0]);
     const ww = Math.max(7, Math.min(12, 0.02 * W)), xw = G.x0 - ww / 2;
     let fill;
@@ -413,8 +449,10 @@
     if (three) { nctx.fillStyle = "rgba(0,0,0,.35)"; nctx.fillRect(xw + ww, 0, 3, H); }
 
     const ink = three ? "#e8eef5" : "#1d2733", acc = three ? "#ffb54d" : "#d35400";
+    const dObj = p.mode === "einzel" ? p.bS : p.mode === "doppel" ? p.gD : p.gG;
+    if (dObj / 2 > G.Hh * 0.97) tag(nctx, (p.mode === "einzel" ? "Spaltränder" : "Spalte") + " liegen außerhalb des Bildes: Zoom verkleinern", W / 2 + G.x0 / 2, H / 2 + fz * 2.2, fz, three ? "#ffd0a0" : "#a04000", three ? "rgba(0,0,0,.6)" : "rgba(255,255,255,.92)", "center");
     // Gangunterschied
-    if (p.gang) drawGang(p, G, X, Y, W, H, fz, ink, acc, three);
+    if (p.gang) drawGang(p, G, X, Y, W, H, fz, ink, acc, three, tNow);
 
     // Beschriftung, Maßstab
     const lab = p.mode === "gitter" ? "Nahaufnahme: Gitter (maßstäblich)" : "Nahaufnahme · Modell: λ " + G.F + "-fach vergrößert";
@@ -429,18 +467,29 @@
     tag(nctx, barUm + " µm", bx + bl + 4, by - 4, fz * 0.85, ink, three ? "rgba(0,0,0,.35)" : "rgba(255,255,255,.8)", "left");
     if (p.mode !== "gitter") tag(nctx, "gezeichnete Wellenlänge: " + fmt(G.lamM, 0) + " µm (echt: " + fmt(p.lam / 1000, 3) + " µm)", W - 10, H - 14, fz * 0.8, ink, three ? "rgba(0,0,0,.45)" : "rgba(255,255,255,.85)", "right");
   }
-  function drawGang(p, G, X, Y, W, H, fz, ink, acc, three) {
+  function drawGang(p, G, X, Y, W, H, fz, ink, acc, three, tNow) {
     const d = p.mode === "einzel" ? p.bS : p.mode === "doppel" ? p.gD : p.gG;
     const sA = p.k * G.lamM / d;
     if (sA >= 1) { tag(nctx, "Die " + p.k + ". Ordnung gibt es hier nicht (k · λ > " + (p.mode === "einzel" ? "b" : "g") + ").", W - 10, 30 + fz * 2.4, fz * 0.9, three ? "#ffd0a0" : "#a04000", three ? "rgba(0,0,0,.5)" : "rgba(255,255,255,.9)", "right"); return; }
     const al = Math.asin(sA), ux = Math.cos(al), uy = Math.sin(al);
     let y1, y2;
-    if (p.mode === "gitter") { y1 = 0; y2 = -p.gG; } else { y1 = d / 2; y2 = -d / 2; }
+    y1 = d / 2; y2 = -d / 2;
     const L = (W - G.x0) / G.k * 1.2;
     const ray = (y0, dash, lw) => { nctx.setLineDash(dash); nctx.lineWidth = lw; nctx.beginPath(); nctx.moveTo(X(0), Y(y0)); nctx.lineTo(X(L * ux), Y(y0 + L * uy)); nctx.stroke(); nctx.setLineDash([]); };
     nctx.strokeStyle = three ? "rgba(255,255,255,.9)" : "#1d2733";
     ray(y1, [], 1.8); ray(y2, [], 1.8);
     if (p.mode === "einzel") { nctx.strokeStyle = three ? "rgba(255,255,255,.6)" : "rgba(29,39,51,.6)"; ray(0, [5, 5], 1.4); }
+    // Wellenberge entlang der beiden Strahlen: Sie liegen auf gemeinsamen Wellenfronten (senkrecht zu den Strahlen)
+    const fr = tNow - Math.floor(tNow), tl = 7;
+    nctx.strokeStyle = three ? "#ffffff" : "#1d2733"; nctx.lineWidth = 2.5;
+    [y1, y2].forEach(y0 => {
+      for (let n = 0; ; n++) {
+        const sx = (n + fr) * G.lamM; if (sx > L) break;
+        const cx = X(sx * ux), cy = Y(y0 + sx * uy);
+        if (cx > W + 10 || cy < -10 || cy > H + 10) break;
+        nctx.beginPath(); nctx.moveTo(cx - uy * tl, cy - ux * tl); nctx.lineTo(cx + uy * tl, cy + ux * tl); nctx.stroke();
+      }
+    });
     // Fußpunkt des Lotes vom oberen Strahl auf den unteren
     const ds = d * sA, Fx = ds * ux, Fy = y2 + ds * uy;
     nctx.strokeStyle = acc; nctx.lineWidth = 2; nctx.setLineDash([5, 4]);
@@ -459,10 +508,10 @@
     const rA = Math.max(26, Math.min(70, (Y(y2) - Y(y1)) * 1.2));
     nctx.strokeStyle = acc; nctx.lineWidth = 2;
     nctx.beginPath(); nctx.moveTo(X(0), Y(y2)); nctx.lineTo(X(0) + rA * 1.25, Y(y2)); nctx.stroke();
-    nctx.beginPath(); nctx.arc(X(0), Y(y2), rA, -al, 0); nctx.stroke();
-    tag(nctx, "α_" + p.k, X(0) + (rA + 6) * Math.cos(al / 2), Y(y2) + 2 - (rA + 6) * Math.sin(al / 2) + fz * 0.6, fz, acc, bgc, "left");
-    tag(nctx, "Δs = " + p.k + " · λ", (X(0) + px) / 2 + 8, (Y(y2) + py) / 2 + fz * 1.1, fz, acc, bgc, "left");
-    const zLab = (p.mode === "einzel" ? p.k + ". Minimum" : p.k + ". Maximum");
+    if (p.k > 0) nctx.beginPath(), nctx.arc(X(0), Y(y2), rA, -al, 0), nctx.stroke();
+    if (p.k > 0) tag(nctx, "α_" + p.k, X(0) + (rA + 6) * Math.cos(al / 2), Y(y2) + 2 - (rA + 6) * Math.sin(al / 2) + fz * 0.6, fz, acc, bgc, "left");
+    tag(nctx, p.k === 0 ? "Δs = 0" : "Δs = " + p.k + " · λ", (X(0) + px) / 2 + 8, (Y(y2) + py) / 2 + fz * 1.1, fz, acc, bgc, "left");
+    const zLab = p.k === 0 ? (p.mode === "einzel" ? "Hauptmaximum" : "0. Maximum") : (p.mode === "einzel" ? p.k + ". Minimum" : p.k + ". Maximum");
     const lx = 0.7 * (W - G.x0) / G.k;
     const lyy = Y(y2 + lx * Math.tan(al)) + fz * 1.1;
     if (lyy > 70 && lyy < H - 30) tag(nctx, "zum " + zLab + " →", X(lx), lyy, fz * 0.85, ink, bgc, "center");
@@ -567,13 +616,16 @@
       c.strokeStyle = acc; c.lineWidth = 2; c.setLineDash([7, 5]);
       c.beginPath(); c.moveTo(X(0), oy); c.lineTo(X(p.a), Y(yd)); c.moveTo(X(0), oy); c.lineTo(X(p.a), Y(-yd)); c.stroke(); c.setLineDash([]);
       c.beginPath(); c.moveTo(X(0), oy); c.lineTo(X(p.a), oy); c.stroke();
-      const rA = Math.min(0.6 * (X(p.a) - X(0)), 90);
-      c.beginPath(); c.arc(X(0), oy, rA, -an, 0); c.stroke();
-      tag(c, "α_" + p.k, X(0) + rA + 4, oy - Math.min(rA * Math.sin(an / 2), (oy - 10)) - 2, fz, acc, bgk, "left");
-      // d_k am Schirm
-      const dx = sx + sw + 14, yT = Math.max(4, Y(yd));
-      arrow(c, dx, oy, dx, yT, acc, 2, true);
-      tag(c, "d_" + p.k + " = " + len(o.dEx), dx + 6, Math.max(fz, (oy + yT) / 2), fz, acc, bgk, "left");
+      const rA = Math.min(0.6 * (X(p.a) - X(0)), 90), dx = sx + sw + 14;
+      if (p.k === 0) tag(c, (p.mode === "einzel" ? "Hauptmaximum" : "0. Maximum") + " in der Mitte (α = 0)", dx, oy - fz * 1.4, fz, acc, bgk, "left");
+      else {
+        c.beginPath(); c.arc(X(0), oy, rA, -an, 0); c.stroke();
+        tag(c, "α_" + p.k, X(0) + rA + 4, oy - Math.min(rA * Math.sin(an / 2), (oy - 10)) - 2, fz, acc, bgk, "left");
+        // d_k am Schirm
+        const yT = Math.max(4, Y(yd));
+        arrow(c, dx, oy, dx, yT, acc, 2, true);
+        tag(c, "d_" + p.k + " = " + len(o.dEx), dx + 6, Math.max(fz, (oy + yT) / 2), fz, acc, bgk, "left");
+      }
     }
     // Abstand a
     const ya = H - 14 - fz * 0.4;
@@ -654,7 +706,7 @@
       const x = xc + sg * o.dEx * kk; if (x < 0 || x > W) return;
       c.fillStyle = "#ffb54d"; c.beginPath(); c.moveTo(x, top - 1); c.lineTo(x - 6, top - 10); c.lineTo(x + 6, top - 10); c.closePath(); c.fill();
     });
-    if (o && o.dEx * kk < W / 2) {
+    if (o && p.k > 0 && o.dEx * kk < W / 2) {
       const x2 = xc + o.dEx * kk;
       c.strokeStyle = "#ffb54d"; c.lineWidth = 1.5; c.beginPath(); c.moveTo(xc, top - 5); c.lineTo(x2, top - 5); c.stroke();
       c.beginPath(); c.moveTo(xc, top - 9); c.lineTo(xc, top - 1); c.stroke();
@@ -688,6 +740,10 @@
       const o = order(p, k);
       if (!o) { if (k <= 3) h += "<tr" + (k === p.k ? " class=sel" : "") + "><td>" + k + "</td><td colspan=4>gibt es nicht</td></tr>"; continue; }
       h += "<tr" + (k === p.k ? " class=sel" : "") + "><td>" + k + "</td><td>" + angTxt(o.th) + "</td><td>" + len(o.dEx) + "</td><td>" + len(o.dAp) + "</td><td>" + (Math.abs(o.dev) < 1e-4 ? "&lt; 0,01" : fmt(Math.abs(o.dev) * 100, Math.abs(o.dev) < 0.01 ? 2 : 1)) + " %</td></tr>";
+    }
+    if (p.k > nmax) {
+      const o = order(p, p.k);
+      h += "<tr class=sel><td>" + p.k + "</td>" + (o ? "<td>" + angTxt(o.th) + "</td><td>" + len(o.dEx) + "</td><td>" + len(o.dAp) + "</td><td>" + fmt(Math.abs(o.dev) * 100, 1) + " %</td>" : "<td colspan=4>gibt es nicht</td>") + "</tr>";
     }
     h += "<tr><td colspan=5 class=small style='text-align:left'>" + (p.mode === "einzel" ? "Minima" : "Maxima") + "; genähert: d<sub>k</sub> ≈ k · λ · a / " + (p.mode === "einzel" ? "b" : "g") + " (Kleinwinkelnäherung)</td></tr>";
     $("vals").innerHTML = h;
@@ -747,7 +803,8 @@
     }
     if (st >= tot) {
       const o = order(p, p.k);
-      if (o) {
+      if (o && p.k === 0) h += "<div class=res>Für k = 0 ist Δs = 0: Das " + (p.mode === "einzel" ? "Hauptmaximum" : "0. Maximum") + " liegt immer in der Mitte, für jede Wellenlänge. Daraus kann man λ nicht bestimmen. Wähle k ≥ 1 für die Probe.</div>";
+      else if (o) {
         const dm = p.mode === "einzel" ? "b" : "g", dv = p.d;
         const lEx = dv * Math.sin(Math.atan(o.dEx / p.a)) / p.k, lAp = dv * o.dEx / (p.k * p.a);
         h += "<div class=res><b>Probe mit deinen Werten</b> (k = " + p.k + "): " + dm + " = " + len(dv) + ", a = " + fmt(p.a, 2) + " m, gemessen d<sub>" + p.k + "</sub> = " + len(o.dEx) + "<br>" +
@@ -768,6 +825,11 @@
   }
 
   // ---------- Bedienung ----------
+  (function () {
+    const sel = $("kMore"); let h = "<option value=''>5+ …</option>";
+    for (let k = 5; k <= 30; k++) h += "<option value='" + k + "'>" + k + "</option>";
+    sel.innerHTML = h;
+  })();
   function outs() {
     const p = P();
     $("lamo").textContent = p.lam + " nm";
@@ -783,6 +845,9 @@
     ["einzel", "doppel", "gitter"].forEach(m => document.querySelectorAll(".m-" + m).forEach(e => e.classList.toggle("hidden", m !== p.mode)));
     document.querySelectorAll("#modeTabs button").forEach(b => b.classList.toggle("on", b.dataset.m === p.mode));
     document.querySelectorAll("#kb button").forEach(b => b.classList.toggle("on", +b.dataset.k === S.k));
+    $("kMore").value = S.k >= 5 ? String(S.k) : ""; $("kMore").classList.toggle("on", S.k >= 5);
+    document.querySelectorAll("#zb button").forEach(b => b.classList.toggle("on", +b.dataset.z === S.zoom));
+    $("lbAvg").classList.toggle("hidden", !p.field);
     document.body.classList.toggle("noNear", !p.near);
     document.body.classList.toggle("noFar", !p.far);
     document.body.classList.toggle("noScr", !p.scr);
@@ -839,13 +904,15 @@
   $("rotGo").onclick = () => document.body.classList.add("quer");
   document.querySelectorAll("#modeTabs button").forEach(b => b.onclick = () => setMode(b.dataset.m));
   document.querySelectorAll("#kb button").forEach(b => b.onclick = () => { S.k = +b.dataset.k; changed(false); drawNear(S.tFrozen); });
+  $("kMore").addEventListener("change", () => { if ($("kMore").value) { S.k = +$("kMore").value; changed(false); drawNear(S.tFrozen); } });
+  document.querySelectorAll("#zb button").forEach(b => b.onclick = () => { S.zoom = +b.dataset.z; S.fkey = ""; outs(); drawNear(S.tFrozen); });
   $("tabSet").onclick = () => setPane("set");
   $("tabDer").onclick = () => setPane("der");
   $("reset").onclick = () => {
     for (const k in DEF) $(k).value = DEF[k];
     S.k = 1; SCRW.einzel = 0.02; SCRW.doppel = 0.02; SCRW.gitter = 2; $("scrW").value = String(SCRW[S.mode]);
     ["cbNear", "cbFar", "cbScr", "cbGang", "cbRun"].forEach(id => $(id).checked = true);
-    $("cbCurve").checked = false; $("cbAvg").checked = false;
+    $("cbCurve").checked = false; $("cbAvg").checked = false; $("cbField").checked = false; S.zoom = 2;
     resize(); outs(); drawStatic();
   };
   // Doppelspalt: Spaltbreite höchstens halber Spaltabstand
@@ -856,7 +923,7 @@
   });
   $("scrW").addEventListener("change", () => { SCRW[S.mode] = +$("scrW").value; drawScr(); });
   ["cbNear", "cbFar", "cbScr"].forEach(id => $(id).addEventListener("change", () => { outs(); resize(); }));
-  ["cbGang", "cbCurve", "cbAvg", "cbRun"].forEach(id => $(id).addEventListener("change", () => { outs(); drawScr(); drawNear(S.tFrozen); }));
+  ["cbGang", "cbCurve", "cbAvg", "cbRun", "cbField"].forEach(id => $(id).addEventListener("change", () => { outs(); drawScr(); drawNear(S.tFrozen); }));
 
   // Schirm in der Fernaufnahme mit dem Finger verschieben
   function farA(ev) {
