@@ -38,7 +38,7 @@
   .par input[type=range] { flex:1; min-width:0; height:2rem; }
   .checks { display:flex; flex-wrap:wrap; gap:.3rem .9rem; font-size:1rem; }
   .checks label { display:flex; align-items:center; gap:5px; min-height:1.9rem; }
-  .checks input { width:1.3rem; height:1.3rem; }
+  .checks input { width:1.4rem; height:1.4rem; margin:0; }
   .btns { display:flex; gap:6px; }
   .btns button { flex:1; }
   #runBtn { background:var(--green); color:#fff; border-color:var(--green); font-weight:600; }
@@ -54,6 +54,31 @@
   details.small summary { cursor:pointer; min-height:1.9rem; display:flex; align-items:center; }
   .small { font-size:.86rem; color:var(--muted); line-height:1.35; }
   .hidden { display:none !important; }
+  .predline { display:flex; align-items:center; gap:6px; }
+  .predline label { flex:1; display:flex; align-items:center; gap:6px; font-size:1rem; min-height:2.2rem; }
+  .predline input { width:1.45rem; height:1.45rem; margin:0; flex:0 0 auto; }
+  .predline button { font-size:.9rem; padding:.2rem .5rem; min-height:2.2rem; }
+  #noteMore button { font-size:.92rem; padding-left:.25rem; padding-right:.25rem; white-space:nowrap; }
+  /* Ergebnis-Übersicht (Nachfahren) über der Simulation */
+  #sumPage { position:absolute; left:0; right:0; bottom:0; top:60px; z-index:4; overflow:auto; -webkit-overflow-scrolling:touch; background:var(--bg); padding:.7rem; display:none; }
+  body.sum #sumPage { display:block; }
+  #sumPage .in { max-width:58rem; margin:0 auto; display:flex; flex-direction:column; gap:.6rem; }
+  .sumhead { display:flex; justify-content:space-between; align-items:center; gap:.8rem; flex-wrap:wrap; background:var(--panel); border:1px solid var(--line); border-radius:.8rem; padding:.6rem .9rem; }
+  .sumhead h2 { margin:0 0 .3rem; font-size:1.3rem; color:var(--blue); }
+  .sumhead .meta { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; font-size:.9rem; color:var(--muted); }
+  .sumname { font:inherit; font-size:1rem; padding:.35rem .5rem; border:1.5px solid var(--line); border-radius:.5rem; width:14rem; max-width:100%; -webkit-user-select:text; user-select:text; }
+  .sumbig { text-align:center; } .sumbig .st { font-size:2.4rem; letter-spacing:.08em; line-height:1; color:#d97706; }
+  .sumbig .pt { font-size:.9rem; color:var(--muted); font-weight:600; } .st .off { color:#d6dbe4; }
+  .sumcard { background:var(--panel); border:1px solid var(--line); border-radius:.8rem; padding:.6rem .9rem; }
+  .sumchips { display:grid; grid-template-columns:repeat(auto-fill, minmax(9.5rem, 1fr)); gap:.4rem; }
+  .schip { display:flex; flex-direction:column; align-items:center; border-radius:.5rem; padding:.3rem .3rem; border:1.5px solid; font-size:.85rem; line-height:1.25; text-align:center; }
+  .schip b { font-size:.92rem; }
+  .schip.g { background:#dcfce7; border-color:#16a34a; color:#14532d; } .schip.y { background:#fef3c7; border-color:#d97706; color:#78350f; }
+  .schip.r { background:#fee2e2; border-color:#dc2626; color:#7f1d1d; } .schip.n { background:#f1f3f7; border-color:#cfd6e2; color:#6b7385; }
+  .sumlegend { display:flex; flex-wrap:wrap; gap:.3rem .9rem; align-items:center; font-size:.85rem; color:var(--muted); }
+  .sumlegend .schip { display:inline-flex; min-width:2rem; padding:0 .3rem; }
+  .sumtip { background:#f1f6fc; border:1px solid #d3e2f3; border-radius:.6rem; padding:.5rem .7rem; font-size:.95rem; }
+  .sumclose { align-self:flex-start; }
 
   /* Werkzeugleiste auf der Simulation */
   #tools { position:absolute; top:8px; right:8px; display:flex; gap:6px; z-index:5; }
@@ -67,7 +92,9 @@
     h1 { display:none; }
     button { padding:.35rem .6rem; min-height:2.4rem; }
     .par input[type=range] { height:1.7rem; }
-    .checks label { min-height:1.6rem; }
+    .checks label { min-height:1.9rem; }
+    .checks { row-gap:0; }
+    #expl { font-size:.9rem; line-height:1.3; }
   }
   @media (max-width: 900px) and (orientation: landscape) { #panel { flex-basis:20rem; } }
 
@@ -105,6 +132,7 @@
 <div id="app">
   <div id="stage">
     <canvas id="cv"></canvas>
+    <div id="sumPage"><div class="in" id="sum"></div></div>
     <div id="tools">
       <button id="fsMinus" title="Schrift kleiner">A−</button>
       <button id="fsPlus" title="Schrift größer">A+</button>
@@ -137,6 +165,7 @@
           <div class="head"><span>Beschleunigung a (konstant)</span><output></output></div>
           <div class="line"><button class="minus">−</button><input type="range" id="r_a"><button class="plus">+</button></div>
         </div>
+        <div class="predline"><label><input id="cbPred" type="checkbox">Erst vorhersagen</label><button id="predClear" class="hidden">Vorhersage löschen</button></div>
       </div>
 
       <div class="sec steu hidden">
@@ -151,6 +180,7 @@
       <div class="sec ziel hidden">
         <div class="lbl">Welchen Graphen fährst du nach?</div>
         <div class="grid2" id="targets"></div>
+        <button id="sumBtn">Übersicht: meine Ergebnisse</button>
       </div>
 
       <div class="btns">
@@ -170,15 +200,16 @@
         <label><input id="cbTrace" type="checkbox" checked>Spur jede Sekunde</label>
         <label><input id="cbMark" type="checkbox" checked>Ort an der s-Achse</label>
         <label><input id="cbTan" type="checkbox">Steigungsdreieck</label>
-        <label><input id="cbArea" type="checkbox">Fläche unter dem Graphen</label>
+        <label title="Fläche unter dem Graphen"><input id="cbArea" type="checkbox">Fläche darunter</label>
       </div>
-      <div id="expl"></div>
-      <div class="btns">
-        <button id="noteBtn">Messwert notieren</button>
+      <div class="btns"><button id="noteBtn">Messwert notieren</button></div>
+      <div id="notes"></div>
+      <div class="btns hidden" id="noteMore">
         <button id="noteUndo" title="Letzte Zeile löschen">Letzten löschen</button>
         <button id="noteClear" title="Alle Messwerte löschen">Alle löschen</button>
+        <button id="noteCsv" title="Messwerte als Tabelle (CSV) speichern, öffnet sich in Excel oder Numbers">Tabelle speichern</button>
       </div>
-      <div id="notes"></div>
+      <div id="expl"></div>
       <details class="small"><summary>Hinweise und Vereinfachungen</summary>
         <div>Tippe in ein Diagramm, um einen Zeitpunkt zu wählen. Dort werden die Werte angezeigt, das Steigungsdreieck gezeichnet und „Messwert notieren“ schreibt t, s, v und a in die Tabelle.
         <br><br>Vereinfachungen: Das Auto ist ein Punkt auf einer geraden Strecke (Bezugspunkt: Mitte des Autos, gezeichnet maßstabsgetreu mit 4,2 m Länge). Fester Maßstab: Strecke 0 bis 50 m, Zeit 0 bis 10 s.
@@ -251,8 +282,15 @@
     bew:{ s0:5, v0:4, a:0 },
     phase:"idle",            // idle, armed (wartet auf Finger), run, pause, end
     t:0, s:5, v:0, a:0, data:[], cur:null, ctl:0, endMsg:"",
-    finger:null, fingerS:0, dragCar:false, dragCtl:false, last:0, L:null, score:null
+    finger:null, fingerS:0, dragCar:false, dragCtl:false, last:0, L:null, score:null,
+    pred:{ s:[], v:[], a:[] }, drawPred:null
   };
+  const predOn = () => S.tab === "bew" && $("cbPred").checked;
+  function predClear() { S.pred = { s:[], v:[], a:[] }; draw(); }
+  // Ergebnisse beim Nachfahren: Versuche und beste mittlere Abweichung je Zielgraph
+  const SUM = TARGETS.map(() => ({ tries:0, best:null })), T_START = Date.now();
+  let sumName = "";
+  const LIM = k => k === "s" ? [1.5, 3] : [0.6, 1.2];
   const ctrlMode = () => S.tab === "steu" ? S.mode : S.tab === "ziel" ? TARGETS[S.target].ctrl : "bew";
 
   // ---------- Bewegung ----------
@@ -306,7 +344,11 @@
   }
   function finish(msg) {
     S.phase = "end"; S.endMsg = msg;
-    if (S.tab === "ziel") S.score = score();
+    if (S.tab === "ziel") {
+      S.score = score();
+      const z = SUM[S.target]; z.tries++;
+      if (S.score.full && (z.best === null || S.score.dev < z.best)) z.best = S.score.dev;
+    }
     updateRunBtn(); showExpl();
   }
   function score() {
@@ -653,6 +695,15 @@
       ctx.lineTo(X(S.cur), clampY(cur[D.k])); ctx.lineTo(X(S.cur), z); ctx.closePath();
       ctx.fillStyle = D.k === "v" ? "rgba(31,78,121,.22)" : "rgba(46,125,50,.22)"; ctx.fill();
     }
+    // Vorhersage (mit dem Finger gezeichnet)
+    const pr = S.pred[D.k];
+    if (pr.some(v => v != null)) {
+      ctx.strokeStyle = "rgba(123,63,160,.8)"; ctx.lineWidth = Math.max(3, fz * 0.22); ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.setLineDash([8, 6]);
+      ctx.beginPath(); let on = false, li = 0;
+      for (let i = 0; i <= 100; i++) { if (pr[i] == null) { on = false; continue; } const x = X(i / 10), y = clampY(pr[i]); on ? ctx.lineTo(x, y) : ctx.moveTo(x, y); on = true; li = i; }
+      ctx.stroke(); ctx.setLineDash([]);
+      tbox("Vorhersage", Math.min(X(li / 10) + 6, D.x + D.w - fz * 6), clampY(pr[li]) - fz * 0.9, fz * 0.75, "#7B3FA0");
+    }
     // Messkurve
     if (S.data.length > 1) {
       ctx.strokeStyle = A.col; ctx.lineWidth = Math.max(2.5, fz * 0.2); ctx.lineJoin = "round"; ctx.lineCap = "round";
@@ -712,7 +763,7 @@
     const d = PAR[key];
     v = Math.round(v / d.step) * d.step;
     S.bew[key] = Math.max(d.min, Math.min(d.max, +v.toFixed(2)));
-    markPreset(); syncInputs(); resetRun();
+    markPreset(); syncInputs(); S.pred = { s:[], v:[], a:[] }; resetRun();
   }
   for (const el of pars) {
     const key = el.dataset.k, inp = el.querySelector("input");
@@ -725,7 +776,7 @@
     $("presets").querySelectorAll("button").forEach(b => { const p = PRESETS[+b.dataset.i]; b.classList.toggle("on", p.s0 === S.bew.s0 && p.v0 === S.bew.v0 && p.a === S.bew.a); });
   }
   $("presets").querySelectorAll("button").forEach(b => b.onclick = () => {
-    const p = PRESETS[+b.dataset.i]; Object.assign(S.bew, { s0:p.s0, v0:p.v0, a:p.a }); markPreset(); syncInputs(); resetRun();
+    const p = PRESETS[+b.dataset.i]; Object.assign(S.bew, { s0:p.s0, v0:p.v0, a:p.a }); markPreset(); syncInputs(); S.pred = { s:[], v:[], a:[] }; resetRun();
   });
   $("targets").innerHTML = TARGETS.map((p, i) => "<button data-i='" + i + "'>" + p.n + "</button>").join("");
   function markTarget() { $("targets").querySelectorAll("button").forEach(b => b.classList.toggle("on", +b.dataset.i === S.target)); }
@@ -765,7 +816,10 @@
   };
   function showExpl() {
     const e = $("expl"); e.classList.remove("good");
-    if (S.tab === "bew") { e.innerHTML = EXPL.bew + (S.endMsg ? "<br><b>" + S.endMsg + "</b>" : ""); return; }
+    if (S.tab === "bew") {
+      if (predOn() && S.phase === "idle") { e.innerHTML = "<b>Erst vorhersagen:</b> Zeichne mit dem Finger in jedes Diagramm, wie du die Graphen erwartest (lila). Drücke dann Start: Der echte Graph erscheint darüber. Vergleicht und begründet die Unterschiede."; return; }
+      e.innerHTML = EXPL.bew + (S.endMsg ? "<br><b>" + S.endMsg + "</b>" : ""); return;
+    }
     if (S.tab === "steu") { e.innerHTML = EXPL.steu[S.mode] + (S.endMsg ? "<br><b>" + S.endMsg + "</b>" : ""); return; }
     const T = TARGETS[S.target], nm = T.diag === "s" ? "t-s" : "t-v";
     let h = "<b>Auftrag:</b> Fahre den orangen Graphen im " + nm + "-Diagramm nach, und zwar " + CTRLNAME[T.ctrl] + ". ";
@@ -787,8 +841,16 @@
       ? "<table><tr><th>Nr.</th><th>t in s</th><th>s in m</th><th>v in m/s</th><th>a in m/s²</th></tr>" +
         NOTES.map((q, i) => "<tr><td>" + (i + 1) + "</td><td>" + q.join("</td><td>") + "</td></tr>").join("") + "</table>"
       : "<div class='empty'>Noch keine Messwerte notiert. Tippe in ein Diagramm, um einen Zeitpunkt zu wählen.</div>";
-    $("noteUndo").disabled = $("noteClear").disabled = !NOTES.length;
+    $("noteMore").classList.toggle("hidden", !NOTES.length);
   }
+  $("noteCsv").onclick = () => {
+    if (!NOTES.length) return;
+    const rows = [["Nr", "t in s", "s in m", "v in m/s", "a in m/s²"]].concat(NOTES.map((q, i) => [i + 1].concat(q.map(x => x.replace("−", "-")))));
+    const qt = v => '"' + String(v).replace(/"/g, '""') + '"';
+    const t = "\ufeff" + rows.map(r => r.map(v => typeof v === "number" || /^-?\d+(,\d+)?$/.test(v) ? v : qt(v)).join(";")).join("\r\n");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([t], { type:"text/csv;charset=utf-8" }));
+    a.download = "Messreihe_Bewegungsdiagramme.csv"; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  };
   $("noteBtn").onclick = () => {
     const p = S.cur != null ? at(S.cur) : S.data[S.data.length - 1]; if (!p) return;
     NOTES.push([de(p.t, 2), de(p.s, 1), de(p.v, 1), de(p.a, 1)]);
@@ -798,12 +860,43 @@
   $("noteUndo").onclick = () => { NOTES.pop(); showNotes(); };
   $("noteClear").onclick = () => { if (confirm("Alle notierten Messwerte löschen?")) { NOTES.length = 0; showNotes(); } };
 
-  /* Direktlink: Bewegungsdiagramme.html#nachfahren öffnet diesen Reiter; beim Umschalten zeigt die Adresse den Reiter */
+  // Ergebnis-Übersicht fürs Nachfahren (für einen Screenshot in Moodle)
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+  function grade(i) { const z = SUM[i], l = LIM(TARGETS[i].diag); if (!z.tries) return "n"; if (z.best === null) return "r"; return z.best < l[0] ? "g" : z.best < l[1] ? "y" : "r"; }
+  function renderSum() {
+    const GR = { g:{ p:2, s:"Sehr gut" }, y:{ p:1, s:"Gut" }, r:{ p:0, s:"noch ungenau" }, n:{ p:0, s:"–" } };
+    const stars = (p, m) => { const q = m ? p / m : 0, n = q >= .85 ? 3 : q >= .6 ? 2 : q >= .3 ? 1 : 0; return "★".repeat(n) + `<span class="off">${"★".repeat(3 - n)}</span>`; };
+    const g = TARGETS.map((_, i) => grade(i)), p = g.reduce((a, x) => a + GR[x].p, 0), m = TARGETS.length * 2;
+    const hm = d => d.toLocaleTimeString("de-DE", { hour:"2-digit", minute:"2-digit" });
+    const now = new Date().toLocaleString("de-DE", { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" });
+    const u = k => k === "s" ? " m" : " m/s";
+    $("sum").innerHTML = `<button class="sumclose" id="sumClose">← Zurück zum Nachfahren</button>
+     <div class="sumhead"><div><h2>Meine Ergebnisse · Bewegungsdiagramme: Nachfahren</h2>
+      <div class="meta"><input class="sumname" id="sumName" value="${esc(sumName)}" placeholder="Dein Name" autocomplete="off"><span>Stand: ${now}</span><span>· gearbeitet seit ${hm(new Date(T_START))} (${Math.round((Date.now() - T_START) / 60000)} min)</span></div></div>
+      <div class="sumbig"><div class="st">${stars(p, m)}</div><div class="pt">${p} von ${m} Punkten</div></div></div>
+     <div class="sumcard"><div class="sumchips">${TARGETS.map((t, i) => `<span class="schip ${g[i]}"><b>${esc(t.n)}</b><span>${GR[g[i]].s}</span>${SUM[i].best !== null ? `<span>beste Abweichung ${de(SUM[i].best, 1)}${u(t.diag)}</span>` : ""}${SUM[i].tries ? `<span>${SUM[i].tries} Versuch${SUM[i].tries === 1 ? "" : "e"}</span>` : ""}</span>`).join("")}</div>
+      <p style="margin:.5rem 0 0;color:var(--muted)">${p} von ${m} Punkten · versucht: ${SUM.filter(z => z.tries).length} von ${TARGETS.length} Graphen</p></div>
+     <div class="sumlegend"><span class="schip g">Sehr gut</span> 2 Punkte<span class="schip y">Gut</span> 1 Punkt<span class="schip r">noch ungenau</span> oder abgebrochen<span class="schip n">–</span> noch nicht versucht<span>Gewertet wird der beste ganze Durchgang (10 s). Sehr gut: mittlere Abweichung unter 1,5 m (t-s) bzw. 0,6 m/s (t-v), gut: unter 3 m bzw. 1,2 m/s.</span></div>
+     <div class="sumtip">📷 Mach einen <b>Screenshot</b> von dieser Seite und gib ihn in Moodle ab. Hinweis: Die Ergebnisse werden nicht gespeichert. Wenn du die Seite neu lädst, beginnt alles von vorn.</div>`;
+    const n = $("sumName"); n.oninput = () => { sumName = n.value; };
+    $("sumClose").onclick = () => setSum(false);
+  }
+  function setSum(on) {
+    if (on && S.tab !== "ziel") setTab("ziel");
+    document.body.classList.toggle("sum", on); if (on) renderSum();
+    $("sumBtn").classList.toggle("on", on); linkSet(S.tab);
+  }
+  $("sumBtn").onclick = () => setSum(!document.body.classList.contains("sum"));
+
+  /* Direktlink: Bewegungsdiagramme.html#nachfahren öffnet diesen Reiter, #uebersicht die Ergebnis-Übersicht; beim Umschalten zeigt die Adresse den Reiter */
   const LINKS = { bew:"bewegungen", steu:"selbst-steuern", ziel:"nachfahren" };
-  function linkGet() { let h = ""; try { h = decodeURIComponent(location.hash.slice(1)).toLowerCase(); } catch (e) {} return Object.keys(LINKS).find(k => LINKS[k] === h); }
-  function linkSet(k) { try { if (location.hash !== "#" + LINKS[k]) history.replaceState(null, "", "#" + LINKS[k]); } catch (e) {} }
-  window.addEventListener("hashchange", () => { const k = linkGet(); if (k && k !== S.tab) setTab(k); });
+  const linkKey = k => k === "ziel" && document.body.classList.contains("sum") ? "uebersicht" : LINKS[k];
+  function linkGet() { let h = ""; try { h = decodeURIComponent(location.hash.slice(1)).toLowerCase(); } catch (e) {} return h === "uebersicht" ? "ziel" : Object.keys(LINKS).find(k => LINKS[k] === h); }
+  function linkSum() { let h = ""; try { h = decodeURIComponent(location.hash.slice(1)).toLowerCase(); } catch (e) {} return h === "uebersicht"; }
+  function linkSet(k) { try { if (location.hash !== "#" + linkKey(k)) history.replaceState(null, "", "#" + linkKey(k)); } catch (e) {} }
+  window.addEventListener("hashchange", () => { const k = linkGet(); if (k && k !== S.tab) setTab(k); if (linkSum() !== document.body.classList.contains("sum")) setSum(linkSum()); });
   function setTab(t) {
+    if (t !== "ziel") { document.body.classList.remove("sum"); $("sumBtn").classList.remove("on"); }
     S.tab = t; linkSet(t);
     for (const k of ["bew", "steu", "ziel"]) {
       $("tab_" + k).classList.toggle("on", k === t);
@@ -837,6 +930,8 @@
   $("tab_steu").onclick = () => setTab("steu");
   $("tab_ziel").onclick = () => setTab("ziel");
   for (const id of ["cb_s", "cb_v", "cb_a", "cbArrows", "cbTrace", "cbMark", "cbTan", "cbArea", "cbSlow"]) $(id).addEventListener("change", draw);
+  $("cbPred").addEventListener("change", () => { $("predClear").classList.toggle("hidden", !$("cbPred").checked); if (!$("cbPred").checked) predClear(); else resetRun(); showExpl(); });
+  $("predClear").onclick = () => { predClear(); resetRun(); };
 
   // ---------- Finger auf der Simulation ----------
   function px(ev) { const r = cv.getBoundingClientRect(); return { x:ev.clientX - r.left, y:ev.clientY - r.top }; }
@@ -865,6 +960,12 @@
       if (S.phase === "armed") { S.fingerS = S.s; go(); }
       return;
     }
+    // Vorhersage zeichnen (vor dem Start)
+    if (predOn() && S.phase === "idle") {
+      for (const D of L.diag || []) if (q.x >= D.x - 10 && q.x <= D.x + D.w + 10 && q.y >= D.y - 6 && q.y <= D.y + D.h + 6) {
+        S.drawPred = { D, li:null }; cv.setPointerCapture(ev.pointerId); setPred(q, D); ev.preventDefault(); return;
+      }
+    }
     // Zeitpunkt in einem Diagramm wählen
     for (const D of L.diag || []) {
       if (q.x >= D.x - 10 && q.x <= D.x + D.w + 10 && q.y >= D.y && q.y <= D.y + D.h + L.fz * 2.4) {
@@ -872,6 +973,14 @@
       }
     }
   });
+  function setPred(q, D) {
+    const A = AXIS[D.k], pr = S.pred[D.k];
+    const i = Math.max(0, Math.min(100, Math.round((q.x - D.x) / D.w * 100)));
+    const y = Math.max(A.min, Math.min(A.max, A.min + (D.y + D.h - q.y) / D.h * (A.max - A.min)));
+    const st = S.drawPred;
+    if (st.li != null && st.li !== i) { const d = i > st.li ? 1 : -1; for (let j = st.li + d; j !== i; j += d) pr[j] = st.ly + (y - st.ly) * (j - st.li) / (i - st.li); }
+    pr[i] = y; st.li = i; st.ly = y; draw();
+  }
   function setCur(x, D) {
     if (S.phase === "run" || S.phase === "armed") return;
     const tEnd = S.data.length ? S.data[S.data.length - 1].t : 0;
@@ -883,6 +992,7 @@
   cv.addEventListener("pointermove", ev => {
     const q = px(ev), L = S.L;
     if (S.dragCtl) { setCtl(q.x); return; }
+    if (S.drawPred) { setPred(q, S.drawPred.D); return; }
     if (S.dragCur) { setCur(q.x, S.dragCur.D); return; }
     if (!S.dragCar) return;
     const s = Math.max(0, Math.min(SMAX, (q.x - S.dx - L.X(0)) / L.k));
@@ -892,14 +1002,14 @@
       else { S.s0steu = Math.round(s * 2) / 2; resetRun(); }
     }
   });
-  const up = () => { S.dragCar = false; S.dragCtl = false; S.dragCur = null; };
+  const up = () => { S.dragCar = false; S.dragCtl = false; S.dragCur = null; S.drawPred = null; };
   cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
 
   window.addEventListener("resize", resize);
   if (window.ResizeObserver) new ResizeObserver(resize).observe(cv);
   S.view = store.get("bewdia_view") === "sym" ? "sym" : "3d"; $("view").textContent = S.view === "3d" ? "Symbol" : "3D";
   syncInputs(); markPreset(); markTarget(); showNotes();
-  setTab(linkGet() || "bew");
+  const sum0 = linkSum(); setTab(linkGet() || "bew"); if (sum0) setSum(true);
   setFs(+store.get("bewdia_fs") || 1);
 })();
 </script>
