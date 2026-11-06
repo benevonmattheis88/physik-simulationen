@@ -128,6 +128,7 @@ Hängt man an den Link einer Simulation `#` und den Namen eines Reiters an, öff
 | Aufgabe Wasserkraftwerk | https://simulationen.familiemueller.space/energie/mittelstufe/Energiefluss_Baukasten.html#aufgabe-wasserkraftwerk |
 | Aufgabe Zentralheizung | https://simulationen.familiemueller.space/energie/mittelstufe/Energiefluss_Baukasten.html#aufgabe-zentralheizung |
 | Aufgabe Kohlekraftwerk | https://simulationen.familiemueller.space/energie/mittelstufe/Energiefluss_Baukasten.html#aufgabe-kohlekraftwerk |
+| Übersicht (Ergebnisse) | https://simulationen.familiemueller.space/energie/mittelstufe/Energiefluss_Baukasten.html#uebersicht |
 
 ### Bewegungsdiagramme
 
@@ -136,6 +137,7 @@ Hängt man an den Link einer Simulation `#` und den Namen eines Reiters an, öff
 | Bewegungen | https://simulationen.familiemueller.space/mechanik/oberstufe/Bewegungsdiagramme.html#bewegungen |
 | Selbst steuern | https://simulationen.familiemueller.space/mechanik/oberstufe/Bewegungsdiagramme.html#selbst-steuern |
 | Nachfahren | https://simulationen.familiemueller.space/mechanik/oberstufe/Bewegungsdiagramme.html#nachfahren |
+| Übersicht (Ergebnisse beim Nachfahren) | https://simulationen.familiemueller.space/mechanik/oberstufe/Bewegungsdiagramme.html#uebersicht |
 
 ### Gravitationslabor
 
@@ -143,6 +145,7 @@ Hängt man an den Link einer Simulation `#` und den Namen eines Reiters an, öff
 |---|---|
 | Labor | https://simulationen.familiemueller.space/mechanik/oberstufe/Gravitationslabor.html#labor |
 | Weltall | https://simulationen.familiemueller.space/mechanik/oberstufe/Gravitationslabor.html#weltall |
+| Drehwaage | https://simulationen.familiemueller.space/mechanik/oberstufe/Gravitationslabor.html#drehwaage |
 
 ### Kreisbewegung
 
