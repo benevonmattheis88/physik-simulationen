@@ -36,11 +36,13 @@
   .chk { display:flex; align-items:center; gap:6px; min-height:34px; } .chk input { width:20px; height:20px; }
   .pane { display:none; gap:.45em; } .pane.on { display:flex; flex-direction:column; }
   .ctl, .info { display:flex; flex-direction:column; gap:.45em; }
-  /* Werkzeugleiste unten rechts auf der Simulation */
-  #tools { position:absolute; right:10px; bottom:10px; display:flex; gap:6px; z-index:5; }
-  #tools button.on { background:var(--blue); color:#fff; }
-  #tools button { min-width:46px; min-height:44px; font-size:17px; font-weight:600; background:rgba(255,255,255,.88);
-                  box-shadow:0 2px 6px rgba(0,0,0,.18); padding:4px 10px; }
+  /* Werkzeugleiste oben rechts auf der Simulation (wie in den anderen Simulationen) */
+  #tools { position:absolute; right:8px; top:8px; display:flex; gap:6px; z-index:5; }
+  #tools button { min-width:44px; height:44px; min-height:44px; font-size:16px; font-weight:600; background:rgba(255,255,255,.88);
+                  border:1px solid #c3ccd8; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,.25); padding:0 10px;
+                  display:flex; align-items:center; justify-content:center; }
+  #tools button svg { width:22px; height:22px; stroke:var(--ink); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  #tools button.on { background:var(--blue); color:#fff; } #tools button.on svg { stroke:#fff; }
   #rot { display:none; position:fixed; inset:0; z-index:20; background:#1F4E79; color:#fff; flex-direction:column;
          align-items:center; justify-content:center; gap:18px; text-align:center; padding:20px; font-size:18px; }
   #rot .ph { width:56px; height:92px; border:4px solid #fff; border-radius:12px; animation:dreh 2s ease-in-out infinite; }
@@ -62,7 +64,8 @@
     #app.nopanel #stage { height:100vh; height:100dvh; }
     #panel { flex:0 0 auto; max-width:none; border-left:0; border-top:1px solid var(--line); overflow:visible; }
     .row label { flex-basis:5.8em; } .row output { flex-basis:6em; }
-    #tools button { min-width:42px; min-height:40px; font-size:15px; padding:3px 8px; }
+    #tools button { min-width:40px; height:40px; min-height:40px; font-size:15px; padding:0 8px; }
+    #app.tab-loop #stage { height:max(300px, 40vh); }
   }
   /* Handy quer: Drehhinweis */
   @media (max-height: 500px) and (orientation: landscape) and (hover: none) {
@@ -76,7 +79,7 @@
   <div id="stage"><canvas id="cv"></canvas>
     <div id="tools">
       <button id="fsm" title="Schrift kleiner">A−</button><button id="fsp" title="Schrift größer">A+</button>
-      <button id="full" title="Vollbild">⛶</button><button id="tog" title="Bedienfeld aus-/einblenden">☰</button>
+      <button id="full" title="Vollbild"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button id="tog" title="Bedienfeld aus-/einblenden"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg></button>
     </div>
   </div>
   <div id="panel">
@@ -91,6 +94,7 @@
       <div class="row"><label>Radius r</label><input id="k_r" type="range" min="15" max="100" step="1" value="50"><output id="k_ro"></output></div>
       <div class="row"><label>Tempo v</label><input id="k_v" type="range" min="10" max="130" step="1" value="54"><output id="k_vo"></output></div>
       <div class="row"><label>Masse m</label><input id="k_m" type="range" min="800" max="3000" step="50" value="1200"><output id="k_mo"></output></div>
+      <div class="row"><label>Überhöhung β</label><input id="k_b" type="range" min="0" max="40" step="1" value="0"><output id="k_bo"></output></div>
       <div class="seg" id="k_mu">
         <button data-mu="0.8" class="on">trocken μ = 0,8</button><button data-mu="0.4">nass μ = 0,4</button><button data-mu="0.1">Eis μ = 0,1</button>
       </div>
@@ -98,7 +102,8 @@
       <div class="info"><table id="k_tab"></table>
       <div class="small">Zum Vergleich: Kreisverkehr r ≈ 15–25 m, enge Landstraßenkurve r ≈ 50–100 m. Pkw-Masse 800–3000 kg.</div>
       <div class="small">nötige Zentripetalkraft</div><div class="bar"><div id="k_bar1" style="background:#C0392B"></div></div>
-      <div class="small">höchstens mögliche Haftreibung</div><div class="bar"><div id="k_bar2" style="background:#2E7D32"></div></div>
+      <div class="small" id="k_bar2t">höchstens mögliche Haftreibung</div><div class="bar"><div id="k_bar2" style="background:#2E7D32"></div></div>
+      <div class="small">Überhöhte Kurve: Die Fahrbahn ist zur Kurveninnenseite geneigt. Das Bild unten rechts zeigt den Querschnitt.</div>
     </div></div>
 
     <div class="pane" id="p-kette"><div class="ctl">
@@ -200,20 +205,25 @@
   document.querySelectorAll("#k_mu button").forEach(b => b.onclick = () => {
     document.querySelectorAll("#k_mu button").forEach(c => c.classList.remove("on")); b.classList.add("on"); K.mu = +b.dataset.mu; kReset();
   });
-  function kP() { return { r:+$("k_r").value, v:+$("k_v").value / 3.6, kmh:+$("k_v").value, m:+$("k_m").value }; }
+  function kP() { return { r:+$("k_r").value, v:+$("k_v").value / 3.6, kmh:+$("k_v").value, m:+$("k_m").value, b:+$("k_b").value * Math.PI / 180 }; }
+  // Überhöhte Kurve: größte und kleinste mögliche Zentripetalbeschleunigung (Normalkraft + Haftreibung)
+  function kAmax(p) { const sb = Math.sin(p.b), cb = Math.cos(p.b), den = cb - K.mu * sb; return den > 1e-9 ? g * (sb + K.mu * cb) / den : Infinity; }
+  function kAmin(p) { const sb = Math.sin(p.b), cb = Math.cos(p.b); return Math.max(0, g * (sb - K.mu * cb) / (cb + K.mu * sb)); }
   function kReset() { const p = kP(); K.state = "idle"; K.x = p.r; K.y = 0; K.vx = 0; K.vy = p.v; K.msg = ""; }
   $("k_go").onclick = () => { kReset(); K.state = "run"; };
   $("k_reset").onclick = kReset;
-  ["k_r", "k_v", "k_m"].forEach(id => $(id).addEventListener("input", kReset));
+  ["k_r", "k_v", "k_m", "k_b"].forEach(id => $(id).addEventListener("input", kReset));
   function kStep(dt) {
     const p = kP();
     if (K.state !== "run" && K.state !== "slide") return;
     const n = 20, h = dt / n;
+    const amax = kAmax(p), amin = kAmin(p);
     for (let i = 0; i < n; i++) {
       const v = Math.hypot(K.vx, K.vy), d = Math.hypot(K.x, K.y);
-      const need = v * v / d, have = K.mu * g;
-      if (K.state === "run" && need > have + 1e-9) { K.state = "slide"; K.msg = "Die Haftreibung reicht nicht: Das Auto rutscht aus der Kurve."; }
-      const a = K.state === "run" ? need : have;
+      const need = v * v / d;
+      if (K.state === "run" && need > amax + 1e-9) { K.state = "slide"; K.out = true; K.msg = p.b > 0 ? "Zu schnell: Neigung und Haftreibung reichen nicht, das Auto rutscht nach außen." : "Die Haftreibung reicht nicht: Das Auto rutscht aus der Kurve."; }
+      if (K.state === "run" && need < amin - 1e-9) { K.state = "slide"; K.out = false; K.msg = "Zu langsam: Die Haftreibung hält das Auto nicht, es rutscht die geneigte Fahrbahn hinunter nach innen."; }
+      const a = K.state === "run" ? need : K.out ? amax : amin;
       // Seitenkraft senkrecht zur Geschwindigkeit, zur Kurveninnenseite
       const tx = K.vx / v, ty = K.vy / v; let nx = -ty, ny = tx;
       if (nx * -K.x + ny * -K.y < 0) { nx = -nx; ny = -ny; }
@@ -222,7 +232,7 @@
       K.x += K.vx * h; K.y += K.vy * h;
       if (K.state === "run") { const dd = Math.hypot(K.x, K.y); K.x *= p.r / dd; K.y *= p.r / dd; }
     }
-    if (Math.hypot(K.x, K.y) > p.r + 30 || Math.hypot(K.x, K.y) > 125) { K.state = "off"; }
+    if (Math.hypot(K.x, K.y) > p.r + 30 || Math.hypot(K.x, K.y) > 125 || Math.hypot(K.x, K.y) < Math.max(2, p.r - 12)) { K.state = "off"; }
   }
   function kDraw() {
     const p = kP(), W = cv.clientWidth, H = cv.clientHeight, Hs = H - 56, cx = W / 2, cy = Hs / 2;
@@ -246,17 +256,18 @@
     const X = cx + K.x * sc, Y = cy - K.y * sc, ang = Math.atan2(-K.vy, K.vx);
     ctx.save(); ctx.translate(X, Y); ctx.rotate(ang);
     drawCar(carL, carW); ctx.restore();
-    const v = Math.hypot(K.vx, K.vy) || p.v, F = p.m * v * v / Math.hypot(K.x, K.y), Fmax = K.mu * p.m * g;
-    const k = 70 / Math.max(F, Fmax);
+    const v = Math.hypot(K.vx, K.vy) || p.v, F = p.m * v * v / Math.hypot(K.x, K.y), Fmax = p.m * Math.min(kAmax(p), 1e6), Fmin = p.m * kAmin(p);
+    const Fz = Math.max(Fmin, Math.min(F, Fmax));
+    const k = 70 / Math.max(F, Fz, 1);
     const d = Math.hypot(K.x, K.y), ux = -K.x / d, uy = K.y / d;
     if (K.state !== "off") {
-      arrow(X, Y, X + ux * Math.min(F, Fmax) * k, Y + uy * Math.min(F, Fmax) * k, C.green, 3);
-      text("F_H", X + ux * Math.min(F, Fmax) * k * 0.5 + 8, Y + uy * Math.min(F, Fmax) * k * 0.5 - 8, C.green, 14);
+      arrow(X, Y, X + ux * Fz * k, Y + uy * Fz * k, C.green, 3);
+      text(p.b > 0 ? "F_Z" : "F_H", X + ux * Fz * k * 0.5 + 8, Y + uy * Fz * k * 0.5 - 8, C.green, 14);
     }
     const vk = 3.5;
     arrow(X, Y, X + K.vx * vk, Y - K.vy * vk, C.red, 2.5);
     text("v", X + K.vx * vk + 6, Y - K.vy * vk, C.red, 14);
-    let my = 28 * FS;
+    let my = 66 + 16 * FS;
     if (K.msg) my = msg(K.msg, my, C.red, 16);
     if (K.state === "off") msg("Von der Fahrbahn abgekommen. „Zurück“ drücken.", my, C.red, 15);
     // Maßstabsbalken 20 m
@@ -264,6 +275,32 @@
     text("20 m", 14 + 20 * sc + 8, H - 41, "#222", 13);
     if (W < 500) { text("Draufsicht · Fahrbahn 7 m breit", 12, H - 66 - 18 * FS, "#41505f", 13); if (4.5 * sc < 24) text("Auto vergrößert gezeichnet", 12, H - 66, "#41505f", 13); }
     else { text("Draufsicht · Fahrbahn 7 m breit", 12, H - 24, "#41505f", 13); if (4.5 * sc < 24) text("Auto vergrößert gezeichnet", 12, H - 8, "#41505f", 13); }
+    if (p.b > 0) text("Fahrbahn um " + fmt(p.b * 180 / Math.PI, 0) + "° zur Mitte geneigt", cx, cy + 20 + 18 * FS, "#333", 13, "center");
+    kSection(p, W, H, v);
+  }
+  // Querschnitt der Fahrbahn mit den Kräften am Auto (Kurvenmitte links)
+  function kSection(p, W, H, v) {
+    const bw = Math.min(230, W * 0.42) * Math.min(FS, 1.25), bh = bw * 0.62, x0 = W - bw - 10, y0 = H - bh - 24;
+    ctx.save(); ctx.shadowColor = "rgba(0,0,0,.2)"; ctx.shadowBlur = 8; ctx.shadowOffsetY = 2;
+    ctx.fillStyle = "rgba(255,255,255,.93)"; rrect(x0, y0, bw, bh, 10); ctx.fill(); ctx.restore();
+    text("Querschnitt (Mitte links)", x0 + 8, y0 + 15 * FS, "#41505f", 12);
+    const cxs = x0 + bw * 0.5, cys = y0 + bh * 0.62, sb = Math.sin(p.b), cb = Math.cos(p.b), Lr = bw * 0.42;
+    // Fahrbahn: links (innen) tiefer
+    ctx.strokeStyle = "#5d6670"; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(cxs - Lr * cb, cys + Lr * sb); ctx.lineTo(cxs + Lr * cb, cys - Lr * sb); ctx.stroke();
+    ctx.fillStyle = "#c9b994"; ctx.beginPath(); ctx.moveTo(cxs - Lr * cb, cys + Lr * sb + 3); ctx.lineTo(cxs + Lr * cb, cys - Lr * sb + 3); ctx.lineTo(cxs + Lr * cb, y0 + bh - 6); ctx.lineTo(cxs - Lr * cb, y0 + bh - 6); ctx.closePath(); ctx.fill();
+    // Auto als Kasten auf der Fahrbahn
+    const cw = bw * 0.16, chh = cw * 0.55;
+    ctx.save(); ctx.translate(cxs, cys); ctx.rotate(-p.b);
+    ctx.fillStyle = "#f07a20"; rrect(-cw / 2, -chh - 3, cw, chh, 3); ctx.fill(); ctx.restore();
+    // Kräfte (relativ zur Gewichtskraft gezeichnet); a = nötige bzw. begrenzte Zentripetalbeschleunigung
+    const r = Math.hypot(K.x, K.y) || p.r, need = v * v / r, a = Math.max(kAmin(p), Math.min(need, kAmax(p)));
+    const N = g * cb + a * sb, FH = a * cb - g * sb, kk = bh * 0.3 / g;
+    const px = cxs - (chh / 2 + 3) * sb, py = cys - (chh / 2 + 3) * cb;
+    arrow(px, py, px, py + g * kk, C.blue, 2.5); text("F_G", px + 5, py + g * kk, C.blue, 12);
+    arrow(px, py, px - N * sb * kk, py - N * cb * kk, C.grey, 2.5); text("F_N", px - N * sb * kk + 4, py - N * cb * kk - 2, "#5b6675", 12);
+    if (Math.abs(FH) * kk > 2) { arrow(px, py, px - FH * cb * kk, py + FH * sb * kk, C.green, 2.5); text("F_H", px - FH * cb * kk - 4, py + FH * sb * kk + 12, C.green, 12, "right"); }
+    if (a * kk > 2) { arrow(px, py, px - a * kk, py, C.red, 3); text("F_Z", px - a * kk - 3, py - 5, C.red, 12, "right"); }
+    text("F_Z = Summe aller Kräfte", x0 + 8, y0 + bh - 8, C.red, 11);
   }
   function drawCar(l, w) {          // Auto von oben, Fahrtrichtung +x
     ctx.save(); ctx.shadowColor = "rgba(0,0,0,.45)"; ctx.shadowBlur = w * 0.6; ctx.shadowOffsetX = w * 0.15; ctx.shadowOffsetY = w * 0.3;
@@ -277,12 +314,21 @@
     ctx.fillStyle = "rgba(255,255,255,.35)"; rrect(-l * 0.45, -w * 0.42, l * 0.85, w * 0.12, w * 0.06); ctx.fill();
   }
   function kPanel() {
-    const p = kP(), F = p.m * p.v * p.v / p.r, Fmax = K.mu * p.m * g, vmax = Math.sqrt(K.mu * g * p.r);
+    const p = kP(), F = p.m * p.v * p.v / p.r, am = kAmax(p), Fmax = p.m * am, vmax = Math.sqrt(am * p.r), vmin = Math.sqrt(kAmin(p) * p.r);
     $("k_ro").textContent = fmt(p.r, 0) + " m"; $("k_vo").textContent = fmt(p.kmh, 0) + " km/h"; $("k_mo").textContent = fmt(p.m, 0) + " kg";
-    $("k_tab").innerHTML = rows([["v", fmt(p.v, 1) + " m/s"], ["nötige Zentripetalkraft m·v²/r", fmt(F, 0) + " N"],
-      ["höchste Haftreibung μ·m·g", fmt(Fmax, 0) + " N"], ["Grenzgeschwindigkeit √(μ·g·r)", fmt(vmax, 1) + " m/s = " + fmt(vmax * 3.6, 0) + " km/h"]]);
-    const mx = Math.max(F, Fmax) * 1.05;
-    $("k_bar1").style.width = (100 * F / mx) + "%"; $("k_bar2").style.width = (100 * Fmax / mx) + "%";
+    $("k_bo").textContent = fmt(p.b * 180 / Math.PI, 0) + "°";
+    const kmh = x => isFinite(x) ? fmt(x, 1) + " m/s = " + fmt(x * 3.6, 0) + " km/h" : "beliebig schnell";
+    if (p.b <= 0) $("k_tab").innerHTML = rows([["v", fmt(p.v, 1) + " m/s"], ["nötige Zentripetalkraft m·v²/r", fmt(F, 0) + " N"],
+      ["höchste Haftreibung μ·m·g", fmt(Fmax, 0) + " N"], ["Grenzgeschwindigkeit √(μ·g·r)", kmh(vmax)]]);
+    else {
+      const v0 = Math.sqrt(g * p.r * Math.tan(p.b));
+      $("k_tab").innerHTML = rows([["v", fmt(p.v, 1) + " m/s"], ["nötige Zentripetalkraft m·v²/r", fmt(F, 0) + " N"],
+        ["ohne Reibung passend: √(g·r·tan β)", kmh(v0)], ["höchstens (mit Haftreibung)", kmh(vmax)],
+        ["mindestens (sonst rutscht es nach innen)", vmin > 0 ? kmh(vmin) : "0 (Haftreibung hält es)"]]);
+    }
+    $("k_bar2t").textContent = p.b > 0 ? "höchstens mögliche Zentripetalkraft (Neigung + Haftreibung)" : "höchstens mögliche Haftreibung";
+    const mx = Math.max(F, isFinite(Fmax) ? Fmax : 2 * F) * 1.05;
+    $("k_bar1").style.width = (100 * F / mx) + "%"; $("k_bar2").style.width = (isFinite(Fmax) ? 100 * Fmax / mx : 100) + "%";
   }
 
   // ------------------------------------------------------------ Kettenkarussell
@@ -300,7 +346,8 @@
   function cDraw(dt) {
     const p = cP(), W = cv.clientWidth, H = cv.clientHeight, a = cSolve(p);
     cPhase += p.w * dt;
-    const sc = Math.min(W * 0.75 / (p.d + p.l + 1.5), H * 0.7 / (p.l + 4));
+    // fester Längenmaßstab: passt für die größte Einstellung (d = 8 m, l = 8 m)
+    const sc = Math.min(W * 0.75 / 17.5, H * 0.7 / 12);
     const ax = W * 0.18, top = H * 0.16;
     ctx.fillStyle = lin(0, 0, 0, H * 0.9, ["#cfe3f6", "#f3f8fc"]); ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = lin(0, H * 0.9, 0, H, ["#9cc285", "#6f9a5c"]); ctx.fillRect(0, H * 0.9, W, H * 0.1);
@@ -347,8 +394,13 @@
       ctx.beginPath(); ctx.moveTo(sx, sy + FG * k); ctx.lineTo(sx - FS * k * Math.sin(a), sy - FS * k * Math.cos(a) + FG * k); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(sx - FS * k * Math.sin(a), sy - FS * k * Math.cos(a)); ctx.lineTo(sx - FZ * k, sy); ctx.stroke(); ctx.setLineDash([]);
     }
+    // Längenmaßstab 2 m im Rasen
+    const lx = 14, ly = H * 0.9 + Math.min(30, H * 0.05);
+    ctx.strokeStyle = "#1d2733"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx + 2 * sc, ly); ctx.stroke();
+    ctx.lineWidth = 1.5; [lx, lx + 2 * sc].forEach(x => { ctx.beginPath(); ctx.moveTo(x, ly - 5); ctx.lineTo(x, ly + 5); ctx.stroke(); });
+    text("2 m", lx + 2 * sc + 8, ly + 5, "#1d2733", 13);
     // Draufsicht
-    const ox = W - 80, oy = 80 * Math.min(FS, 1.2), rr = 55, R = p.d + p.l * Math.sin(a), rs = rr * R / (p.d + p.l);
+    const ox = W - 80, oy = 62 + 66 * Math.min(FS, 1.2), rr = 55, R = p.d + p.l * Math.sin(a), rs = rr * R / (p.d + p.l);
     ctx.save(); ctx.shadowColor = "rgba(0,0,0,.2)"; ctx.shadowBlur = 8; ctx.shadowOffsetY = 2;
     ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(ox, oy, rr + 10, 0, 2 * Math.PI); ctx.fill(); ctx.restore();
     ctx.strokeStyle = C.grey; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.arc(ox, oy, rs, 0, 2 * Math.PI); ctx.stroke(); ctx.setLineDash([]);
@@ -371,9 +423,10 @@
   function lP() { return { h:+$("l_h").value, r:+$("l_r").value, m:+$("l_m").value, slow:$("l_slow").checked }; }
   function lBuild() {
     const p = lP(), pts = [];
-    const Lr = Math.max(2.2 * p.h, 3 * p.r), flat = 1.2 * p.r;
+    // Rampe oben steil (Wagen fährt sofort los), unten waagerecht in den Looping
+    const Lr = Math.max(1.5 * p.h, 3 * p.r), flat = 1.2 * p.r;
     const N1 = 120;
-    for (let i = 0; i <= N1; i++) { const u = i / N1; pts.push([-Lr - flat + u * Lr, p.h * (0.5 + 0.5 * Math.cos(Math.PI * u))]); }
+    for (let i = 0; i <= N1; i++) { const u = i / N1; pts.push([-Lr - flat + u * Lr, p.h * (1 - u) * (1 - u)]); }
     pts.push([0, 0]);
     L.loopStart = pts.length - 1;
     const N2 = 240;
@@ -431,15 +484,18 @@
     if (!L.pts) lReset();
     const xs = L.pts.map(q => q[0]), xmin = Math.min(...xs) - 0.5, xmax = Math.max(...xs) + 0.5;
     const ymax = Math.max(p.h, 2 * p.r) * 1.15 + 0.5;
-    const sc = Math.min((W - 40) / (xmax - xmin), (H - 104) / ymax);
+    // fester Maßstab: Grundbild 24 m breit und 14 m hoch; nur wenn die Bahn nicht hineinpasst, in Stufen 2 : 1, 4 : 1, 8 : 1 verkleinert
+    const top = 60, sc0 = Math.min((W - 40) / 24, (H - 64 - top) / 14);
+    let st = 1; while (st < 8 && ((xmax - xmin) * sc0 / st > W - 40 || ymax * sc0 / st > H - 64 - top)) st *= 2;
+    const sc = sc0 / st;
     const ox = 20 - xmin * sc + ((W - 40) - (xmax - xmin) * sc) / 2, oy = H - 64;
     const X = x => ox + x * sc, Y = y => oy - y * sc;
     ctx.fillStyle = lin(0, 0, 0, oy, ["#cfe3f6", "#f3f8fc"]); ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = lin(0, oy, 0, H, ["#9cc285", "#6f9a5c"]); ctx.fillRect(0, oy, W, H - oy);
     // Raster 1 m
     ctx.strokeStyle = "#d3e0ee"; ctx.lineWidth = 1;
-    const step = ymax > 20 ? 5 : (ymax > 8 ? 2 : 1);
-    for (let y = step; y < ymax; y += step) { ctx.beginPath(); ctx.moveTo(0, Y(y)); ctx.lineTo(W, Y(y)); ctx.stroke(); text(fmt(y, 0) + " m", 6, Y(y) - 3, "#7a8796", 11); }
+    const step = st >= 4 ? 10 : st >= 2 ? 5 : 2;
+    for (let y = step; Y(y) > 40; y += step) { ctx.beginPath(); ctx.moveTo(0, Y(y)); ctx.lineTo(W, Y(y)); ctx.stroke(); text(fmt(y, 0) + " m", 6, Y(y) - 3, "#7a8796", 11); }
     // Stützen unter der Rampe und am Looping
     ctx.fillStyle = lin(0, 0, 6, 0, ["#7d8792", "#c9d0d8", "#6b7580"]);
     for (let i = 6; i < L.loopStart; i += 12) { const q = L.pts[i]; if (q[1] > 0.05) { ctx.save(); ctx.translate(X(q[0]) - 3, 0); ctx.fillRect(0, Y(q[1]), 6, oy - Y(q[1])); ctx.restore(); } }
@@ -452,7 +508,7 @@
     // Markierungen
     ctx.setLineDash([5, 5]); ctx.strokeStyle = C.red; ctx.lineWidth = 1.2;
     ctx.beginPath(); ctx.moveTo(0, Y(2.5 * p.r)); ctx.lineTo(W, Y(2.5 * p.r)); ctx.stroke(); ctx.setLineDash([]);
-    text("h_min = 2,5 · r = " + fmt(2.5 * p.r, 2) + " m", W - 10, Y(2.5 * p.r) - 5, C.red, 13, "right");
+    text("h_min = 2,5 · r = " + fmt(2.5 * p.r, 2) + " m", W - 10, Y(2.5 * p.r) < 70 ? Y(2.5 * p.r) + 16 : Y(2.5 * p.r) - 5, C.red, 13, "right");
     // Wagen: steht auf der Schiene (Innenseite), im freien Fall in Flugrichtung gedreht
     const cl = Math.max(9, Math.min(0.35 * sc, 26)), ch = cl * 0.75;
     let tx = 1, ty = 0;
@@ -466,8 +522,14 @@
     ctx.fillStyle = "rgba(255,255,255,.45)"; rrect(-cl * 0.85, -ch * 1.18, cl * 1.7, ch * 0.22, ch * 0.1); ctx.fill();
     [-0.55, 0.55].forEach(u => ball(u * cl, -ch * 0.22, ch * 0.24, "#555", "#111"));
     ctx.restore();
-    if (L.msg) msg(L.msg, 26 * FS, L.msg.startsWith("Looping") ? C.green : C.red, 16);
-    text("Seitenansicht", 12, H - 16, "#41505f", 13);
+    if (L.msg) msg(L.msg, 66 + 16 * FS, L.msg.startsWith("Looping") ? C.green : C.red, 16);
+    // Längenmaßstab
+    const bm = st >= 4 ? 10 : st >= 2 ? 5 : 2, by = H - 40;
+    ctx.strokeStyle = "#1d2733"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(12, by); ctx.lineTo(12 + bm * sc, by); ctx.stroke();
+    ctx.lineWidth = 1.5; [12, 12 + bm * sc].forEach(x => { ctx.beginPath(); ctx.moveTo(x, by - 5); ctx.lineTo(x, by + 5); ctx.stroke(); });
+    text(bm + " m", 12 + bm * sc + 8, by + 5, "#1d2733", 13);
+    if (st > 1) text("Maßstab verkleinert (" + st + " : 1)", 12 + bm * sc + 50 * FS, by + 5, C.red, 13);
+    text("Seitenansicht", 12, H - 14, "#41505f", 13);
   }
   function lPanel() {
     const p = lP();
@@ -486,7 +548,7 @@
 
   // ------------------------------------------------------------ Steuerung
   function setTab(t) {
-    tab = t; linkSet(t);
+    tab = t; linkSet(t); $("app").className = $("app").className.replace(/\btab-\w+/g, "").trim() + " tab-" + t; resize();
     document.querySelectorAll(".tabs button").forEach(c => c.classList.toggle("on", c.dataset.tab === tab));
     document.querySelectorAll(".pane").forEach(pn => pn.classList.toggle("on", pn.id === "p-" + tab));
     if (tab === "loop") lReset(); if (tab === "kurve") kReset();

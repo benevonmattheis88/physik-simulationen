@@ -49,6 +49,16 @@
   #mtable table { font-size:.86rem; }
   .small { font-size:.86rem; color:var(--muted); }
   .hidden { display:none !important; }
+  /* großes Messdiagramm über der Drehscheibe */
+  #bigwrap { position:absolute; left:10px; right:10px; top:60px; bottom:22px; z-index:4; background:#fff; border:1px solid var(--line);
+             border-radius:12px; box-shadow:0 4px 18px rgba(0,0,0,.18); display:none; flex-direction:column; padding:.5rem .7rem; gap:.3rem; }
+  body.bigplot #bigwrap { display:flex; }
+  #bigwrap .hd { display:flex; align-items:center; gap:8px; font-weight:600; color:var(--blue); font-size:1.05rem; }
+  #bigwrap .hd span { flex:1; }
+  #plotwrap .btns button { white-space:nowrap; padding-left:.3rem; padding-right:.3rem; font-size:.95rem; }
+  #plotwrap .btns #measure { flex:1.7; }
+  #plot2 { flex:1; min-height:0; width:100%; display:block; }
+  #big svg { width:18px; height:18px; stroke:var(--ink); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; vertical-align:middle; }
 
   /* Werkzeugleiste auf der Simulation */
   #tools { position:absolute; top:8px; right:8px; display:flex; gap:6px; z-index:5; }
@@ -103,6 +113,7 @@
 <div id="app">
   <div id="stage">
     <canvas id="cv"></canvas>
+    <div id="bigwrap"><div class="hd"><span id="bigTitle">Messdiagramm</span><button id="bigMeasure">Messen (Körper 1)</button><button id="bigClose">Zurück zur Scheibe</button></div><canvas id="plot2"></canvas></div>
     <div id="tools">
       <button id="fsMinus" title="Schrift kleiner">A−</button>
       <button id="fsPlus" title="Schrift größer">A+</button>
@@ -143,13 +154,14 @@
         <div class="btns">
           <button id="measure">Messen (Körper 1)</button>
           <button id="clear">Löschen</button>
+          <button id="csv" title="Messwerte als Tabelle (CSV) speichern, öffnet sich in Excel oder Numbers">Speichern</button>
         </div>
         <div class="row"><label>x-Achse</label>
           <select id="xsel">
             <option value="w">ω in Hz</option><option value="w2" selected>ω² in Hz²</option>
             <option value="r">r in m</option><option value="m">m in kg</option>
             <option value="v">v in m/s</option><option value="v2">v² in m²/s²</option>
-          </select></div>
+          </select><button id="big" class="mini" title="Diagramm groß über der Scheibe zeigen"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg> groß</button></div>
         <canvas id="plot"></canvas>
         <div id="mtable"></div>
       </div>
@@ -168,7 +180,7 @@
 (function () {
   const $ = id => document.getElementById(id);
   const cv = $("cv"), ctx = cv.getContext("2d");
-  const pc = $("plot"), pctx = pc.getContext("2d");
+  const pc = $("plot"), pctx = pc.getContext("2d"), pc2 = $("plot2");
   // feste Maßstäbe für Kraftpfeile: Bildlänge in m pro N
   const FSCALE = [{ name:"fein", k:0.25, N:1, txt:"1 N" }, { name:"grob", k:0.025, N:10, txt:"10 N" }];
   const S = { mode: "desc", view: "3d", fs: 1, fsc: 0, phi: 0, running: true, released: false, rel: null, data: [] };
@@ -204,7 +216,7 @@
 
   function resize() {
     const dpr = window.devicePixelRatio || 1;
-    for (const c of [cv, pc]) {
+    for (const c of [cv, pc, pc2]) {
       const r = c.getBoundingClientRect();
       c.width = Math.max(1, Math.round(r.width * dpr)); c.height = Math.max(1, Math.round(r.height * dpr));
       c.getContext("2d").setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -438,29 +450,52 @@
 
   function xval(d, key) { return { w:d.w, w2:d.w * d.w, r:d.r, m:d.m, v:d.v, v2:d.v * d.v }[key]; }
 
+  // schöne Schrittweite für Achsen (1, 2, 5 · 10^n)
+  function nice(max, n) { const raw = max / n, e = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / e; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * e; }
   function drawPlot() {
-    const W = pc.clientWidth, H = pc.clientHeight;
+    drawPlotOn(pc, false);
+    if (document.body.classList.contains("bigplot")) drawPlotOn(pc2, true);
+  }
+  function drawPlotOn(c, big) {
+    const pctx = c.getContext("2d"), W = c.clientWidth, H = c.clientHeight;
     pctx.clearRect(0, 0, W, H);
     if (!W) return;
-    const fsz = Math.round(11 * S.fs);
-    const key = $("xsel").value;
+    const fsz = Math.round((big ? 15 : 11) * S.fs);
+    const key = $("xsel").value, xname = $("xsel").selectedOptions[0].text;
     const pts = S.data.map(d => [xval(d, key), d.F]);
-    const xmax = Math.max(1e-9, ...pts.map(q => q[0])) * 1.15, ymax = Math.max(1e-9, ...pts.map(q => q[1])) * 1.15;
-    const L = 40 * S.fs, B = 24 * S.fs, R = 8, T = 8;
-    pctx.strokeStyle = "#888"; pctx.lineWidth = 1;
-    pctx.beginPath(); pctx.moveTo(L, T); pctx.lineTo(L, H - B); pctx.lineTo(W - R, H - B); pctx.stroke();
-    pctx.fillStyle = "#5b6675"; pctx.font = fsz + "px -apple-system, Arial";
-    pctx.textAlign = "left"; pctx.fillText("F in N", L + 5, T + fsz - 2); pctx.textAlign = "right";
-    pctx.fillText(fmt(ymax / 1.15, 2), L - 3, H - B - (H - B - T) / 1.15 + 4);
-    pctx.textAlign = "right"; pctx.fillText($("xsel").selectedOptions[0].text, W - R, H - 6);
-    pctx.textAlign = "left"; pctx.fillText("0", L - 2, H - B + fsz + 2);
-    pctx.textAlign = "center"; pctx.fillText(fmt(xmax / 1.15, 2), L + (W - R - L) / 1.15, H - B - 5);
-    if (!pts.length) { pctx.fillText("Noch keine Messwerte", W / 2, H / 2); return; }
-    pctx.fillStyle = "#1F4E79";
-    for (const [x, y] of pts) {
-      const X = L + x / xmax * (W - R - L), Y = H - B - y / ymax * (H - B - T);
-      pctx.beginPath(); pctx.arc(X, Y, 4, 0, 2 * Math.PI); pctx.fill();
+    const L = (big ? 62 : 40) * S.fs, B = (big ? 40 : 24) * S.fs, R = big ? 18 : 8, T = big ? 14 : 8;
+    const xs = nice(Math.max(1e-9, ...pts.map(q => q[0])) * 1.05, big ? 8 : 3), ys = nice(Math.max(1e-9, ...pts.map(q => q[1])) * 1.05, big ? 6 : 2);
+    const xmax = pts.length ? Math.ceil(Math.max(...pts.map(q => q[0])) * 1.05 / xs) * xs || xs : xs * 4, ymax = pts.length ? Math.ceil(Math.max(...pts.map(q => q[1])) * 1.05 / ys) * ys || ys : ys * 3;
+    const X = x => L + x / xmax * (W - R - L), Y = y => H - B - y / ymax * (H - B - T);
+    const dg = st => st >= 1 ? 0 : Math.min(4, Math.ceil(-Math.log10(st) - 1e-9));
+    pctx.font = fsz + "px -apple-system, Arial"; pctx.lineWidth = 1;
+    if (pts.length) {
+      pctx.strokeStyle = "#e3e8ee"; pctx.fillStyle = "#5b6675";
+      pctx.textAlign = "right";
+      for (let y = ys; y <= ymax + 1e-9; y += ys) { pctx.beginPath(); pctx.moveTo(L, Y(y)); pctx.lineTo(W - R, Y(y)); pctx.stroke(); if (big || y >= ymax - 1e-9) pctx.fillText(fmt(y, dg(ys)), L - 4, Y(y) + fsz * 0.35); }
+      pctx.textAlign = "center";
+      for (let x = xs; x <= xmax + 1e-9; x += xs) { pctx.beginPath(); pctx.moveTo(X(x), T); pctx.lineTo(X(x), H - B); pctx.stroke(); if (big || x >= xmax - 1e-9) pctx.fillText(fmt(x, dg(xs)), X(x), H - B + fsz + 3); }
     }
+    pctx.strokeStyle = "#888";
+    pctx.beginPath(); pctx.moveTo(L, T); pctx.lineTo(L, H - B); pctx.lineTo(W - R, H - B); pctx.stroke();
+    pctx.fillStyle = "#5b6675";
+    pctx.textAlign = "left"; pctx.fillText("F in N", L + 5, T + fsz - 2);
+    pctx.textAlign = "right"; pctx.fillText(xname, W - R, H - B - 5);
+    pctx.textAlign = "right"; pctx.fillText("0", L - 4, H - B + fsz + 3);
+    if (!pts.length) { pctx.textAlign = "center"; pctx.fillText("Noch keine Messwerte", (L + W) / 2, H / 2); return; }
+    pctx.fillStyle = "#1F4E79";
+    for (const [x, y] of pts) { pctx.beginPath(); pctx.arc(X(x), Y(y), big ? 6 : 4, 0, 2 * Math.PI); pctx.fill(); }
+    if (big) $("bigTitle").textContent = "Messdiagramm: F über " + xname.replace(/ in .*/, "") + " (" + pts.length + " Messwert" + (pts.length === 1 ? "" : "e") + ")";
+  }
+  function setBig(on) { document.body.classList.toggle("bigplot", on); resize(); }
+  function csv() {
+    if (!S.data.length) return;
+    const rows = [["Nr", "Masse m in kg", "Radius r in m", "ω in Hz", "Bahngeschwindigkeit v in m/s", "Zentripetalkraft F_Z in N"]];
+    S.data.forEach((d, i) => rows.push([i + 1, fmt(d.m, 2), fmt(d.r, 2), fmt(d.w, 1), fmt(d.v, 3), fmt(d.F, 4)]));
+    const q = v => '"' + String(v).replace(/"/g, '""') + '"';
+    const t = "﻿" + rows.map(r => r.map(v => typeof v === "number" || /^-?\d+(,\d+)?$/.test(v) ? v : q(v)).join(";")).join("\r\n");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([t], { type:"text/csv;charset=utf-8" }));
+    a.download = "Messreihe_Kreisbewegung.csv"; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
   }
 
   function mtable() {
@@ -479,7 +514,7 @@
     $("tabDesc").classList.toggle("on", m === "desc"); $("tabForce").classList.toggle("on", m === "force");
     document.querySelectorAll(".force").forEach(e => e.classList.toggle("hidden", m !== "force"));
     $("plotwrap").style.display = m === "force" ? "flex" : "none";
-    if (m === "desc") unrelease();
+    if (m === "desc") { unrelease(); document.body.classList.remove("bigplot"); }
     resize(); table();
   }
 
@@ -527,10 +562,14 @@
   };
   $("measure").onclick = () => { const p = P(); S.data.push({ m:p.m, r:p.r1, w:p.w, v:p.w * p.r1, F:p.m * p.w * p.w * p.r1 }); mtable(); drawPlot(); };
   $("clear").onclick = () => { S.data = []; mtable(); drawPlot(); };
+  $("csv").onclick = csv;
+  $("big").onclick = () => setBig(!document.body.classList.contains("bigplot"));
+  $("bigClose").onclick = () => setBig(false);
+  $("bigMeasure").onclick = () => $("measure").click();
   $("xsel").onchange = drawPlot;
   document.querySelectorAll("input").forEach(e => e.addEventListener("input", table));
   window.addEventListener("resize", resize);
-  if (window.ResizeObserver) { const ro = new ResizeObserver(resize); ro.observe(cv); ro.observe(pc); }
+  if (window.ResizeObserver) { const ro = new ResizeObserver(resize); ro.observe(cv); ro.observe(pc); ro.observe(pc2); }
 
   let last = performance.now();
   function loop(t) {
