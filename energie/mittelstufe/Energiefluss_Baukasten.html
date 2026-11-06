@@ -67,11 +67,11 @@
   .par .line { display:flex; align-items:center; gap:6px; }
   .par .line button { flex:0 0 2.7rem; padding:0; font-size:1.3rem; font-weight:600; }
   .par input[type=range] { flex:1; min-width:0; height:2rem; }
-  .checks { display:flex; flex-wrap:wrap; gap:.25rem .9rem; }
-  .checks label { display:flex; align-items:center; gap:5px; min-height:1.9rem; }
-  .checks input { width:1.3rem; height:1.3rem; }
-  .chk { display:flex; align-items:center; gap:6px; min-height:1.9rem; }
-  .chk input { width:1.3rem; height:1.3rem; flex:none; }
+  .checks { display:flex; flex-wrap:wrap; gap:0 .9rem; }
+  .checks label { display:flex; align-items:center; gap:7px; min-height:2.25rem; cursor:pointer; }
+  .checks input { width:1.55rem; height:1.55rem; flex:none; margin:0; }
+  .chk { display:flex; align-items:center; gap:7px; min-height:2.25rem; cursor:pointer; }
+  .chk input { width:1.55rem; height:1.55rem; flex:none; margin:0; }
   #selbox .btns button { padding:.3rem .35rem; font-size:.9rem; min-width:0; }
   .row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 
@@ -141,6 +141,31 @@
     #legend { font-size:.8rem; top:54px; }
   }
 
+  /* Ergebnis-Übersicht der Aufgaben (zum Abgeben als Screenshot in Moodle) */
+  #sumPage { display:none; grid-row:2 / 4; grid-column:1 / -1; overflow:auto; -webkit-overflow-scrolling:touch; background:var(--bg); padding:.8rem; }
+  body.sum #sumPage { display:block; }
+  body.sum #pal, body.sum #stage, body.sum #bot, body.sum #aufSec, body.sum #auftrag { display:none !important; }
+  #sumPage .in { max-width:58rem; margin:0 auto; display:flex; flex-direction:column; gap:.6rem; }
+  .sumhead { display:flex; justify-content:space-between; align-items:center; gap:.8rem; flex-wrap:wrap; background:var(--panel); border:1px solid var(--line); border-radius:.8rem; padding:.6rem .9rem; }
+  .sumhead h2 { margin:0 0 .3rem; font-size:1.3rem; }
+  .sumhead .meta { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; font-size:.9rem; color:var(--muted); }
+  .sumname { font:inherit; font-size:1rem; padding:.35rem .5rem; border:1.5px solid var(--line); border-radius:.5rem; width:14rem; max-width:100%; -webkit-user-select:text; user-select:text; }
+  .sumbig { text-align:center; } .sumbig .st { font-size:2.4rem; letter-spacing:.08em; line-height:1; color:#d97706; }
+  .sumbig .pt { font-size:.9rem; color:var(--muted); font-weight:600; } .st .off { color:#d6dbe4; }
+  .sumcard { background:var(--panel); border:1px solid var(--line); border-radius:.8rem; padding:.6rem .9rem; }
+  .sumchips { display:grid; grid-template-columns:repeat(auto-fill, minmax(7.5rem, 1fr)); gap:.4rem; }
+  .schip { display:flex; flex-direction:column; align-items:center; border-radius:.5rem; padding:.3rem .3rem; border:1.5px solid; font-size:.85rem; line-height:1.25; text-align:center; }
+  .schip b { font-size:.95rem; }
+  .schip.g { background:#dcfce7; border-color:#16a34a; color:#14532d; } .schip.y { background:#fef3c7; border-color:#d97706; color:#78350f; }
+  .schip.r { background:#fee2e2; border-color:#dc2626; color:#7f1d1d; } .schip.n { background:#f1f3f7; border-color:#cfd6e2; color:#6b7385; }
+  .sumlegend { display:flex; flex-wrap:wrap; gap:.3rem .9rem; align-items:center; font-size:.85rem; color:var(--muted); }
+  .sumlegend .schip { display:inline-flex; min-width:2rem; padding:0 .3rem; }
+  .sumfast { font-size:.95rem; } .sumfast.warn { color:#8a5a00; font-weight:600; }
+  .sumtip { background:#f1f6fc; border:1px solid #d3e2f3; border-radius:.6rem; padding:.5rem .7rem; font-size:.95rem; }
+  #aufListe button .dot { display:inline-block; width:.6rem; height:.6rem; border-radius:50%; margin-left:.35rem; vertical-align:middle; }
+  .dot.g { background:#16a34a; } .dot.y { background:#d97706; } .dot.r { background:#dc2626; }
+  @media (max-width: 640px) { #sumPage { order:2; } }
+
   /* Drehhinweis, wenn das Handy quer gehalten wird */
   #rotate { display:none; position:fixed; inset:0; z-index:50; background:rgba(29,39,51,.94); color:#fff;
             align-items:center; justify-content:center; text-align:center; padding:20px; }
@@ -159,6 +184,7 @@
     <div class="tabs">
       <button id="tabFrei" class="on">Frei bauen</button>
       <button id="tabAuf">Aufgaben</button>
+      <button id="tabSum">Übersicht</button>
     </div>
     <div id="aufSec" class="hidden">
       <div id="aufListe"></div>
@@ -192,6 +218,7 @@
       <button id="zIn" title="Vergrößern">+</button>
     </div>
   </div>
+  <div id="sumPage"><div class="in" id="sum"></div></div>
   <div id="bot" class="bar">
     <div class="cell"><div id="selbox" class="box"></div></div>
     <div class="cell">
@@ -1110,7 +1137,7 @@
     }
     if (bilanzHinweis) msgs.push(["warn", "Bei manchen Umladern fließt weniger Energie heraus als hinein. Das geht nur auf, wenn man die Abwärme mitzeichnet (Schalter „Abwärme verlangen“)."]);
     const res = msgs.length ? msgs : [["ok", "Alles stimmig! Keine Fehler gefunden."]];
-    if (U.mode === "auf" && U.task != null) res.push(...compare());
+    if (U.mode === "auf" && U.task != null) { const cmp = compare(); res.push(...cmp); sumRecord(!msgs.some(m => m[0] === "err") && cmp[0][0] === "ok"); }
     show(res, flags);
   }
   function show(list, flags) {
@@ -1164,9 +1191,44 @@
     return res;
   }
 
+  /* ---------- Ergebnis-Übersicht ----------
+     Je Aufgabe: g = beim ersten Prüfen richtig (2 Punkte), y = nach mehrmaligem Prüfen (1 Punkt),
+     r = Lösung angesehen, bevor die Aufgabe gelöst war (0), n = offen. 💡 = Lückendiagramm genutzt.
+     Zeit = vom ersten Öffnen der Aufgabe bis zum ersten Prüfen. Nichts wird gespeichert oder verschickt. */
+  const SUM = TASKS.map(() => ({ t0:null, dt:null, tries:0, done:false, peek:false, tip:false }));
+  const T_START = Date.now(); let sumName = "";
+  /* Unter dieser Zeit (Sekunden bis zum ersten Prüfen) gilt eine Aufgabe als „sehr schnell“: kaum Zeit zum Bauen */
+  const FAST = 30;
+  function sumRecord(ok) {
+    const z = SUM[U.task]; if (z.done) return;
+    z.tries++; if (z.dt === null && z.t0 !== null) z.dt = (Date.now() - z.t0) / 1000;
+    if (ok) z.done = true;
+    buildTasks();
+  }
+  function grade(i) { const z = SUM[i]; if (z.peek) return "r"; if (!z.done) return "n"; return z.tries === 1 ? "g" : "y"; }
+  function renderSum() {
+    const GR = { g:{ p:2, s:"✓" }, y:{ p:1, s:"≈" }, r:{ p:0, s:"✗" }, n:{ p:0, s:"–" } };
+    const secs = x => x === null ? "" : x < 60 ? Math.round(x) + " s" : Math.floor(x / 60) + " min " + String(Math.round(x % 60)).padStart(2, "0") + " s";
+    const stars = (p, m) => { const q = m ? p / m : 0, n = q >= .85 ? 3 : q >= .6 ? 2 : q >= .3 ? 1 : 0; return "★".repeat(n) + `<span class="off">${"★".repeat(3 - n)}</span>`; };
+    const g = TASKS.map((_, i) => grade(i)), p = g.reduce((a, x) => a + GR[x].p, 0), m = TASKS.length * 2;
+    const fast = SUM.map(z => z.dt !== null && z.dt < FAST), nAns = SUM.filter(z => z.dt !== null).length, nFast = fast.filter(Boolean).length;
+    const hm = d => d.toLocaleTimeString("de-DE", { hour:"2-digit", minute:"2-digit" });
+    const now = new Date().toLocaleString("de-DE", { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" });
+    $("sum").innerHTML = `<div class="sumhead"><div><h2>Meine Ergebnisse · Energiefluss-Baukasten</h2>
+      <div class="meta"><input class="sumname" id="sumName" value="${esc(sumName)}" placeholder="Dein Name" autocomplete="off"><span>Stand: ${now}</span><span>· gearbeitet seit ${hm(new Date(T_START))} (${Math.round((Date.now() - T_START) / 60000)} min)</span></div></div>
+      <div class="sumbig"><div class="st">${stars(p, m)}</div><div class="pt">${p} von ${m} Punkten</div></div></div>
+     <div class="sumcard"><div class="sumchips">${TASKS.map((t, i) => `<span class="schip ${g[i]}"><b>${esc(t.t)}</b><span>${GR[g[i]].s}${SUM[i].tip ? " 💡" : ""}${fast[i] ? " ⚡" : ""}</span>${SUM[i].tries ? `<span>${SUM[i].tries}× geprüft</span>` : ""}${SUM[i].dt !== null ? `<span>${secs(SUM[i].dt)}</span>` : ""}</span>`).join("")}</div>
+      <p style="margin:.5rem 0 0;color:var(--muted)">${p} von ${m} Punkten · gelöst: ${SUM.filter(z => z.done).length} von ${TASKS.length}</p></div>
+     <div class="sumfast ${nFast ? "warn" : ""}">⚡ Sehr schnell geprüft: <b>${nFast}</b> von ${nAns} Aufgaben${nFast ? " (kaum Zeit zum Bauen)" : ""}</div>
+     <div class="sumlegend"><span class="schip g">✓</span> beim ersten Prüfen richtig (2 Punkte)<span class="schip y">≈</span> nach mehrmaligem Prüfen (1 Punkt)<span class="schip r">✗</span> Lösung angesehen<span class="schip n">–</span> noch offen<span>💡 Lückendiagramm genutzt</span><span>⚡ erstes Prüfen nach weniger als ${FAST} s</span><span>Zeit = vom Öffnen der Aufgabe bis zum ersten Prüfen</span></div>
+     <div class="sumtip">📷 Mach einen <b>Screenshot</b> von dieser Seite und gib ihn in Moodle ab. Hinweis: Die Ergebnisse werden nicht gespeichert. Wenn du die Seite neu lädst, beginnt alles von vorn.</div>`;
+    const n = $("sumName"); n.oninput = () => { sumName = n.value; };
+  }
+
   /* ---------- Aufgaben laden ---------- */
   function loadTask(i, what) {
     const T0 = TASKS[i], o = opt();
+    const z = SUM[i]; if (what === "lsg" && !z.done) z.peek = true; if (what === "luecke") z.tip = true;
     D = { nodes:[], arrows:[], scale:T0.scale, next:1 };
     const map = {};
     // Aufgaben etwas enger setzen, damit die Schrift beim Einpassen größer bleibt
@@ -1191,11 +1253,11 @@
     U.sel = null; changed(); syncScale(); render(); renderSel(); commit(); fit();
   }
   function buildTasks() {
-    $("aufListe").innerHTML = TASKS.map((t, i) => `<button data-i="${i}">${esc(t.t)}</button>`).join("");
-    $("aufListe").querySelectorAll("button").forEach(b => b.onclick = () => openTask(+b.dataset.i));
+    $("aufListe").innerHTML = TASKS.map((t, i) => { const g = grade(i); return `<button data-i="${i}">${esc(t.t)}${g !== "n" ? `<span class="dot ${g}"></span>` : ""}</button>`; }).join("");
+    $("aufListe").querySelectorAll("button").forEach(b => { b.onclick = () => openTask(+b.dataset.i); b.classList.toggle("on", +b.dataset.i === U.task); });
   }
   function openTask(i) {
-    U.task = i;
+    U.task = i; if (SUM[i].t0 === null) SUM[i].t0 = Date.now();
     $("aufListe").querySelectorAll("button").forEach(x => x.classList.toggle("on", +x.dataset.i === i));
     $("auftrag").innerHTML = `<b>Auftrag:</b> ${esc(TASKS[U.task].txt)}`;
     $("auftrag").classList.remove("hidden"); $("aufBtns").classList.remove("hidden"); requestAnimationFrame(resize);
@@ -1203,19 +1265,21 @@
   }
   /* Direktlink: Datei.html#aufgaben öffnet die Aufgaben, #aufgabe-wasserkocher gleich eine Aufgabe; beim Umschalten zeigt die Adresse, was offen ist */
   const slug = t => t.toLowerCase().replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-  function linkKey() { return U.mode !== "auf" ? "frei" : U.task == null ? "aufgaben" : "aufgabe-" + slug(TASKS[U.task].t); }
+  function linkKey() { return U.mode === "sum" ? "uebersicht" : U.mode !== "auf" ? "frei" : U.task == null ? "aufgaben" : "aufgabe-" + slug(TASKS[U.task].t); }
   function linkSet() { const k = linkKey(); try { if (location.hash !== "#" + k) history.replaceState(null, "", "#" + k); } catch (e) {} }
   function linkOpen() {
     let h = ""; try { h = decodeURIComponent(location.hash.slice(1)).toLowerCase(); } catch (e) {}
     if (!h || h === linkKey()) return;
     if (h === "frei") setMode("frei");
     else if (h === "aufgaben") setMode("auf");
+    else if (h === "uebersicht") setMode("sum");
     else { const i = TASKS.findIndex(t => "aufgabe-" + slug(t.t) === h); if (i >= 0) { setMode("auf"); openTask(i); } }
   }
   window.addEventListener("hashchange", linkOpen);
   function setMode(m) {
     U.mode = m; linkSet();
-    $("tabFrei").classList.toggle("on", m === "frei"); $("tabAuf").classList.toggle("on", m === "auf");
+    $("tabFrei").classList.toggle("on", m === "frei"); $("tabAuf").classList.toggle("on", m === "auf"); $("tabSum").classList.toggle("on", m === "sum");
+    document.body.classList.toggle("sum", m === "sum"); if (m === "sum") renderSum();
     $("aufSec").classList.toggle("hidden", m !== "auf");
     $("auftrag").classList.toggle("hidden", m !== "auf" || U.task == null);
     changed(); requestAnimationFrame(resize);
@@ -1279,6 +1343,7 @@
   $("pruefBtn").onclick = check;
   $("tabFrei").onclick = () => setMode("frei");
   $("tabAuf").onclick = () => setMode("auf");
+  $("tabSum").onclick = () => setMode("sum");
   $("aufLeer").onclick = () => U.task != null && loadTask(U.task, "leer");
   $("aufLuecke").onclick = () => U.task != null && loadTask(U.task, "luecke");
   $("aufLsg").onclick = () => U.task != null && loadTask(U.task, "lsg");
