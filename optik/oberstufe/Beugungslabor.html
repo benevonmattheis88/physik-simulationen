@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Beugungslabor: Einzelspalt, Doppelspalt und Gitter</title>
+<style>
+  :root { --bg:#f4f6f9; --panel:#ffffff; --ink:#1d2733; --muted:#5b6675; --line:#d5dbe3;
+          --blue:#1F4E79; --red:#C0392B; --green:#2E7D32; --orange:#E67E22; }
+  * { box-sizing:border-box; }
+  html { font-size:14px; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--ink);
+               font-family:-apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow:hidden;
+               -webkit-text-size-adjust:100%; }
+  #app { display:flex; height:100vh; height:100dvh; width:100vw; }
+  #stage { flex:1 1 auto; position:relative; min-width:0; min-height:0; display:flex; flex-direction:column; background:#161a20; }
+  .view { position:relative; min-height:0; }
+  .view canvas { position:absolute; inset:0; display:block; width:100%; height:100%; touch-action:none; }
+  #vNear { flex:1.25 1 0; }
+  #vFar { flex:1 1 0; border-top:2px solid #0c0e12; }
+  #vScr { flex:0 0 7rem; border-top:2px solid #0c0e12; }
+  body.noNear #vNear, body.noFar #vFar, body.noScr #vScr { display:none; }
+  body.noNear.noFar #vScr { flex:1 1 0; }
+  #panel { flex:0 0 25rem; max-width:50vw; background:var(--panel); border-left:1px solid var(--line);
+           padding:.6rem .85rem; display:flex; flex-direction:column; gap:.4rem; overflow-y:auto; }
+  body.nopanel #panel { display:none; }
+  .col { display:flex; flex-direction:column; gap:.35rem; min-width:0; }
+  h1 { font-size:1.2rem; margin:0; color:var(--blue); }
+  .tabs { display:flex; gap:6px; }
+  .tabs button { flex:1; padding-left:.3rem; padding-right:.3rem; }
+  .tabs.sub button { min-height:2.2rem; font-size:.95rem; }
+  button { font:inherit; font-size:1rem; padding:.5rem .6rem; border-radius:8px; border:1px solid var(--line);
+           background:#eef2f7; color:var(--ink); cursor:pointer; touch-action:manipulation; min-height:2.6rem; }
+  button.on { background:var(--blue); color:#fff; border-color:var(--blue); }
+  .row { display:flex; align-items:center; gap:8px; font-size:1rem; }
+  .row label { flex:0 0 7.6rem; }
+  .row input[type=range] { flex:1; min-width:0; height:1.9rem; }
+  .row output { flex:0 0 5.4rem; text-align:right; font-variant-numeric:tabular-nums; }
+  .row .kb { flex:1; display:flex; gap:6px; }
+  .row .kb button { flex:1; min-height:2.2rem; padding:.2rem; }
+  #lam { background:linear-gradient(90deg,#5a0070 0%,#7a00c8 5%,#2a3bff 18%,#00b4ff 30%,#00e070 40%,#c8ff00 50%,#ffd000 55%,#ff7000 64%,#ff0000 75%,#7a0000 100%);
+         border-radius:6px; -webkit-appearance:none; appearance:none; height:1.3rem !important; }
+  #lam::-webkit-slider-thumb { -webkit-appearance:none; width:1.7rem; height:1.7rem; border-radius:50%; background:var(--lc,#fff); border:3px solid #fff; box-shadow:0 0 0 1px #333, 0 1px 4px rgba(0,0,0,.5); }
+  #lam::-moz-range-thumb { width:1.5rem; height:1.5rem; border-radius:50%; background:var(--lc,#fff); border:3px solid #fff; box-shadow:0 0 0 1px #333; }
+  #lamName { display:flex; align-items:center; gap:.5rem; font-size:.95rem; color:var(--muted); margin:-.15rem 0 .1rem 8.2rem; }
+  #swatch { width:2.2rem; height:1.1rem; border-radius:4px; border:1px solid #333; box-shadow:0 0 8px var(--lc,#fff); background:var(--lc,#fff); }
+  select { font:inherit; font-size:1rem; padding:.3rem; flex:1; min-width:0; }
+  .checks { display:flex; flex-wrap:wrap; gap:.25rem .9rem; font-size:1rem; }
+  .checks label { display:flex; align-items:center; gap:5px; min-height:1.9rem; }
+  .checks input { width:1.3rem; height:1.3rem; }
+  table { border-collapse:collapse; width:100%; font-size:.9rem; font-variant-numeric:tabular-nums; }
+  td, th { border-bottom:1px solid var(--line); padding:.2rem .25rem; text-align:right; }
+  td:first-child, th:first-child { text-align:left; }
+  th { color:var(--muted); font-weight:600; }
+  tr.sel td { background:#fff5e8; }
+  .btns { display:flex; gap:6px; }
+  .btns button { flex:1; }
+  #expl { font-size:.95rem; background:#f1f6fc; border:1px solid #d3e2f3; border-radius:8px; padding:.4rem .55rem; line-height:1.35; }
+  #expl.warn { background:#fff4e5; border-color:#f0c88a; }
+  .small { font-size:.86rem; color:var(--muted); line-height:1.3; }
+  .hidden { display:none !important; }
+
+  /* Herleitung */
+  #pDer { gap:.45rem; }
+  .step { border:1px solid var(--line); border-radius:8px; padding:.4rem .55rem; font-size:.97rem; line-height:1.4; }
+  .step .q { color:var(--muted); }
+  .step .a { margin-top:.25rem; }
+  .step.cur { border-color:var(--orange); background:#fffaf3; }
+  .vor b { color:var(--blue); }
+  #chain { border:2px solid var(--blue); border-radius:10px; padding:.45rem .6rem; background:#f6f9fd; font-size:1.08rem; }
+  #chain .ct { font-size:.85rem; color:var(--muted); margin-bottom:.2rem; }
+  #chain .ln { display:flex; align-items:center; gap:.4rem; min-height:2.4rem; flex-wrap:wrap; }
+  #chain .ln .eq { flex:0 0 1.3rem; text-align:center; font-weight:600; }
+  #chain .ln .why { font-size:.8rem; color:var(--muted); margin-left:auto; }
+  #chain .ln.neu { animation:neu 1.2s ease-out; }
+  @keyframes neu { from { background:#ffe9c7; } to { background:transparent; } }
+  .fr { display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; margin:0 .15rem; line-height:1.15; }
+  .fr > span:first-child { border-bottom:1.5px solid currentColor; padding:0 .15rem; }
+  .fr > span:last-child { padding:0 .15rem; }
+  .res { font-size:.95rem; background:#eef8ef; border:1px solid #bfe0c3; border-radius:8px; padding:.4rem .55rem; line-height:1.45; }
+
+  /* Werkzeugleiste auf der Simulation */
+  #tools { position:absolute; top:8px; right:8px; display:flex; gap:6px; z-index:5; }
+  #tools button { min-width:44px; height:44px; min-height:44px; padding:0 10px; font-size:16px; font-weight:600;
+                  background:rgba(255,255,255,.88); border:1px solid #c3ccd8; border-radius:10px;
+                  box-shadow:0 2px 6px rgba(0,0,0,.25); display:flex; align-items:center; justify-content:center; }
+  #tools button svg { width:22px; height:22px; stroke:var(--ink); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  #tools button:active { background:#dde5ef; }
+
+  @media (max-height: 800px) {
+    h1 { display:none; }
+    button { padding:.35rem .6rem; min-height:2.4rem; }
+    td, th { padding:.12rem .25rem; }
+    .row input[type=range] { height:1.6rem; }
+    .checks label { min-height:1.6rem; }
+    #vScr { flex-basis:6.2rem; }
+  }
+  @media (max-width: 900px) and (orientation: landscape) { #panel { flex-basis:22rem; } .row label { flex-basis:6.8rem; } #lamName { margin-left:7.4rem; } }
+
+  /* iPad hochkant: Simulation oben, Bedienfeld zweispaltig darunter */
+  @media (min-width: 641px) and (max-width: 900px) and (orientation: portrait) {
+    #app { flex-direction:column; }
+    #panel { flex:0 0 auto; max-width:none; max-height:42vh; width:100%; border-left:0; border-top:1px solid var(--line);
+             display:grid; grid-template-columns:1fr 1fr; gap:.4rem 1.1rem; align-items:start; }
+    #panel > .wide { grid-column:1 / -1; }
+    h1 { display:none; }
+  }
+
+  /* Handy hochkant: Simulation oben, Bedienfeld darunter, Seite darf scrollen */
+  @media (max-width: 640px) {
+    html, body { height:auto; overflow:auto; }
+    #app { flex-direction:column; height:auto; min-height:100vh; }
+    #stage { flex:none; height:min(175vw, 80vh); }
+    body.nopanel #stage { height:100vh; height:100dvh; }
+    #vScr { flex-basis:5.4rem; }
+    #panel { flex:none; width:100%; max-width:none; border-left:0; border-top:1px solid var(--line); overflow:visible; }
+    h1 { display:block; }
+    #tools button { min-width:40px; height:40px; min-height:40px; padding:0 8px; }
+    .row label { flex-basis:6.6rem; }
+    #lamName { margin-left:7.2rem; }
+  }
+
+  /* Drehhinweis, wenn das Handy quer gehalten wird */
+  #rotate { display:none; position:fixed; inset:0; z-index:50; background:rgba(29,39,51,.94); color:#fff;
+            align-items:center; justify-content:center; text-align:center; padding:20px; }
+  #rotate .box { max-width:420px; display:flex; flex-direction:column; align-items:center; gap:14px; font-size:18px; }
+  #rotate svg { width:80px; height:80px; stroke:#fff; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+  #rotate button { font-size:17px; background:#fff; color:var(--ink); padding:10px 18px; }
+  @media (orientation: landscape) and (max-height: 500px) {
+    body:not(.quer) #rotate { display:flex; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <div class="view" id="vNear"><canvas id="cNear"></canvas></div>
+    <div class="view" id="vFar"><canvas id="cFar"></canvas></div>
+    <div class="view" id="vScr"><canvas id="cScr"></canvas></div>
+    <div id="tools">
+      <button id="fsMinus" title="Schrift kleiner">A−</button>
+      <button id="fsPlus" title="Schrift größer">A+</button>
+      <button id="view" title="Darstellung umschalten">Symbol</button>
+      <button id="full" title="Vollbild"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      <button id="panelBtn" title="Bedienfeld aus-/einblenden"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg></button>
+    </div>
+  </div>
+  <div id="panel">
+    <div class="col wide">
+      <h1>Beugungslabor</h1>
+      <div class="tabs" id="modeTabs">
+        <button data-m="einzel">Einzelspalt</button>
+        <button data-m="doppel">Doppelspalt</button>
+        <button data-m="gitter" class="on">Gitter</button>
+      </div>
+      <div class="tabs sub">
+        <button id="tabSet" class="on">Einstellungen</button>
+        <button id="tabDer">Herleitung</button>
+      </div>
+    </div>
+    <div class="col" id="pSet1">
+      <div class="row"><label>Wellenlänge λ</label><input id="lam" type="range" min="380" max="780" step="1" value="532"><output id="lamo"></output></div>
+      <div id="lamName"><span id="swatch"></span><span id="lamTxt"></span></div>
+      <div class="row m-einzel"><label>Spaltbreite b</label><input id="bS" type="range" min="50" max="500" step="5" value="200"><output id="bSo"></output></div>
+      <div class="row m-doppel"><label>Spaltabstand g</label><input id="gD" type="range" min="100" max="1000" step="10" value="500"><output id="gDo"></output></div>
+      <div class="row m-doppel"><label>Spaltbreite b</label><input id="bD" type="range" min="10" max="200" step="5" value="100"><output id="bDo"></output></div>
+      <div class="row m-gitter"><label>Gitterkonstante g</label><input id="gG" type="range" min="1" max="10" step="0.01" value="3.33"><output id="gGo"></output></div>
+      <div class="small m-gitter" id="gGlines" style="margin:-.2rem 0 0 8.2rem"></div>
+      <div class="row"><label>Schirmabstand a</label><input id="a" type="range" min="0.2" max="5" step="0.05" value="1.5"><output id="ao"></output></div>
+      <div class="row"><label id="kLab">Ordnung k</label><div class="kb" id="kb"><button data-k="1" class="on">1</button><button data-k="2">2</button><button data-k="3">3</button></div></div>
+      <div class="row"><label>Schirmausschnitt</label>
+        <select id="scrW">
+          <option value="2">2 m breit</option>
+          <option value="1">1 m breit</option>
+          <option value="0.5">50 cm breit</option>
+          <option value="0.2">20 cm breit</option>
+          <option value="0.1">10 cm breit</option>
+          <option value="0.05">5 cm breit</option>
+          <option value="0.02">2 cm breit</option>
+          <option value="0.01">1 cm breit</option>
+        </select></div>
+    </div>
+    <div class="col" id="pSet2">
+      <div class="checks">
+        <label><input id="cbNear" type="checkbox" checked>Nahaufnahme</label>
+        <label><input id="cbFar" type="checkbox" checked>Fernaufnahme</label>
+        <label><input id="cbScr" type="checkbox" checked>Schirmbild</label>
+        <label><input id="cbGang" type="checkbox" checked>Gangunterschied</label>
+        <label><input id="cbCurve" type="checkbox">Intensitätskurve</label>
+        <label><input id="cbRun" type="checkbox" checked>Wellen bewegen</label>
+        <label><input id="cbAvg" type="checkbox">Helligkeit (gemittelt)</label>
+      </div>
+      <div class="btns"><button id="reset">Zurücksetzen</button></div>
+      <div id="expl"></div>
+      <table id="vals"></table>
+      <div class="small" id="simpl"></div>
+    </div>
+    <div class="col wide hidden" id="pDer"></div>
+  </div>
+</div>
+<div id="rotate">
+  <div class="box">
+    <svg viewBox="0 0 64 64"><rect x="20" y="6" width="24" height="42" rx="4"/><path d="M29 42h6"/><path d="M50 30a20 20 0 0 1-12 22M38 52l1-6M38 52l-6-1"/></svg>
+    <div>Bitte das Handy hochkant halten.</div>
+    <button id="rotGo">Trotzdem quer weiter</button>
+  </div>
+</div>
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const cN = $("cNear"), nctx = cN.getContext("2d");
+  const cF = $("cFar"), fctx = cF.getContext("2d");
+  const cS = $("cScr"), sctx = cS.getContext("2d");
+  const off = document.createElement("canvas"), octx = off.getContext("2d");
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  };
+  const DEF = { lam:532, bS:200, gD:500, bD:100, gG:3.33, a:1.5 };
+  const SCRW = { einzel:0.02, doppel:0.02, gitter:2 };
+  const S = { mode:"gitter", view:"3d", fs:1, k:1, pane:"set", step:0, coarse:false, field:null, fkey:"", t0:performance.now(), tFrozen:0, dragA:false };
+  const NAME = { einzel:"Einzelspalt", doppel:"Doppelspalt", gitter:"Gitter" };
+  const fmt = (x, d) => (isFinite(x) ? x.toFixed(d).replace(".", ",") : "–");
+  const deg = r => r * 180 / Math.PI;
+  const sinc = x => Math.abs(x) < 1e-9 ? 1 : Math.sin(x) / x;
+  const GB = 0.3;                         // Spaltbreite beim Gitter: b = 0,3 · g (Modellannahme)
+
+  // ---------- Farben ----------
+  function wl2rgb(l) {
+    let r, g, b;
+    if (l < 440) { r = (440 - l) / 60; g = 0; b = 1; }
+    else if (l < 490) { r = 0; g = (l - 440) / 50; b = 1; }
+    else if (l < 510) { r = 0; g = 1; b = (510 - l) / 20; }
+    else if (l < 580) { r = (l - 510) / 70; g = 1; b = 0; }
+    else if (l < 645) { r = 1; g = (645 - l) / 65; b = 0; }
+    else { r = 1; g = 0; b = 0; }
+    // am Rand des sichtbaren Bereichs wird das Licht für das Auge dunkler
+    const f = l < 420 ? 0.3 + 0.7 * (l - 380) / 40 : l > 700 ? 0.3 + 0.7 * (780 - l) / 80 : 1;
+    return [r, g, b].map(c => Math.pow(c * f, 0.8));
+  }
+  function rgbArr(l) { return wl2rgb(l).map(v => Math.round(v * 255)); }
+  function col(l, a) { const c = rgbArr(l); return "rgba(" + c.join(",") + "," + (a == null ? 1 : a) + ")"; }
+  function colDark(l) { const c = wl2rgb(l), m = Math.max(...c, 0.01); return c.map(v => Math.round(v / m * 200)); }
+  function colName(l) {
+    if (l < 400) return "violett (kaum noch sichtbar)";
+    if (l < 430) return "violett";
+    if (l < 470) return "blau";
+    if (l < 500) return "blaugrün";
+    if (l < 560) return "grün";
+    if (l < 585) return "gelb";
+    if (l < 620) return "orange";
+    if (l < 700) return "rot";
+    return "dunkelrot (kaum noch sichtbar)";
+  }
+
+  // ---------- Parameter ----------
+  function P() {
+    const p = { mode:S.mode, lam:+$("lam").value, bS:+$("bS").value, gD:+$("gD").value, bD:+$("bD").value, gG:+$("gG").value,
+                a:+$("a").value, k:S.k, scrW:+$("scrW").value,
+                near:$("cbNear").checked, far:$("cbFar").checked, scr:$("cbScr").checked,
+                gang:$("cbGang").checked, curve:$("cbCurve").checked, run:$("cbRun").checked, avg:$("cbAvg").checked };
+    p.L = p.lam * 1e-9;                                                   // Wellenlänge in m
+    if (p.mode === "einzel") { p.b = p.bS * 1e-6; p.d = p.b; }
+    else if (p.mode === "doppel") { p.g = p.gD * 1e-6; p.b = p.bD * 1e-6; p.d = p.g; }
+    else { p.g = p.gG * 1e-6; p.b = GB * p.g; p.d = p.g; }
+    return p;
+  }
+  // relative Intensität I/I0 in Richtung mit sin θ = s
+  function Irel(p, s) {
+    const be = Math.PI * p.b * s / p.L;
+    if (p.mode === "einzel") return sinc(be) ** 2;
+    const de = Math.PI * p.g * s / p.L;
+    if (p.mode === "doppel") return Math.cos(de) ** 2 * sinc(be) ** 2;
+    return sinc(be) ** 2;                                                  // Gitter: nur die Hülle, Linien siehe gratingLines
+  }
+  function gratingLines(p) {
+    const out = [], km = Math.floor(p.g / p.L - 1e-9);
+    for (let k = -km; k <= km; k++) {
+      const s = k * p.L / p.g, th = Math.asin(s);
+      out.push({ k, s, th, x:p.a * Math.tan(th), I:sinc(Math.PI * GB * k) ** 2 });
+    }
+    return out;
+  }
+  // Ordnungen: Maxima (Doppelspalt, Gitter) bzw. Minima (Einzelspalt)
+  function order(p, k) {
+    const s = k * p.L / p.d;
+    if (s >= 1) return null;
+    const th = Math.asin(s), dEx = p.a * Math.tan(th), dAp = k * p.L * p.a / p.d;
+    return { k, s, th, dEx, dAp, dev:(dAp - dEx) / dEx };
+  }
+  function len(m, dig) {
+    const a = Math.abs(m);
+    if (a < 1e-3) return fmt(m * 1e6, 0) + " µm";
+    if (a < 0.01) return fmt(m * 1000, dig == null ? 2 : dig) + " mm";
+    if (a < 1) return fmt(m * 100, dig == null ? 1 : dig) + " cm";
+    return fmt(m, 2) + " m";
+  }
+  function angTxt(r) { const d = deg(r); return fmt(d, d < 1 ? 3 : d < 10 ? 2 : 1) + "°"; }
+
+  // ---------- Text mit echten Indizes im Canvas: "α_1", "d_k" ----------
+  function txt(c, s, x, y, size, color, align, bold) {
+    const parts = []; s.split(/(_[0-9A-Za-z]+)/).forEach(q => { if (q) parts.push(q[0] === "_" ? [q.slice(1), true] : [q, false]); });
+    const font = q => (bold ? "600 " : "") + (q[1] ? Math.round(size * 0.72) : size) + "px -apple-system, 'Segoe UI', Roboto, Arial, sans-serif";
+    let w = 0; for (const q of parts) { c.font = font(q); w += c.measureText(q[0]).width; }
+    let cx = align === "center" ? x - w / 2 : align === "right" ? x - w : x;
+    c.fillStyle = color; c.textAlign = "left"; c.textBaseline = "middle";
+    for (const q of parts) { c.font = font(q); c.fillText(q[0], cx, q[1] ? y + size * 0.28 : y); cx += c.measureText(q[0]).width; }
+    return w;
+  }
+  function tag(c, s, x, y, size, color, bg, align) {         // Text auf halbdurchsichtigem Kasten
+    c.font = size + "px -apple-system, 'Segoe UI', Roboto, Arial, sans-serif";
+    const w = c.measureText(s.replace(/_/g, "")).width + 10, x0 = align === "right" ? x - w : align === "center" ? x - w / 2 : x;
+    c.fillStyle = bg; rr(c, x0, y - size * 0.75, w, size * 1.5, 5); c.fill();
+    txt(c, s, x0 + 5, y, size, color, "left");
+  }
+  function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+  function arrow(c, x1, y1, x2, y2, color, lw, both) {
+    c.strokeStyle = color; c.fillStyle = color; c.lineWidth = lw;
+    c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke();
+    const head = (xa, ya, xb, yb) => { const an = Math.atan2(yb - ya, xb - xa), h = 7 + lw;
+      c.beginPath(); c.moveTo(xb, yb); c.lineTo(xb - h * Math.cos(an - 0.4), yb - h * Math.sin(an - 0.4)); c.lineTo(xb - h * Math.cos(an + 0.4), yb - h * Math.sin(an + 0.4)); c.closePath(); c.fill(); };
+    head(x1, y1, x2, y2); if (both) head(x2, y2, x1, y1);
+  }
+
+  // ---------- Nahaufnahme: Wellenfeld nach Huygens ----------
+  function nearGeo(W, H, p) {
+    const m = p.mode;
+    const Hh = m === "gitter" ? 10 : m === "doppel" ? 700 : 400;           // halbe Bildhöhe in µm (fester Maßstab)
+    const F = m === "gitter" ? 1 : m === "doppel" ? 100 : 50;              // Vergrößerung der gezeichneten Wellenlänge
+    const k = H / (2 * Hh), lamM = p.lam / 1000 * F, x0 = Math.round(Math.min(W * 0.18, 150));
+    let slits = [];
+    if (m === "einzel") slits = [{ c:0, b:p.bS }];
+    else if (m === "doppel") slits = [{ c:p.gD / 2, b:p.bD }, { c:-p.gD / 2, b:p.bD }];
+    else {
+      const R = Hh + (W - x0) / k * 0.8, J = Math.floor(R / p.gG);
+      for (let j = -J; j <= J; j++) slits.push({ c:j * p.gG, b:GB * p.gG });
+    }
+    return { Hh, F, k, lamM, x0, slits };
+  }
+  function computeField(W, H, p) {
+    const G = nearGeo(W, H, p);
+    const cs = Math.max(1.5, G.lamM * G.k / 4.5) * (S.coarse ? 2.5 : 1);
+    const key = [p.mode, p.lam, p.bS, p.gD, p.bD, p.gG, W, H, cs].join("|");
+    if (S.fkey === key) return S.field;
+    const nx = Math.ceil(W / cs), ny = Math.ceil(H / cs), n = nx * ny;
+    const Ar = new Float32Array(n), Ai = new Float32Array(n), Am = new Float32Array(n);
+    const kw = 2 * Math.PI / G.lamM;
+    // Elementarwellenzentren in den Spalten
+    const per = Math.max(1, Math.floor(110 / G.slits.length)), src = [];
+    G.slits.forEach(s => {
+      const M = Math.max(1, Math.min(per, Math.ceil(s.b / (G.lamM / 2.5))));
+      for (let i = 0; i < M; i++) src.push({ y:s.c + s.b * ((i + 0.5) / M - 0.5), w:1 / M });
+    });
+    const soft = G.lamM * 0.25;
+    for (let ix = 0; ix < nx; ix++) {
+      const x = ((ix + 0.5) * cs - G.x0) / G.k;
+      let cmax = 1e-9;
+      for (let iy = 0; iy < ny; iy++) {
+        const y = (H / 2 - (iy + 0.5) * cs) / G.k, i = iy * nx + ix;
+        let re, im;
+        if (x <= 0) { re = Math.cos(kw * x); im = Math.sin(kw * x); }
+        else {
+          re = 0; im = 0;
+          for (let j = 0; j < src.length; j++) {
+            const dy = y - src[j].y, r = Math.sqrt(x * x + dy * dy), w = src[j].w * (1 + x / r) * 0.5 / Math.sqrt(r + soft);
+            re += w * Math.cos(kw * r); im += w * Math.sin(kw * r);
+          }
+        }
+        Ar[i] = re; Ai[i] = im; const am = Math.sqrt(re * re + im * im); Am[i] = am; if (am > cmax) cmax = am;
+      }
+      if (x > 0) for (let iy = 0; iy < ny; iy++) { const i = iy * nx + ix; Ar[i] /= cmax; Ai[i] /= cmax; Am[i] /= cmax; }
+    }
+    S.fkey = key;
+    S.field = { G, cs, nx, ny, Ar, Ai, Am };
+    return S.field;
+  }
+  let img = null;
+  function drawNear(tNow) {
+    const W = cN.clientWidth, H = cN.clientHeight; if (!W || !H) return;
+    const p = P(), three = S.view === "3d", F = computeField(W, H, p), G = F.G, fz = 14 * S.fs;
+    const { nx, ny, Ar, Ai, Am } = F;
+    if (off.width !== nx || off.height !== ny || !img) { off.width = nx; off.height = ny; img = octx.createImageData(nx, ny); }
+    const ph = 2 * Math.PI * tNow, c = Math.cos(ph), s = Math.sin(ph);
+    const lc = rgbArr(p.lam), ld = colDark(p.lam), D = img.data;
+    const bg = three ? [12, 15, 20] : [252, 253, 254];
+    const tc = three ? lc : ld;
+    for (let i = 0, n = nx * ny; i < n; i++) {
+      let b;
+      if (p.avg) b = Am[i] * Am[i];
+      else { const v = Ar[i] * c + Ai[i] * s; b = (v + Am[i]) * 0.5; }
+      if (b > 1) b = 1;
+      const o = i * 4;
+      D[o] = bg[0] + (tc[0] - bg[0]) * b; D[o + 1] = bg[1] + (tc[1] - bg[1]) * b; D[o + 2] = bg[2] + (tc[2] - bg[2]) * b; D[o + 3] = 255;
+    }
+    octx.putImageData(img, 0, 0);
+    nctx.imageSmoothingEnabled = true;
+    nctx.clearRect(0, 0, W, H);
+    nctx.drawImage(off, 0, 0, nx * F.cs, ny * F.cs);
+
+    // Blende mit Spalten
+    const X = x => G.x0 + x * G.k, Y = y => H / 2 - y * G.k;
+    const ivs = G.slits.map(sl => [Y(sl.c + sl.b / 2), Y(sl.c - sl.b / 2)]).sort((u, v) => u[0] - v[0]);
+    const ww = Math.max(7, Math.min(12, 0.02 * W)), xw = G.x0 - ww / 2;
+    let fill;
+    if (three) { const gr = nctx.createLinearGradient(xw, 0, xw + ww, 0); gr.addColorStop(0, "#8b939d"); gr.addColorStop(0.35, "#e2e6ea"); gr.addColorStop(1, "#4a5059"); fill = gr; }
+    else fill = "#1d2733";
+    nctx.fillStyle = fill;
+    let yPrev = -10;
+    const seg = (y1, y2) => { if (y2 - y1 > 0.3) { nctx.fillRect(xw, y1, ww, y2 - y1); } };
+    ivs.forEach(iv => { seg(yPrev, iv[0]); yPrev = Math.max(yPrev, iv[1]); });
+    seg(yPrev, H + 10);
+    if (three) { nctx.fillStyle = "rgba(0,0,0,.35)"; nctx.fillRect(xw + ww, 0, 3, H); }
+
+    const ink = three ? "#e8eef5" : "#1d2733", acc = three ? "#ffb54d" : "#d35400";
+    // Gangunterschied
+    if (p.gang) drawGang(p, G, X, Y, W, H, fz, ink, acc, three);
+
+    // Beschriftung, Maßstab
+    const lab = p.mode === "gitter" ? "Nahaufnahme: Gitter (maßstäblich)" : "Nahaufnahme · Modell: λ " + G.F + "-fach vergrößert";
+    nctx.font = fz + "px -apple-system, 'Segoe UI', Roboto, Arial, sans-serif";
+    const tw = $("tools").getBoundingClientRect().width, ly = nctx.measureText(lab).width + 26 > W - tw - 8 ? 62 + fz * 0.8 : 8 + fz * 0.8;
+    tag(nctx, lab, 8, ly, fz, ink, three ? "rgba(0,0,0,.45)" : "rgba(255,255,255,.85)", "left");
+    tag(nctx, "Licht", 8, H / 2 - fz * 1.6, fz * 0.9, ink, three ? "rgba(0,0,0,.35)" : "rgba(255,255,255,.8)", "left");
+    arrow(nctx, 12, H / 2, Math.min(G.x0 - 14, 70), H / 2, ink, 2);
+    const barUm = p.mode === "gitter" ? 5 : p.mode === "doppel" ? 200 : 100, bl = barUm * G.k, bx = 12, by = H - 16;
+    nctx.strokeStyle = ink; nctx.lineWidth = 2;
+    nctx.beginPath(); nctx.moveTo(bx, by - 5); nctx.lineTo(bx, by); nctx.lineTo(bx + bl, by); nctx.lineTo(bx + bl, by - 5); nctx.stroke();
+    tag(nctx, barUm + " µm", bx + bl + 4, by - 4, fz * 0.85, ink, three ? "rgba(0,0,0,.35)" : "rgba(255,255,255,.8)", "left");
+    if (p.mode !== "gitter") tag(nctx, "gezeichnete Wellenlänge: " + fmt(G.lamM, 0) + " µm (echt: " + fmt(p.lam / 1000, 3) + " µm)", W - 10, H - 14, fz * 0.8, ink, three ? "rgba(0,0,0,.45)" : "rgba(255,255,255,.85)", "right");
+  }
+  function drawGang(p, G, X, Y, W, H, fz, ink, acc, three) {
+    const d = p.mode === "einzel" ? p.bS : p.mode === "doppel" ? p.gD : p.gG;
+    const sA = p.k * G.lamM / d;
+    if (sA >= 1) { tag(nctx, "Die " + p.k + ". Ordnung gibt es hier nicht (k · λ > " + (p.mode === "einzel" ? "b" : "g") + ").", W - 10, 30 + fz * 2.4, fz * 0.9, three ? "#ffd0a0" : "#a04000", three ? "rgba(0,0,0,.5)" : "rgba(255,255,255,.9)", "right"); return; }
+    const al = Math.asin(sA), ux = Math.cos(al), uy = Math.sin(al);
+    let y1, y2;
+    if (p.mode === "gitter") { y1 = 0; y2 = -p.gG; } else { y1 = d / 2; y2 = -d / 2; }
+    const L = (W - G.x0) / G.k * 1.2;
+    const ray = (y0, dash, lw) => { nctx.setLineDash(dash); nctx.lineWidth = lw; nctx.beginPath(); nctx.moveTo(X(0), Y(y0)); nctx.lineTo(X(L * ux), Y(y0 + L * uy)); nctx.stroke(); nctx.setLineDash([]); };
+    nctx.strokeStyle = three ? "rgba(255,255,255,.9)" : "#1d2733";
+    ray(y1, [], 1.8); ray(y2, [], 1.8);
+    if (p.mode === "einzel") { nctx.strokeStyle = three ? "rgba(255,255,255,.6)" : "rgba(29,39,51,.6)"; ray(0, [5, 5], 1.4); }
+    // Fußpunkt des Lotes vom oberen Strahl auf den unteren
+    const ds = d * sA, Fx = ds * ux, Fy = y2 + ds * uy;
+    nctx.strokeStyle = acc; nctx.lineWidth = 2; nctx.setLineDash([5, 4]);
+    nctx.beginPath(); nctx.moveTo(X(0), Y(y1)); nctx.lineTo(X(Fx), Y(Fy)); nctx.stroke(); nctx.setLineDash([]);
+    nctx.lineWidth = 5; nctx.lineCap = "round";
+    nctx.beginPath(); nctx.moveTo(X(0), Y(y2)); nctx.lineTo(X(Fx), Y(Fy)); nctx.stroke(); nctx.lineCap = "butt";
+    // rechter Winkel
+    const q = 9, px = X(Fx), py = Y(Fy), vx = -ux, vy = uy, wx = -uy, wy = -ux;    // Bildschirmrichtungen
+    nctx.lineWidth = 1.5; nctx.beginPath(); nctx.moveTo(px + vx * q, py + vy * q); nctx.lineTo(px + vx * q + wx * q, py + vy * q + wy * q); nctx.lineTo(px + wx * q, py + wy * q); nctx.stroke();
+    // Hypotenuse g bzw. b markieren
+    nctx.strokeStyle = acc; nctx.lineWidth = 3;
+    nctx.beginPath(); nctx.moveTo(X(0) - 9, Y(y1)); nctx.lineTo(X(0) - 9, Y(y2)); nctx.stroke();
+    const bgc = three ? "rgba(0,0,0,.55)" : "rgba(255,255,255,.9)";
+    tag(nctx, p.mode === "einzel" ? "b" : "g", X(0) - 14, (Y(y1) + Y(y2)) / 2, fz, acc, bgc, "right");
+    // Winkel α_k am unteren Ausgangspunkt zur Mittelachse
+    const rA = Math.max(26, Math.min(70, (Y(y2) - Y(y1)) * 1.2));
+    nctx.strokeStyle = acc; nctx.lineWidth = 2;
+    nctx.beginPath(); nctx.moveTo(X(0), Y(y2)); nctx.lineTo(X(0) + rA * 1.25, Y(y2)); nctx.stroke();
+    nctx.beginPath(); nctx.arc(X(0), Y(y2), rA, -al, 0); nctx.stroke();
+    tag(nctx, "α_" + p.k, X(0) + (rA + 6) * Math.cos(al / 2), Y(y2) + 2 - (rA + 6) * Math.sin(al / 2) + fz * 0.6, fz, acc, bgc, "left");
+    tag(nctx, "Δs = " + p.k + " · λ", (X(0) + px) / 2 + 8, (Y(y2) + py) / 2 + fz * 1.1, fz, acc, bgc, "left");
+    const zLab = (p.mode === "einzel" ? p.k + ". Minimum" : p.k + ". Maximum");
+    const lx = 0.7 * (W - G.x0) / G.k;
+    const lyy = Y(y2 + lx * Math.tan(al)) + fz * 1.1;
+    if (lyy > 70 && lyy < H - 30) tag(nctx, "zum " + zLab + " →", X(lx), lyy, fz * 0.85, ink, bgc, "center");
+  }
+
+  // ---------- Fernaufnahme: Blick von oben auf den Aufbau ----------
+  function drawFar() {
+    const W = cF.clientWidth, H = cF.clientHeight; if (!W || !H) return;
+    const p = P(), three = S.view === "3d", fz = 14 * S.fs, c = fctx;
+    const Q = p.mode === "gitter" ? 1 : 200;                        // Querrichtung gestreckt (fest je Versuch)
+    const k = Math.min(W / 6.5, H / 2.3), ox = (W - 6.5 * k) / 2 + 1.0 * k, oy = H / 2 + 4;
+    const X = x => ox + x * k, Y = yd => oy - yd * k;
+    const ink = three ? "#e8eef5" : "#1d2733", acc = three ? "#ffb54d" : "#d35400";
+    const bgc = three ? "rgba(0,0,0,.5)" : "rgba(255,255,255,.88)";
+    if (three) {
+      const bg = c.createRadialGradient(W * 0.45, H * 0.5, 20, W * 0.5, H * 0.5, Math.max(W, H) * 0.75);
+      bg.addColorStop(0, "#262c35"); bg.addColorStop(1, "#111418"); c.fillStyle = bg; c.fillRect(0, 0, W, H);
+      // optische Bank
+      const rh = 16, gr = c.createLinearGradient(0, oy - rh / 2, 0, oy + rh / 2);
+      gr.addColorStop(0, "#5d6570"); gr.addColorStop(0.35, "#aeb6bf"); gr.addColorStop(0.6, "#7d858f"); gr.addColorStop(1, "#3a4048");
+      c.fillStyle = gr; c.fillRect(X(-0.95), oy - rh / 2, X(5.35) - X(-0.95), rh);
+      c.fillStyle = "rgba(0,0,0,.3)"; c.fillRect(X(-0.95), oy + rh / 2, X(5.35) - X(-0.95), 4);
+      c.fillStyle = "rgba(0,0,0,.25)";
+      for (let x = 0; x <= 5; x += 0.5) c.fillRect(X(x) - 0.5, oy + rh / 2 - 4, 1, 4);
+    } else { c.fillStyle = "#fbfcfe"; c.fillRect(0, 0, W, H); c.strokeStyle = "#c9d1db"; c.lineWidth = 1; c.setLineDash([6, 6]); c.beginPath(); c.moveTo(X(-0.9), oy); c.lineTo(W, oy); c.stroke(); c.setLineDash([]); }
+
+    // Licht
+    c.save(); if (three) c.globalCompositeOperation = "lighter";
+    c.lineCap = "round";
+    const lcol = three ? (a => col(p.lam, a)) : (a => { const d = colDark(p.lam); return "rgba(" + d.join(",") + "," + a + ")"; });
+    c.strokeStyle = lcol(1); c.lineWidth = 3; c.beginPath(); c.moveTo(X(-0.15), oy); c.lineTo(X(0), oy); c.stroke();
+    if (three) { c.strokeStyle = lcol(0.3); c.lineWidth = 9; c.beginPath(); c.moveTo(X(-0.15), oy); c.lineTo(X(0), oy); c.stroke(); }
+    const topD = (oy) / k, botD = (H - oy) / k;
+    if (p.mode === "gitter") {
+      gratingLines(p).forEach(Ln => {
+        if (Ln.I < 0.003) return;
+        const ex = X(p.a), ey = Y(p.a * Math.tan(Ln.th) * Q);
+        const a = Math.min(1, 0.25 + 0.75 * Math.sqrt(Ln.I));
+        if (three) { c.strokeStyle = lcol(a * 0.28); c.lineWidth = 7; c.beginPath(); c.moveTo(X(0), oy); c.lineTo(ex, ey); c.stroke(); }
+        c.strokeStyle = lcol(a); c.lineWidth = 2; c.beginPath(); c.moveTo(X(0), oy); c.lineTo(ex, ey); c.stroke();
+      });
+    } else {
+      c.lineWidth = 1.2;
+      for (let py = 0; py <= H; py += 1.5) {
+        const yr = (oy - py) / k / Q, s = yr / Math.sqrt(yr * yr + p.a * p.a), I = Irel(p, s);
+        if (I < 0.002) continue;
+        c.strokeStyle = lcol(Math.min(1, (three ? 0.16 : 0.12) * Math.sqrt(I)));
+        c.beginPath(); c.moveTo(X(0), oy); c.lineTo(X(p.a), py); c.stroke();
+      }
+    }
+    c.restore();
+
+    // Schirm
+    const sx = X(p.a), sw = 8;
+    if (three) {
+      c.save(); c.shadowColor = "rgba(0,0,0,.6)"; c.shadowBlur = 8; c.shadowOffsetX = 3;
+      const g2 = c.createLinearGradient(sx, 0, sx + sw, 0); g2.addColorStop(0, "#f4f4ef"); g2.addColorStop(0.5, "#cfd0ca"); g2.addColorStop(1, "#8d8f8a");
+      c.fillStyle = g2; c.fillRect(sx, 6, sw, H - 12); c.restore();
+    } else { c.fillStyle = "#555"; c.fillRect(sx, 6, 4, H - 12); }
+    // Lichtflecke auf dem Schirm
+    c.save(); if (three) c.globalCompositeOperation = "lighter";
+    if (p.mode === "gitter") gratingLines(p).forEach(Ln => {
+      const y = Y(p.a * Math.tan(Ln.th)); if (y < 0 || y > H) return;
+      const gg = c.createRadialGradient(sx, y, 0, sx, y, 12); gg.addColorStop(0, lcol(Math.min(1, 0.3 + Math.sqrt(Ln.I)))); gg.addColorStop(1, lcol(0));
+      c.fillStyle = gg; c.fillRect(sx - 12, y - 12, 24, 24);
+    });
+    else for (let py = 6; py < H - 6; py += 1) {
+      const yr = (oy - py) / k / Q, s = yr / Math.sqrt(yr * yr + p.a * p.a), I = Irel(p, s);
+      c.fillStyle = lcol(Math.min(1, Math.sqrt(I))); c.fillRect(sx - 2, py, 5, 1);
+    }
+    c.restore();
+
+    // Laser
+    const lh = Math.max(20, Math.min(30, 0.16 * k));
+    if (three) {
+      c.save(); c.shadowColor = "rgba(0,0,0,.6)"; c.shadowBlur = 6; c.shadowOffsetY = 3;
+      const g3 = c.createLinearGradient(0, oy - lh / 2, 0, oy + lh / 2);
+      g3.addColorStop(0, "#3a3f47"); g3.addColorStop(0.3, "#8a929c"); g3.addColorStop(0.55, "#4d535b"); g3.addColorStop(1, "#22262b");
+      c.fillStyle = g3; rr(c, X(-0.9), oy - lh / 2, X(-0.15) - X(-0.9), lh, 4); c.fill(); c.restore();
+      c.fillStyle = "#1a1d21"; c.fillRect(X(-0.15) - 3, oy - lh * 0.3, 5, lh * 0.6);
+      c.fillStyle = col(p.lam); c.beginPath(); c.arc(X(-0.15), oy, 3, 0, 7); c.fill();
+      txt(c, "Laser", (X(-0.9) + X(-0.15)) / 2, oy, Math.min(fz, lh * 0.6), "#e8eef5", "center", true);
+    } else {
+      c.strokeStyle = "#1d2733"; c.lineWidth = 2; c.fillStyle = "#fff";
+      c.fillRect(X(-0.9), oy - lh / 2, X(-0.15) - X(-0.9), lh); c.strokeRect(X(-0.9), oy - lh / 2, X(-0.15) - X(-0.9), lh);
+      txt(c, "Laser", (X(-0.9) + X(-0.15)) / 2, oy, Math.min(fz, lh * 0.6), "#1d2733", "center", true);
+    }
+    // Halter mit Spalt/Gitter
+    const hh = Math.max(46, Math.min(80, 0.4 * k));
+    if (three) {
+      c.save(); c.shadowColor = "rgba(0,0,0,.6)"; c.shadowBlur = 6; c.shadowOffsetX = 2;
+      const g4 = c.createLinearGradient(X(0) - 4, 0, X(0) + 4, 0); g4.addColorStop(0, "#6b737d"); g4.addColorStop(0.5, "#d9dde2"); g4.addColorStop(1, "#3c424a");
+      c.fillStyle = g4; c.fillRect(X(0) - 4, oy - hh / 2, 8, hh); c.restore();
+      c.fillStyle = "#2a2f36"; rr(c, X(0) - 10, oy + 6, 20, 14, 3); c.fill();
+    } else { c.fillStyle = "#1d2733"; c.fillRect(X(0) - 2, oy - hh / 2, 4, hh / 2 - 3); c.fillRect(X(0) - 2, oy + 3, 4, hh / 2 - 3); }
+    txt(c, NAME[p.mode], X(0), oy - hh / 2 - fz * 0.8, fz, ink, "center", true);
+
+    // gewählte Ordnung
+    const o = order(p, p.k), bgk = bgc;
+    if (o) {
+      const yd = p.a * Math.tan(o.th) * Q, an = Math.atan2(yd, p.a);
+      c.strokeStyle = acc; c.lineWidth = 2; c.setLineDash([7, 5]);
+      c.beginPath(); c.moveTo(X(0), oy); c.lineTo(X(p.a), Y(yd)); c.moveTo(X(0), oy); c.lineTo(X(p.a), Y(-yd)); c.stroke(); c.setLineDash([]);
+      c.beginPath(); c.moveTo(X(0), oy); c.lineTo(X(p.a), oy); c.stroke();
+      const rA = Math.min(0.6 * (X(p.a) - X(0)), 90);
+      c.beginPath(); c.arc(X(0), oy, rA, -an, 0); c.stroke();
+      tag(c, "α_" + p.k, X(0) + rA + 4, oy - Math.min(rA * Math.sin(an / 2), (oy - 10)) - 2, fz, acc, bgk, "left");
+      // d_k am Schirm
+      const dx = sx + sw + 14, yT = Math.max(4, Y(yd));
+      arrow(c, dx, oy, dx, yT, acc, 2, true);
+      tag(c, "d_" + p.k + " = " + len(o.dEx), dx + 6, Math.max(fz, (oy + yT) / 2), fz, acc, bgk, "left");
+    }
+    // Abstand a
+    const ya = H - 14 - fz * 0.4;
+    arrow(c, X(0), ya, X(p.a), ya, ink, 1.5, true);
+    tag(c, "a = " + fmt(p.a, 2) + " m", (X(0) + X(p.a)) / 2, ya - fz * 0.95, fz * 0.9, ink, bgc, "center");
+    // Beschriftung, Maßstab
+    tag(c, "Fernaufnahme: Blick von oben" + (Q > 1 ? " (quer " + Q + "-fach gestreckt)" : " (maßstäblich)"), 8, 8 + fz * 0.8, fz, ink, bgc, "left");
+    const bx = W - 14 - k;
+    c.strokeStyle = ink; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(bx, H - 10); c.lineTo(bx + k, H - 10); c.moveTo(bx, H - 14); c.lineTo(bx, H - 6); c.moveTo(bx + k, H - 14); c.lineTo(bx + k, H - 6); c.stroke();
+    tag(c, "1 m", bx + k / 2, H - 10 - fz, fz * 0.85, ink, bgc, "center");
+    if (Q > 1) {
+      const vl = 0.005 * Q * k, vx = W - 14;
+      c.beginPath(); c.moveTo(vx, 34); c.lineTo(vx, 34 + vl); c.moveTo(vx - 4, 34); c.lineTo(vx + 4, 34); c.moveTo(vx - 4, 34 + vl); c.lineTo(vx + 4, 34 + vl); c.stroke();
+      tag(c, "5 mm quer", vx - 8, 34 + vl / 2, fz * 0.85, ink, bgc, "right");
+    }
+  }
+
+  // ---------- Schirmbild ----------
+  function drawScr() {
+    const W = cS.clientWidth, H = cS.clientHeight; if (!W || !H) return;
+    const p = P(), fz = 13 * S.fs, c = sctx, Wm = p.scrW, kk = W / Wm, xc = W / 2;
+    const bg = c.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, "#24272d"); bg.addColorStop(1, "#1a1d22");
+    c.fillStyle = bg; c.fillRect(0, 0, W, H);
+    const top = Math.round(H * 0.24), bot = H - 22, bh = bot - top - 2;
+    const lc = rgbArr(p.lam);
+    c.save(); c.globalCompositeOperation = "lighter";
+    const curve = [];
+    if (p.mode === "gitter") {
+      gratingLines(p).forEach(Ln => {
+        const x = xc + Ln.x * kk; if (x < -10 || x > W + 10) return;
+        const a = Math.min(1, 0.25 + 0.9 * Math.sqrt(Ln.I)), hw = 5;
+        const g = c.createLinearGradient(x - hw, 0, x + hw, 0);
+        g.addColorStop(0, "rgba(" + lc + ",0)"); g.addColorStop(0.5, "rgba(" + lc + "," + a + ")"); g.addColorStop(1, "rgba(" + lc + ",0)");
+        c.fillStyle = g; c.fillRect(x - hw, top, 2 * hw, bh);
+        c.fillStyle = "rgba(255,255,255," + 0.5 * a + ")"; c.fillRect(x - 0.6, top + 2, 1.2, bh - 4);
+        curve.push([x, Ln.I]);
+      });
+    } else {
+      for (let px = 0; px < W; px++) {
+        let I = 0;
+        for (let j = 0; j < 4; j++) { const x = (px + (j + 0.5) / 4 - xc) / kk, s = x / Math.sqrt(x * x + p.a * p.a); I += Irel(p, s) / 4; }
+        curve.push([px + 0.5, I]);
+        const b = Math.min(1, Math.sqrt(I));
+        if (b < 0.004) continue;
+        c.fillStyle = "rgba(" + lc + "," + b + ")"; c.fillRect(px, top, 1, bh);
+      }
+    }
+    c.restore();
+    // weiche Kanten oben und unten
+    const f1 = c.createLinearGradient(0, top, 0, top + bh * 0.3); f1.addColorStop(0, "rgba(30,33,38,1)"); f1.addColorStop(1, "rgba(30,33,38,0)");
+    c.fillStyle = f1; c.fillRect(0, top, W, bh * 0.3);
+    const f2 = c.createLinearGradient(0, bot - bh * 0.3, 0, bot); f2.addColorStop(0, "rgba(28,31,36,0)"); f2.addColorStop(1, "rgba(28,31,36,1)");
+    c.fillStyle = f2; c.fillRect(0, bot - bh * 0.3, W, bh * 0.3);
+    // Intensitätskurve (echte Verhältnisse)
+    if (p.curve) {
+      const y0 = bot - 3, hgt = bot - top - 6;
+      c.strokeStyle = "rgba(255,255,255,.9)"; c.lineWidth = 1.6;
+      if (p.mode === "gitter") curve.forEach(([x, I]) => { c.beginPath(); c.moveTo(x, y0); c.lineTo(x, y0 - I * hgt); c.stroke(); });
+      else { c.beginPath(); curve.forEach(([x, I], i) => i ? c.lineTo(x, y0 - I * hgt) : c.moveTo(x, y0 - I * hgt)); c.stroke(); }
+      txt(c, "I/I_0", 8, top + 8, fz * 0.85, "rgba(255,255,255,.85)", "left");
+    }
+    // Lineal
+    const steps = [1e-4, 2e-4, 5e-4, 1e-3, 2e-3, 5e-3, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1];
+    const st = steps.find(s => s * kk >= 48) || 1;
+    const unit = Wm <= 0.05 ? ["mm", 1000] : Wm <= 0.5 ? ["cm", 100] : ["m", 1];
+    c.strokeStyle = "rgba(255,255,255,.4)"; c.lineWidth = 1;
+    const n0 = Math.ceil(-Wm / 2 / (st / 5)), n1 = Math.floor(Wm / 2 / (st / 5));
+    for (let n = n0; n <= n1; n++) {
+      const x = xc + n * st / 5 * kk, full = n % 5 === 0;
+      c.beginPath(); c.moveTo(x, bot + 2); c.lineTo(x, bot + (full ? 9 : 5)); c.stroke();
+      if (full && x < W - 30) txt(c, fmt(Math.abs(n * st / 5) * unit[1], st * unit[1] < 1 ? 1 : 0), x, bot + 15, fz * 0.75, "rgba(255,255,255,.6)", "center");
+    }
+    txt(c, unit[0], W - 6, bot + 15, fz * 0.75, "rgba(255,255,255,.6)", "right");
+    // Markierung d_k
+    const o = order(p, p.k);
+    if (o) [1, -1].forEach(sg => {
+      const x = xc + sg * o.dEx * kk; if (x < 0 || x > W) return;
+      c.fillStyle = "#ffb54d"; c.beginPath(); c.moveTo(x, top - 1); c.lineTo(x - 6, top - 10); c.lineTo(x + 6, top - 10); c.closePath(); c.fill();
+    });
+    if (o && o.dEx * kk < W / 2) {
+      const x2 = xc + o.dEx * kk;
+      c.strokeStyle = "#ffb54d"; c.lineWidth = 1.5; c.beginPath(); c.moveTo(xc, top - 5); c.lineTo(x2, top - 5); c.stroke();
+      c.beginPath(); c.moveTo(xc, top - 9); c.lineTo(xc, top - 1); c.stroke();
+      txt(c, "d_" + p.k, (xc + x2) / 2, top - 13, fz * 0.9, "#ffb54d", "center", true);
+    }
+    txt(c, W < 520 ? "Schirmbild (" + len(Wm, 0) + " breit)" : "Schirmbild: Ausschnitt " + len(Wm, 0) + " breit, Mitte = 0", 8, 10, fz * 0.9, "rgba(255,255,255,.8)", "left");
+  }
+
+  // ---------- Erklärung und Tabelle ----------
+  function info() {
+    const p = P(), ex = $("expl");
+    let t = "", warn = false;
+    const lamTxt = p.lam + " nm (" + colName(p.lam) + ")";
+    if (p.mode === "gitter") {
+      const km = Math.floor(p.g / p.L - 1e-9), o1 = order(p, 1);
+      t = "Hinter dem Gitter verstärken sich die Wellen <b>nur in wenigen Richtungen</b>: scharfe, helle Linien. Es gibt Maxima bis zur Ordnung <b>k<sub>max</sub> = " + km + "</b>, denn sin α<sub>k</sub> = k · λ / g kann nicht größer als 1 sein.";
+      if (o1 && o1.th > 0.17) t += " Die Winkel sind groß: Die Näherung sin α ≈ tan α weicht schon bei k = 1 um " + fmt(Math.abs(o1.dev) * 100, 1) + " % ab.";
+    } else if (p.mode === "doppel") {
+      const dd = p.L * p.a / p.g;
+      t = "Viele gleich helle Streifen im Abstand <b>Δd ≈ λ · a / g = " + len(dd) + "</b>. Nach außen werden sie dunkler: Jeder einzelne Spalt hat die Breite b und beugt selbst wie ein Einzelspalt (Hüllkurve, erstes Minimum bei " + len(p.L * p.a / p.b) + ").";
+    } else {
+      const o1 = order(p, 1);
+      t = "Breites helles Hauptmaximum (Breite 2 · d<sub>1</sub> ≈ " + (o1 ? len(2 * o1.dEx) : "–") + "), daneben schwache Nebenmaxima. <b>Je schmaler der Spalt, desto breiter das Muster.</b>";
+    }
+    if (!order(p, p.k)) { warn = true; t += " <b>Die " + p.k + ". Ordnung gibt es bei diesen Werten nicht</b> (k · λ wäre größer als " + (p.mode === "einzel" ? "b" : "g") + ")."; }
+    ex.innerHTML = t; ex.classList.toggle("warn", warn);
+    const what = p.mode === "einzel" ? "Minimum" : "Maximum";
+    let h = "<tr><th>k</th><th>α<sub>k</sub></th><th>d<sub>k</sub> exakt</th><th>d<sub>k</sub> genähert</th><th>Fehler</th></tr>";
+    const nmax = p.mode === "gitter" ? 5 : 3;
+    for (let k = 1; k <= nmax; k++) {
+      const o = order(p, k);
+      if (!o) { if (k <= 3) h += "<tr" + (k === p.k ? " class=sel" : "") + "><td>" + k + "</td><td colspan=4>gibt es nicht</td></tr>"; continue; }
+      h += "<tr" + (k === p.k ? " class=sel" : "") + "><td>" + k + "</td><td>" + angTxt(o.th) + "</td><td>" + len(o.dEx) + "</td><td>" + len(o.dAp) + "</td><td>" + (Math.abs(o.dev) < 1e-4 ? "&lt; 0,01" : fmt(Math.abs(o.dev) * 100, Math.abs(o.dev) < 0.01 ? 2 : 1)) + " %</td></tr>";
+    }
+    h += "<tr><td colspan=5 class=small style='text-align:left'>" + (p.mode === "einzel" ? "Minima" : "Maxima") + "; genähert: d<sub>k</sub> ≈ k · λ · a / " + (p.mode === "einzel" ? "b" : "g") + " (Kleinwinkelnäherung)</td></tr>";
+    $("vals").innerHTML = h;
+    $("simpl").innerHTML = "Vereinfachungen: Schirm weit entfernt (Fraunhofer), α wird exakt aus tan α = d / a berechnet. " +
+      (p.mode === "gitter" ? "Gitter mit sehr vielen Spalten, Spaltbreite fest 0,3 · g; die Helligkeit der Linien ist nur angedeutet. " : "") +
+      (p.mode === "doppel" ? "Zwei gleiche Spalte. " : "") +
+      "Im Schirmbild sind schwache Stellen heller gezeichnet, als das Auge sie sähe; die Intensitätskurve zeigt die echten Verhältnisse. " +
+      (p.mode !== "gitter" ? "Die Nahaufnahme ist ein Modell: Mit echter Wellenlänge wären die Wellen viel zu fein zum Zeichnen, deshalb sind dort die Winkel viel größer als im echten Versuch. " : "") +
+      "Lichtfarben am Bildschirm nur ungefähr. Ziehe den Schirm in der Fernaufnahme mit dem Finger, um a zu ändern.";
+  }
+
+  // ---------- Herleitung ----------
+  const fr = (a, b) => "<span class=fr><span>" + a + "</span><span>" + b + "</span></span>";
+  function derivation(p) {
+    const d = p.mode === "einzel" ? "b" : "g", ext = p.mode === "einzel" ? "Minimums (dunkle Stelle)" : "Maximums (helle Stelle)";
+    const vor = [];
+    if (p.mode === "einzel") {
+      vor.push({ q:"Teile den Spalt gedanklich in eine obere und eine untere Hälfte. Jeder Punkt oben hat unten einen Partner im Abstand b/2. Wann löschen sich die Elementarwellen zweier Partner aus?",
+                 a:"Wenn ihr Gangunterschied <b>λ/2</b> beträgt: Berg trifft auf Tal." });
+      vor.push({ q:"Wie groß ist dann der Gangunterschied Δs zwischen den beiden <b>Randstrahlen</b>?",
+                 a:"Δs = 2 · λ/2 = λ. Alle Partner löschen sich aus: erstes Minimum. Teilt man den Spalt in 2k Streifen, folgt allgemein: <b>Δs = k · λ</b> ergibt das k-te Minimum." });
+    } else {
+      vor.push({ q:"Wann verstärken sich die Wellen aus " + (p.mode === "gitter" ? "benachbarten Spalten" : "beiden Spalten") + " in einer Richtung?",
+                 a:"Wenn der Gangunterschied ein ganzzahliges Vielfaches der Wellenlänge ist: <b>Δs = k · λ</b> (k = 0, 1, 2, …). Berg trifft auf Berg." +
+                   (p.mode === "gitter" ? " Beim Gitter gilt das dann für alle Spalte gleichzeitig, in allen anderen Richtungen löschen sich die vielen Wellen fast ganz aus: scharfe Linien." : "") });
+    }
+    vor.push({ q:"Der Schirm ist sehr weit weg (a ist viel größer als " + d + "). Wie verlaufen zwei Strahlen, die sich am selben Schirmpunkt treffen?",
+               a:"Praktisch <b>parallel</b>, beide unter demselben Winkel α<sub>k</sub> zur Mittelachse." });
+    vor.push({ q:"In der Nahaufnahme ist ein rechtwinkliges Dreieck eingezeichnet (orange, Hypotenuse " + d + "). Was gilt darin für α<sub>k</sub>?",
+               a:"<b>sin α<sub>k</sub> = " + fr("Δs", d) + "</b>" });
+    vor.push({ q:"Wie hängt α<sub>k</sub> mit dem Abstand d<sub>k</sub> des k-ten " + ext + " von der Schirmmitte zusammen? (Fernaufnahme)",
+               a:"<b>tan α<sub>k</sub> = " + fr("d<sub>k</sub>", "a") + "</b>" });
+    const kette = [
+      { q:"Gesucht ist λ. Beginne die Gleichungskette mit der Bedingung für den Gangunterschied.", l:"λ = " + fr("Δs", "k"), why:"aus Δs = k · λ" },
+      { q:"Ersetze Δs mit dem Dreieck am Spalt.", l:fr(d + " · sin α<sub>k</sub>", "k"), why:"Δs = " + d + " · sin α<sub>k</sub>" },
+      { q:"Ersetze α<sub>k</sub> durch die Größen, die man am Schirm misst.", l:fr(d + " · sin(arctan(d<sub>k</sub> / a))", "k"), why:"α<sub>k</sub> = arctan(d<sub>k</sub> / a)" },
+      { q:"Für kleine Winkel gilt sin α ≈ tan α. Was ergibt sich dann?", l:fr(d + " · d<sub>k</sub>", "k · a"), why:"Kleinwinkelnäherung", approx:true }
+    ];
+    return { vor, kette };
+  }
+  function renderDer() {
+    const p = P(), D = derivation(p), nV = D.vor.length, nK = D.kette.length, tot = nV + nK, st = S.step;
+    let h = "<div class=small>Herleitung für den " + NAME[p.mode] + ": Lies die Frage, überlege selbst und decke dann die Antwort auf.</div>";
+    h += "<div class=small style='font-weight:600;color:var(--blue)'>Voraussetzungen</div>";
+    D.vor.forEach((v, i) => {
+      if (i > st) return;
+      h += "<div class='step vor" + (i === st ? " cur" : "") + "'><div class=q>" + (i + 1) + ". " + v.q + "</div>" + (i < st ? "<div class=a>" + v.a + "</div>" : "") + "</div>";
+    });
+    if (st >= nV) {
+      h += "<div id=chain><div class=ct>Gleichungskette</div>";
+      D.kette.forEach((z, j) => {
+        if (nV + j >= st) return;
+        h += "<div class='ln" + (nV + j === st - 1 ? " neu" : "") + "'><span class=eq>" + (j === 0 ? "" : z.approx ? "≈" : "=") + "</span><span>" + z.l + "</span><span class=why>" + z.why + "</span></div>";
+      });
+      h += "</div>";
+      if (st < tot) h += "<div class='step cur'><div class=q>" + D.kette[st - nV].q + "</div></div>";
+    }
+    if (st >= tot) {
+      const o = order(p, p.k);
+      if (o) {
+        const dm = p.mode === "einzel" ? "b" : "g", dv = p.d;
+        const lEx = dv * Math.sin(Math.atan(o.dEx / p.a)) / p.k, lAp = dv * o.dEx / (p.k * p.a);
+        h += "<div class=res><b>Probe mit deinen Werten</b> (k = " + p.k + "): " + dm + " = " + len(dv) + ", a = " + fmt(p.a, 2) + " m, gemessen d<sub>" + p.k + "</sub> = " + len(o.dEx) + "<br>" +
+             "exakt: λ = " + fmt(lEx * 1e9, 0) + " nm &nbsp;·&nbsp; mit Näherung: λ ≈ " + fmt(lAp * 1e9, 0) + " nm (" + fmt((lAp - lEx) / lEx * 100, 1) + " %)<br>" +
+             (Math.abs(o.dev) < 0.01 ? "Die Winkel sind klein, die Näherung ist hier sehr gut." : "<b>Achtung:</b> Der Winkel ist groß, die Näherung sin α ≈ tan α ist hier ungenau. Rechne mit der exakten Formel.") + "</div>";
+      } else h += "<div class=res>Die " + p.k + ". Ordnung gibt es bei diesen Werten nicht, wähle k = 1 für die Probe.</div>";
+      if (p.mode === "einzel") h += "<div class=small>Hinweis: d<sub>k</sub> ist hier der Abstand des k-ten <b>Minimums</b>. Die Nebenmaxima liegen nur ungefähr bei Δs = (k + ½) · λ.</div>";
+    }
+    h += "<div class=btns>";
+    if (st < tot) h += "<button id=dNext class=on>" + (st < nV ? "Antwort zeigen" : "Nächste Zeile") + "</button><button id=dAll>Alles zeigen</button>";
+    h += "<button id=dReset>Von vorn</button></div>";
+    $("pDer").innerHTML = h;
+    if ($("dNext")) $("dNext").onclick = () => { S.step++; renderDer(); };
+    if ($("dAll")) $("dAll").onclick = () => { S.step = tot; renderDer(); };
+    $("dReset").onclick = () => { S.step = 0; renderDer(); };
+    const cur = $("pDer").querySelector(".step.cur, .res");
+    if (cur && S.step > 0 && cur.scrollIntoView) cur.scrollIntoView({ block:"nearest" });
+  }
+
+  // ---------- Bedienung ----------
+  function outs() {
+    const p = P();
+    $("lamo").textContent = p.lam + " nm";
+    $("lamTxt").textContent = colName(p.lam);
+    document.documentElement.style.setProperty("--lc", col(p.lam));
+    $("bSo").textContent = fmt(p.bS / 1000, 3) + " mm";
+    $("gDo").textContent = fmt(p.gD / 1000, 2) + " mm";
+    $("bDo").textContent = fmt(p.bD / 1000, 3) + " mm";
+    $("gGo").textContent = fmt(p.gG, 2) + " µm";
+    $("gGlines").textContent = "entspricht " + Math.round(1000 / p.gG) + " Strichen pro mm";
+    $("ao").textContent = fmt(p.a, 2) + " m";
+    $("kLab").textContent = p.mode === "einzel" ? "Minimum k" : "Maximum k";
+    ["einzel", "doppel", "gitter"].forEach(m => document.querySelectorAll(".m-" + m).forEach(e => e.classList.toggle("hidden", m !== p.mode)));
+    document.querySelectorAll("#modeTabs button").forEach(b => b.classList.toggle("on", b.dataset.m === p.mode));
+    document.querySelectorAll("#kb button").forEach(b => b.classList.toggle("on", +b.dataset.k === S.k));
+    document.body.classList.toggle("noNear", !p.near);
+    document.body.classList.toggle("noFar", !p.far);
+    document.body.classList.toggle("noScr", !p.scr);
+  }
+  function drawStatic() { drawFar(); drawScr(); info(); if (S.pane === "der") renderDer(); }
+  let fineT = null;
+  function changed(coarse) {
+    // Beim Ziehen am Regler wird das Wellenfeld grob berechnet, kurz danach fein
+    S.coarse = !!coarse; outs(); drawStatic(); if (!$("cbRun").checked) drawNear(S.tFrozen);
+    clearTimeout(fineT);
+    if (coarse) fineT = setTimeout(() => { S.coarse = false; if (!$("cbRun").checked) drawNear(S.tFrozen); }, 260);
+  }
+  function resize() {
+    const dpr = window.devicePixelRatio || 1;
+    for (const c of [cN, cF, cS]) {
+      const r = c.getBoundingClientRect();
+      c.width = Math.max(1, Math.round(r.width * dpr)); c.height = Math.max(1, Math.round(r.height * dpr));
+      c.getContext("2d").setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    S.fkey = ""; drawStatic(); drawNear(S.tFrozen);
+  }
+  function setMode(m) {
+    SCRW[S.mode] = +$("scrW").value;
+    S.mode = m; $("scrW").value = String(SCRW[m]); S.step = 0;
+    S.fkey = ""; outs(); drawStatic(); drawNear(S.tFrozen);
+  }
+  function setFs(v) {
+    S.fs = Math.max(0.8, Math.min(1.6, Math.round(v * 10) / 10));
+    document.documentElement.style.fontSize = (14 * S.fs) + "px";
+    store.set("beugung_fs", S.fs); resize();
+  }
+  function setView(v) {
+    S.view = v; $("view").textContent = v === "3d" ? "Symbol" : "3D";
+    $("view").title = v === "3d" ? "Zur Symbolansicht wechseln" : "Zur 3D-Ansicht wechseln";
+    store.set("beugung_view", v); drawStatic(); drawNear(S.tFrozen);
+  }
+  function setPane(pn) {
+    S.pane = pn; $("tabSet").classList.toggle("on", pn === "set"); $("tabDer").classList.toggle("on", pn === "der");
+    $("pSet1").classList.toggle("hidden", pn !== "set"); $("pSet2").classList.toggle("hidden", pn !== "set"); $("pDer").classList.toggle("hidden", pn !== "der");
+    if (pn === "der") { $("cbGang").checked = true; renderDer(); }
+    drawNear(S.tFrozen);
+  }
+
+  $("fsMinus").onclick = () => setFs(S.fs - 0.1);
+  $("fsPlus").onclick = () => setFs(S.fs + 0.1);
+  $("view").onclick = () => setView(S.view === "3d" ? "sym" : "3d");
+  $("panelBtn").onclick = () => { document.body.classList.toggle("nopanel"); resize(); };
+  const de = document.documentElement, reqFS = de.requestFullscreen || de.webkitRequestFullscreen;
+  if (!reqFS) $("full").classList.add("hidden");
+  $("full").onclick = () => {
+    const cur = document.fullscreenElement || document.webkitFullscreenElement;
+    if (cur) (document.exitFullscreen || document.webkitExitFullscreen).call(document); else reqFS.call(de);
+  };
+  $("rotGo").onclick = () => document.body.classList.add("quer");
+  document.querySelectorAll("#modeTabs button").forEach(b => b.onclick = () => setMode(b.dataset.m));
+  document.querySelectorAll("#kb button").forEach(b => b.onclick = () => { S.k = +b.dataset.k; changed(false); drawNear(S.tFrozen); });
+  $("tabSet").onclick = () => setPane("set");
+  $("tabDer").onclick = () => setPane("der");
+  $("reset").onclick = () => {
+    for (const k in DEF) $(k).value = DEF[k];
+    S.k = 1; SCRW.einzel = 0.02; SCRW.doppel = 0.02; SCRW.gitter = 2; $("scrW").value = String(SCRW[S.mode]);
+    ["cbNear", "cbFar", "cbScr", "cbGang", "cbRun"].forEach(id => $(id).checked = true);
+    $("cbCurve").checked = false; $("cbAvg").checked = false;
+    resize(); outs(); drawStatic();
+  };
+  // Doppelspalt: Spaltbreite höchstens halber Spaltabstand
+  function clampB() { if (+$("bD").value > +$("gD").value / 2) $("bD").value = Math.floor(+$("gD").value / 2 / 5) * 5; }
+  ["lam", "bS", "gD", "bD", "gG", "a"].forEach(id => {
+    $(id).addEventListener("input", () => { clampB(); changed(true); });
+    $(id).addEventListener("change", () => { clampB(); changed(false); });
+  });
+  $("scrW").addEventListener("change", () => { SCRW[S.mode] = +$("scrW").value; drawScr(); });
+  ["cbNear", "cbFar", "cbScr"].forEach(id => $(id).addEventListener("change", () => { outs(); resize(); }));
+  ["cbGang", "cbCurve", "cbAvg", "cbRun"].forEach(id => $(id).addEventListener("change", () => { outs(); drawScr(); drawNear(S.tFrozen); }));
+
+  // Schirm in der Fernaufnahme mit dem Finger verschieben
+  function farA(ev) {
+    const r = cF.getBoundingClientRect(), W = r.width, H = r.height, k = Math.min(W / 6.5, H / 2.3), ox = (W - 6.5 * k) / 2 + 1.0 * k;
+    return (ev.clientX - r.left - ox) / k;
+  }
+  cF.addEventListener("pointerdown", ev => {
+    const a = +$("a").value, r = cF.getBoundingClientRect(), k = Math.min(r.width / 6.5, r.height / 2.3);
+    if (Math.abs(farA(ev) - a) * k < 30) { S.dragA = true; cF.setPointerCapture(ev.pointerId); ev.preventDefault(); }
+  });
+  cF.addEventListener("pointermove", ev => {
+    if (!S.dragA) return;
+    $("a").value = Math.max(0.2, Math.min(5, Math.round(farA(ev) / 0.05) * 0.05)); changed(false);
+  });
+  const up = () => { S.dragA = false; };
+  cF.addEventListener("pointerup", up); cF.addEventListener("pointercancel", up);
+
+  // Animation der Wellen
+  function loop(now) {
+    if ($("cbRun").checked && $("cbNear").checked) { S.tFrozen = (now - S.t0) / 1000 * 0.8; drawNear(S.tFrozen); }
+    else S.t0 = now - S.tFrozen / 0.8 * 1000;
+    requestAnimationFrame(loop);
+  }
+
+  window.addEventListener("resize", resize);
+  if (window.ResizeObserver) { const ro = new ResizeObserver(() => resize()); ro.observe(cN); ro.observe(cF); ro.observe(cS); }
+  $("scrW").value = String(SCRW[S.mode]);
+  setView(store.get("beugung_view") === "sym" ? "sym" : "3d");
+  setFs(+store.get("beugung_fs") || 1);
+  outs(); resize();
+  requestAnimationFrame(loop);
+})();
+</script>
+<!-- KI-Hinweis: einheitlich in allen Simulationen, immer sichtbar unten rechts -->
+<style>
+#ki-hinweis{position:fixed;right:0;bottom:0;z-index:2147483000;pointer-events:none;
+  font:10px/16px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  color:#5b6270;background:rgba(243,244,246,.92);border-top:1px solid rgba(0,0,0,.08);border-left:1px solid rgba(0,0,0,.08);
+  border-top-left-radius:6px;padding:0 max(7px,env(safe-area-inset-right)) env(safe-area-inset-bottom) 8px;white-space:nowrap}
+.ki-platz::after{content:"";display:block;height:20px;flex:none}
+@media print{#ki-hinweis{position:static;text-align:right;border:0;background:none}}
+</style>
+<div id="ki-hinweis" role="note">Mit KI erstellt · Physik nicht geprüft · Ergebnisse kritisch prüfen</div>
+<script>
+/* Scrollbereiche, die bis unter den Hinweis reichen, bekommen unten 20 px Luft,
+   damit ihr letzter Inhalt nicht dauerhaft vom Hinweis verdeckt wird. */
+(function(){
+  var hin=document.getElementById('ki-hinweis');
+  function platz(){
+    var alt=document.querySelectorAll('.ki-platz');
+    for(var i=0;i<alt.length;i++)alt[i].classList.remove('ki-platz');
+    var vw=innerWidth,vh=innerHeight,hb=hin.getBoundingClientRect();
+    var els=document.body.querySelectorAll('*');
+    function passt(el){
+      var cs=getComputedStyle(el);
+      if(cs.display==='block'||cs.display==='flow-root')return true;
+      return cs.display==='flex'&&/column/.test(cs.flexDirection);
+    }
+    for(var j=0;j<els.length;j++){
+      var el=els[j];if(el===hin||el.closest('svg'))continue;
+      var oy=getComputedStyle(el).overflowY;
+      if(oy!=='auto'&&oy!=='scroll')continue;
+      var r=el.getBoundingClientRect();
+      if(r.height<40||r.bottom<vh-hb.height-4||r.right<hb.left+20||r.left>vw)continue;
+      if(passt(el))el.classList.add('ki-platz');
+    }
+    var se=document.scrollingElement||document.documentElement;
+    if(se.scrollHeight>vh+2&&passt(document.body))document.body.classList.add('ki-platz');
+  }
+  var t;function spaeter(){clearTimeout(t);t=setTimeout(platz,150);}
+  addEventListener('resize',spaeter);addEventListener('load',spaeter);
+  document.addEventListener('click',spaeter,true);
+  platz();
+})();
+</script>
+</body>
+</html>
