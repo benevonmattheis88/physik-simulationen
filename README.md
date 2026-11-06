@@ -56,6 +56,7 @@ archiv/                       eingefrorene ältere Stände, gleiche Ordnerstrukt
 - Ältere Stände: Seite „Ältere Versionen“ (`versionen.html`, verlinkt von der Startseite). Archivierte Stände in `archiv/` laufen direkt im Browser und werden nicht mehr verändert (außer KI-Hinweis), ihre Links bleiben fest. Alle übrigen Stände findet man im GitHub-Verlauf der jeweiligen Datei.
 - Startseite: Wer schon einmal da war, sieht oben „Neu seit deinem letzten Besuch“ mit den seitdem geänderten Simulationen. Der Besuchszeitpunkt bleibt nur im eigenen Browser. **Jede Änderung an einer Simulation bekommt einen Eintrag in `aenderungen.html`** (Datenblock `aenderungsdaten`: Zeitpunkt, Simulation, kurzer Text).
 - Änderungen an `Kernlabor.html` müssen auch in die Dateien in `Kernlabor_einzeln/` übernommen werden.
+- Startseite in zwei Teilen: oben **Lernmodule** (zum Selbstlernen mit Rückmeldung und Ergebnis-Übersicht für Moodle: Ersatzwiderstand, Aufgaben im Energiefluss-Baukasten, Nachfahren in den Bewegungsdiagrammen), darunter die **Simulationen** zum Vorführen und Erkunden, nach Thema sortiert. Die Dateien liegen trotzdem alle im Themenordner.
 - Einzelne Reiter lassen sich direkt verlinken, siehe [Direktlinks zu einzelnen Reitern](#direktlinks-zu-einzelnen-reitern).
 
 ## Direktlinks zu einzelnen Reitern
