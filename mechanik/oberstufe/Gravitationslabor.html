@@ -50,6 +50,10 @@
   details.small summary { cursor:pointer; min-height:1.9rem; display:flex; align-items:center; }
   .small { font-size:.86rem; color:var(--muted); line-height:1.35; }
   .hidden { display:none !important; }
+  body[data-scene=dreh] .par, body[data-scene=dreh] .checks, body[data-scene=dreh] .arrowrow { display:none !important; }
+  body:not([data-scene=dreh]) .dreh { display:none !important; }
+  #noteMore button { font-size:.92rem; padding-left:.25rem; padding-right:.25rem; white-space:nowrap; }
+  .tabs button { padding-left:.3rem; padding-right:.3rem; }
 
   /* Werkzeugleiste auf der Simulation */
   #tools { position:absolute; top:8px; right:8px; display:flex; gap:6px; z-index:5; }
@@ -115,6 +119,7 @@
       <div class="tabs">
         <button id="tabLab" class="on">Labor</button>
         <button id="tabSpace">Weltall</button>
+        <button id="tabDreh">Drehwaage</button>
       </div>
       <div class="par" data-k="m1">
         <div class="head"><span>Masse m<sub>1</sub> (links)</span><output></output></div>
@@ -136,17 +141,20 @@
         <label class="space"><input id="cbMag" type="checkbox">Körper 5× vergrößert</label>
       </div>
       <div class="row arrowrow"><label>Pfeilmaßstab</label><select id="arrowScale"></select></div>
+      <div class="btns dreh"><button id="swing">Große Kugeln umschwenken</button></div>
+      <div class="row dreh"><label>Zeitraffer</label><select id="speed"><option value="1">1-fach (echte Zeit)</option><option value="10">10-fach</option><option value="30" selected>30-fach</option><option value="60">60-fach</option></select></div>
       <div class="btns">
         <button id="preset" class="space">Erde und Mond</button>
         <button id="reset">Zurücksetzen</button>
       </div>
       <div id="expl"></div>
-      <div class="btns">
-        <button id="noteBtn">Messwert notieren</button>
+      <div class="btns"><button id="noteBtn">Messwert notieren</button></div>
+      <div id="notes"></div>
+      <div class="btns hidden" id="noteMore">
         <button id="noteUndo" title="Letzte Zeile löschen">Letzten löschen</button>
         <button id="noteClear" title="Alle Messwerte löschen">Alle löschen</button>
+        <button id="noteCsv" title="Messwerte als Tabelle (CSV) speichern, öffnet sich in Excel oder Numbers">Tabelle speichern</button>
       </div>
-      <div id="notes"></div>
       <details class="small"><summary>Hinweise und Vereinfachungen</summary><div id="simpl"></div></details>
     </div>
   </div>
@@ -269,6 +277,7 @@
   // ---------- Hauptzeichnung ----------
   function draw() {
     const W = cv.clientWidth, H = cv.clientHeight; if (!W || !H) return;
+    if (S.scene === "dreh") { drawDreh(W, H); return; }
     const lab = S.scene === "lab", d3 = S.view === "3d", p = P(), c = C();
     const fz = Math.max(12, Math.min(17, W / 48)) * S.fs;
     const ink = d3 ? "#f2f5f8" : "#1d2733", sub = d3 ? "rgba(242,245,248,.75)" : "#5b6675";
@@ -354,6 +363,111 @@
                   bx, yb - fz * (S.tooLong && $("cbArrow").checked ? 2.9 : 1.5), fz * 0.8, sub, "left");
 
     drawMeter(W, fz, F, lab, d3);
+  }
+
+  // ---------- Drehwaage (Cavendish) ----------
+  // Feste Werte wie bei einer Schul-Drehwaage: kleine Kugeln 15 g, große 1,5 kg, Mittelpunktsabstand 4,7 cm,
+  // halbe Balkenlänge 5 cm, Schwingungsdauer 10 min, Skala 5 m vom Spiegel. Keine Auswertung, nur Beobachten und Ablesen.
+  const DW = { m:0.015, M:1.5, b:0.047, d:0.05, T:600, tau:900, L:5, EX:10 };
+  DW.J = 2 * DW.m * DW.d * DW.d; DW.kap = DW.J * Math.pow(2 * Math.PI / DW.T, 2);
+  DW.F = G * DW.M * DW.m / (DW.b * DW.b); DW.torque = 2 * DW.F * DW.d;
+  const D0 = () => ({ pos:1, phi:DW.torque / DW.kap, w:0, t:0, swing:1, raf:null, last:0 });
+  S.dw = D0();
+  function dwStep(dt) {
+    const z = S.dw;
+    if (z.swing < 1) { z.swing = Math.min(1, z.swing + dt / 3); }   // Schwenken dauert 3 s (Echtzeit)
+  }
+  function dwPhys(dt) {
+    const z = S.dw, tq = z.swing >= 1 ? z.pos * DW.torque : 0, n = Math.max(1, Math.ceil(dt / 0.5)), h = dt / n;
+    for (let i = 0; i < n; i++) { const a = (tq - DW.kap * z.phi) / DW.J - 2 / DW.tau * z.w; z.w += a * h; z.phi += z.w * h; }
+    z.t += dt;
+  }
+  const dwX = () => 2 * S.dw.phi * DW.L * 100;                       // Lichtzeiger in cm
+  function dwLoop(ts) {
+    const z = S.dw;
+    if (S.scene !== "dreh") { z.raf = null; return; }
+    const dtR = Math.min(0.1, (ts - (z.last || ts)) / 1000); z.last = ts;
+    dwStep(dtR); dwPhys(dtR * +$("speed").value); draw();
+    z.raf = requestAnimationFrame(dwLoop);
+  }
+  function drawDreh(W, H) {
+    const d3 = S.view === "3d", z = S.dw, fz = Math.max(12, Math.min(17, W / 48)) * S.fs;
+    const ink = d3 ? "#f2f5f8" : "#1d2733", sub = d3 ? "rgba(242,245,248,.75)" : "#5b6675", red = d3 ? "#ff5a47" : "#C0392B";
+    if (d3) { const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "#3a4350"); g.addColorStop(1, "#262c35"); ctx.fillStyle = g; } else ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, W, H);
+    // Skala unten (fester Maßstab: −30 cm bis +30 cm)
+    const sy = H - fz * 4.2, sx0 = 24, sx1 = W - 24, xc = (sx0 + sx1) / 2, kS = (sx1 - sx0) / 60;
+    // Draufsicht der Drehwaage
+    const narrow = W < 600, top = narrow ? 92 : 62, cy = top + (sy - top - fz * 3) * 0.45, kB = Math.min(W * 0.32, (sy - top - fz * 3) * 0.42) / 7;   // px pro cm
+    const cx = xc;
+    // Gehäuse
+    const hw = 6.6 * kB, hh = 1.35 * kB;
+    if (d3) {
+      ctx.fillStyle = "rgba(210,230,250,.10)"; rrect(cx - hw, cy - hh, 2 * hw, 2 * hh, 14); ctx.fill();
+      ctx.strokeStyle = "rgba(210,230,250,.45)"; ctx.lineWidth = 2; rrect(cx - hw, cy - hh, 2 * hw, 2 * hh, 14); ctx.stroke();
+    } else { ctx.strokeStyle = "#8a95a3"; ctx.lineWidth = 1.5; rrect(cx - hw, cy - hh, 2 * hw, 2 * hh, 14); ctx.stroke(); }
+    txt("Drehwaage von oben", 12, top + fz * 0.3, fz * 0.8, sub, "left", true);
+    // große Kugeln am Schwenkarm (außerhalb des Gehäuses gedacht)
+    const ang = Math.atan2(DW.b, DW.d) * 100 / 100, rArm = Math.hypot(DW.b, DW.d) * 100 * kB;
+    const p0 = z.pos === 1 ? -1 : 1, aNow = (p0 + (z.pos - p0) * (z.swing < 1 ? (1 - Math.cos(Math.PI * z.swing)) / 2 : 1)) * ang;
+    const RB = Math.cbrt(3 * DW.M / (4 * Math.PI * 11340)) * 100 * kB, rs = Math.cbrt(3 * DW.m / (4 * Math.PI * 11340)) * 100 * kB;
+    ctx.strokeStyle = d3 ? "rgba(200,210,220,.6)" : "#8a95a3"; ctx.lineWidth = Math.max(3, kB * 0.5);
+    ctx.beginPath(); ctx.moveTo(cx - rArm * Math.cos(aNow), cy + rArm * Math.sin(aNow)); ctx.lineTo(cx + rArm * Math.cos(aNow), cy - rArm * Math.sin(aNow)); ctx.stroke();
+    for (const sg of [1, -1]) {
+      const x = cx + sg * rArm * Math.cos(aNow), y = cy - sg * rArm * Math.sin(aNow);
+      if (d3) ball(x, y, RB, "#6c7480", "#d9dee4", "#2a2f36"); else { ctx.fillStyle = "#e3e7ec"; ctx.strokeStyle = "#1d2733"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, RB, 0, 7); ctx.fill(); ctx.stroke(); }
+    }
+    // Balken mit kleinen Kugeln, Drehung vergrößert
+    const ph = -z.phi * DW.EX, bl = DW.d * 100 * kB;
+    ctx.strokeStyle = d3 ? "#d9dee4" : "#1d2733"; ctx.lineWidth = Math.max(2, kB * 0.25);
+    ctx.beginPath(); ctx.moveTo(cx - bl * Math.cos(ph), cy - bl * Math.sin(ph)); ctx.lineTo(cx + bl * Math.cos(ph), cy + bl * Math.sin(ph)); ctx.stroke();
+    for (const sg of [1, -1]) {
+      const x = cx + sg * bl * Math.cos(ph), y = cy + sg * bl * Math.sin(ph);
+      if (d3) ball(x, y, Math.max(rs, 3), "#6c7480", "#d9dee4", "#2a2f36"); else { ctx.fillStyle = "#1d2733"; ctx.beginPath(); ctx.arc(x, y, Math.max(rs, 3), 0, 7); ctx.fill(); }
+    }
+    // Ruhelage gestrichelt
+    ctx.setLineDash([4, 4]); ctx.strokeStyle = sub; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx - bl * 1.15, cy); ctx.lineTo(cx + bl * 1.15, cy); ctx.stroke(); ctx.setLineDash([]);
+    // Draht und Spiegel in der Mitte
+    ctx.fillStyle = d3 ? "#ffd166" : "#1F4E79"; ctx.beginPath(); ctx.arc(cx, cy, 3, 0, 7); ctx.fill();
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(ph);
+    ctx.fillStyle = d3 ? "#cfe8ff" : "#9ec9f0"; ctx.fillRect(-kB * 0.9, kB * 0.35, kB * 1.8, Math.max(3, kB * 0.22)); ctx.restore();
+    txt("Drehung " + DW.EX + "-fach vergrößert gezeichnet", W - 12, top + fz * 1.5, fz * 0.75, sub, "right");
+    // Lichtzeiger: Laser links unten, Strahl zum Spiegel, reflektiert zur Skala (Lichtweg verkürzt gezeichnet)
+    const xs = xc + dwX() * kS, ym = cy + kB * 0.45, lx = sx0 + 10, ly = sy - fz * 1.6;
+    ctx.fillStyle = d3 ? "#3d4550" : "#c3ccd8"; rrect(lx - 6, ly - 8, 46, 16, 4); ctx.fill();
+    txt("Laser", lx + 17, ly, fz * 0.7, d3 ? "#fff" : "#1d2733", "center", true);
+    ctx.strokeStyle = "rgba(255,60,40,.85)"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(lx + 40, ly); ctx.lineTo(cx, ym); ctx.lineTo(xs, sy); ctx.stroke();
+    txt("Lichtweg verkürzt (Skala 5 m entfernt)", cx + fz * 0.6, (ym + sy) / 2, fz * 0.72, sub, "left");
+    // Skala
+    ctx.fillStyle = d3 ? "#f3efe3" : "#fffdf5"; ctx.fillRect(sx0 - 6, sy, sx1 - sx0 + 12, fz * 2.2);
+    ctx.strokeStyle = "#2b2b2b"; ctx.lineWidth = 1; ctx.strokeRect(sx0 - 6, sy, sx1 - sx0 + 12, fz * 2.2);
+    ctx.fillStyle = "#2b2b2b"; ctx.font = "600 " + Math.round(fz * 0.7) + "px " + FONT; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+    for (let c = -30; c <= 30; c++) {
+      const x = xc + c * kS, long = c % 10 === 0, mid = c % 5 === 0;
+      ctx.beginPath(); ctx.moveTo(x, sy); ctx.lineTo(x, sy + (long ? fz * 0.9 : mid ? fz * 0.6 : fz * 0.35)); ctx.stroke();
+      if (long || (mid && kS > 9)) ctx.fillText(String(c), x, sy + fz * 1.9);
+    }
+    ctx.textAlign = "right"; ctx.fillText("cm", sx1 + 4, sy + fz * 1.0);
+    // Lichtfleck
+    const gr = ctx.createRadialGradient(xs, sy + fz * 0.5, 1, xs, sy + fz * 0.5, fz * 0.9);
+    gr.addColorStop(0, "rgba(255,40,20,1)"); gr.addColorStop(0.4, "rgba(255,40,20,.6)"); gr.addColorStop(1, "rgba(255,40,20,0)");
+    ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(xs, sy + fz * 0.5, fz * 0.9, 0, 7); ctx.fill();
+    // Uhr und Stellung oben links
+    const yr = narrow ? 62 + fz * 0.5 : fz * 1.1 + 6;
+    let xr = 10;
+    xr += tbox2("t = " + de(z.t / 60, 1) + " min", xr, yr, fz * 1.15, "#1d2733") + 6;
+    tbox2("Stellung " + (z.pos === 1 ? "I" : "II") + (z.swing < 1 ? " (wird geschwenkt)" : ""), xr, yr, fz * 0.85, "#5b6675");
+    tbox2("Lichtzeiger x = " + (dwX() >= 0 ? "+" : "−") + de(Math.abs(dwX()), 1) + " cm", 10, sy - fz * 3.4, fz * 0.95, red);
+    S.reading = null;
+  }
+  function tbox2(s, x, y, size, col) {
+    ctx.font = "600 " + Math.round(size) + "px " + FONT;
+    const w = ctx.measureText(s).width + 12, h = size * 1.5;
+    ctx.fillStyle = "rgba(255,255,255,.92)"; rrect(x, y - h / 2, w, h, 6); ctx.fill();
+    ctx.fillStyle = col; ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText(s, x + 6, y);
+    return w;
   }
 
   function drawLab(W, H, k, x1, x2, yc, r1, r2, d3, fz, ink, sub) {
@@ -588,31 +702,53 @@
     lab: "<b>Forschungsauftrag:</b> Wovon hängt die Anziehungskraft F zwischen den beiden Bleikugeln ab? " +
          "Verändere immer nur <b>eine</b> Größe (m<sub>1</sub>, m<sub>2</sub> oder r), lies die Kraft am Messgerät ab und notiere sie mit „Messwert notieren“.",
     space: "<b>Forschungsauftrag:</b> Gilt bei Himmelskörpern derselbe Zusammenhang wie im Labor? " +
-           "Miss wieder, indem du immer nur eine Größe veränderst. Vergleiche die Größenordnungen mit dem Labor."
+           "Miss wieder, indem du immer nur eine Größe veränderst. Vergleiche die Größenordnungen mit dem Labor.",
+    dreh: "<b>So misst man so winzige Kräfte:</b> An einem sehr dünnen Draht hängt ein leichter Balken mit zwei kleinen Bleikugeln. " +
+          "Schwenkt man zwei große Bleikugeln heran, ziehen sie die kleinen an und der Draht verdrillt sich ein wenig. Ein Spiegel am Draht lenkt einen Lichtstrahl auf eine weit entfernte Skala, so wird die winzige Drehung sichtbar. " +
+          "<b>Auftrag:</b> Schwenke die großen Kugeln um und beobachte den Lichtzeiger. Notiere seine Position zu verschiedenen Zeiten."
   };
   const SIMPL = {
     lab: "Du kannst die rechte Kugel auch mit dem Finger verschieben. Vereinfachungen: Kugeln aus Blei (11,3 g/cm³), ihre Größe ergibt sich aus der Masse. " +
          "Der Sensor misst nur die Anziehung zwischen den beiden Kugeln. In Wirklichkeit stören Luftzug, Erschütterungen und die Anziehung durch Tisch, Stative und Personen; " +
          "so kleine Kräfte misst man deshalb mit einer Drehwaage (Cavendish, 1798). Messrauschen: ±0,3 nN wie bei einem sehr guten Sensor.",
     space: "Du kannst den rechten Körper auch mit dem Finger verschieben. Vereinfachungen: Die Körper werden festgehalten gedacht (in Wirklichkeit würden sie sich bewegen). " +
-           "Größe aus der Masse mit typischer Dichte (Planet 5,5 g/cm³, Mond 3,3 g/cm³). Erde und Mond gerundet: m<sub>Erde</sub> ≈ 5,97 · 10²⁴ kg, m<sub>Mond</sub> ≈ 7,35 · 10²² kg, mittlerer Abstand ≈ 384 400 km."
+           "Größe aus der Masse mit typischer Dichte (Planet 5,5 g/cm³, Mond 3,3 g/cm³). Erde und Mond gerundet: m<sub>Erde</sub> ≈ 5,97 · 10²⁴ kg, m<sub>Mond</sub> ≈ 7,35 · 10²² kg, mittlerer Abstand ≈ 384 400 km.",
+    dreh: "Im Glasgehäuse hängen Draht, Spiegel, Balken und kleine Kugeln; die großen Kugeln sitzen außen auf einem Schwenkarm. Werte wie bei einer Schul-Drehwaage: kleine Kugeln je 15 g, große je 1,5 kg, Abstand der Mittelpunkte 4,7 cm, Balken 10 cm lang, Skala 5 m vom Spiegel entfernt. " +
+          "Eine Schwingung dauert etwa 10 Minuten, deshalb läuft die Zeit im Zeitraffer; die Uhr zeigt die echte Zeit. Die Drehung des Balkens ist 30-fach vergrößert gezeichnet, der Lichtweg verkürzt. " +
+          "Vereinfachungen: Es zählt nur die Anziehung jeder großen Kugel auf die nahe kleine Kugel. Luftzug, Erschütterungen und Temperatur stören hier nicht; die Schwingung klingt durch Luftreibung langsam ab. " +
+          "Historisch: Henry Cavendish, 1798."
   };
   // Messwerte notieren: nur eine Liste der abgelesenen Werte, keine Auswertung
-  const NOTES = { lab:[], space:[] };
+  const NOTES = { lab:[], space:[], dreh:[] };
   const HEAD = {
     lab: "<th>Nr.</th><th>m<sub>1</sub> in kg</th><th>m<sub>2</sub> in kg</th><th>r in cm</th><th>F in nN</th>",
-    space: "<th>Nr.</th><th>m<sub>1</sub> in 10<sup>24</sup> kg</th><th>m<sub>2</sub> in 10<sup>22</sup> kg</th><th>r in 1000 km</th><th>F in 10<sup>20</sup> N</th>"
+    space: "<th>Nr.</th><th>m<sub>1</sub> in 10<sup>24</sup> kg</th><th>m<sub>2</sub> in 10<sup>22</sup> kg</th><th>r in 1000 km</th><th>F in 10<sup>20</sup> N</th>",
+    dreh: "<th>Nr.</th><th>t in min</th><th>Lichtzeiger x in cm</th><th>Stellung</th>"
+  };
+  const CSVHEAD = {
+    lab: ["Nr", "m1 in kg", "m2 in kg", "r in cm", "F in nN"],
+    space: ["Nr", "m1 in 10^24 kg", "m2 in 10^22 kg", "r in 1000 km", "F in 10^20 N"],
+    dreh: ["Nr", "t in min", "Lichtzeiger x in cm", "Stellung der großen Kugeln"]
   };
   function showNotes() {
     const n = NOTES[S.scene];
     $("notes").innerHTML = n.length
       ? "<table><tr>" + HEAD[S.scene] + "</tr>" + n.map((q, i) => "<tr><td>" + (i + 1) + "</td><td>" + q.join("</td><td>") + "</td></tr>").join("") + "</table>"
       : "<div class='empty'>Noch keine Messwerte notiert.</div>";
-    $("noteUndo").disabled = $("noteClear").disabled = !n.length;
+    $("noteMore").classList.toggle("hidden", !n.length);
   }
+  $("noteCsv").onclick = () => {
+    const n = NOTES[S.scene]; if (!n.length) return;
+    const rows = [CSVHEAD[S.scene]].concat(n.map((q, i) => [i + 1].concat(q.map(x => String(x).replace("−", "-")))));
+    const qt = v => '"' + String(v).replace(/"/g, '""') + '"';
+    const t = "\ufeff" + rows.map(r => r.map(v => typeof v === "number" || /^-?\d+(,\d+)?$/.test(v) ? v : qt(v)).join(";")).join("\r\n");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([t], { type:"text/csv;charset=utf-8" }));
+    a.download = "Messreihe_Gravitationslabor_" + LINKS[S.scene] + ".csv"; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  };
   $("noteBtn").onclick = () => {
     const p = P();
-    NOTES[S.scene].push([String(p.m1), String(p.m2), S.scene === "lab" ? String(p.r) : String(p.r / 1000), S.reading]);
+    if (S.scene === "dreh") NOTES.dreh.push([de(S.dw.t / 60, 1), (dwX() < 0 ? "−" : "") + de(Math.abs(dwX()), 1), S.dw.pos === 1 ? "I" : "II"]);
+    else NOTES[S.scene].push([String(p.m1), String(p.m2), S.scene === "lab" ? String(p.r) : String(p.r / 1000), S.reading]);
     showNotes();
     const t = $("notes").querySelector("tr:last-child"); if (t && t.scrollIntoView) t.scrollIntoView({ block:"nearest" });
   };
@@ -620,17 +756,19 @@
   $("noteClear").onclick = () => { if (confirm("Alle notierten Messwerte löschen?")) { NOTES[S.scene].length = 0; showNotes(); } };
 
   /* Direktlink: Gravitationslabor.html#weltall öffnet diesen Reiter; beim Umschalten zeigt die Adresse den Reiter */
-  const LINKS = { lab:"labor", space:"weltall" };
+  const LINKS = { lab:"labor", space:"weltall", dreh:"drehwaage" };
   function linkGet() { let h = ""; try { h = decodeURIComponent(location.hash.slice(1)).toLowerCase(); } catch (e) {} return Object.keys(LINKS).find(k => LINKS[k] === h); }
   function linkSet(k) { try { if (location.hash !== "#" + LINKS[k]) history.replaceState(null, "", "#" + LINKS[k]); } catch (e) {} }
   window.addEventListener("hashchange", () => { const k = linkGet(); if (k && k !== S.scene) setScene(k); });
   function setScene(s) {
     S.scene = s; linkSet(s);
-    $("tabLab").classList.toggle("on", s === "lab"); $("tabSpace").classList.toggle("on", s === "space");
+    $("tabLab").classList.toggle("on", s === "lab"); $("tabSpace").classList.toggle("on", s === "space"); $("tabDreh").classList.toggle("on", s === "dreh");
+    document.body.dataset.scene = s;
+    if (s === "dreh" && !S.dw.raf) { S.dw.last = 0; S.dw.raf = requestAnimationFrame(dwLoop); }
     document.querySelectorAll(".lab").forEach(e => e.classList.toggle("hidden", s !== "lab"));
     document.querySelectorAll(".space").forEach(e => e.classList.toggle("hidden", s !== "space"));
     $("expl").innerHTML = EXPL[s]; $("simpl").innerHTML = SIMPL[s];
-    fillScales(); syncInputs(); noiseTimer(); draw(); showNotes();
+    if (s !== "dreh") { fillScales(); syncInputs(); } noiseTimer(); draw(); showNotes();
   }
   function setFs(v) {
     S.fs = Math.max(0.8, Math.min(1.6, Math.round(v * 10) / 10));
@@ -666,11 +804,14 @@
   $("rotGo").onclick = () => document.body.classList.add("quer");
   $("tabLab").onclick = () => setScene("lab");
   $("tabSpace").onclick = () => setScene("space");
+  $("tabDreh").onclick = () => setScene("dreh");
+  $("swing").onclick = () => { const z = S.dw; if (z.swing < 1) return; z.pos = -z.pos; z.swing = 0; };
   $("cbArrow").addEventListener("change", () => { document.querySelector(".arrowrow").classList.toggle("hidden", !$("cbArrow").checked); draw(); });
   $("cbNoise").addEventListener("change", () => { noiseTimer(); draw(); });
   $("cbMag").addEventListener("change", draw);
   $("preset").onclick = () => { Object.assign(S.val.space, { m1:6, m2:7, r:380000 }); syncInputs(); draw(); };
   $("reset").onclick = () => {
+    if (S.scene === "dreh") { const r = S.dw.raf; S.dw = D0(); S.dw.raf = r; $("speed").value = "30"; draw(); return; }
     const c = C(); for (const k in c.par) P()[k] = c.par[k].def;
     S.scale[S.scene] = c.defScale; fillScales();
     $("cbArrow").checked = true; document.querySelector(".arrowrow").classList.remove("hidden");
@@ -681,6 +822,7 @@
   // Rechten Körper mit dem Finger verschieben
   function px(ev) { const r = cv.getBoundingClientRect(); return { x:ev.clientX - r.left, y:ev.clientY - r.top }; }
   cv.addEventListener("pointerdown", ev => {
+    if (S.scene === "dreh") return;
     const q = px(ev), x2 = S.x1 + P().r * S.k, R2 = Math.max(radii()[1] * S.k, 22);
     if (Math.abs(q.x - x2) < R2 + 6 && Math.abs(q.y - S.yc) < R2 + 16) { S.drag = true; S.dx = q.x - x2; cv.setPointerCapture(ev.pointerId); ev.preventDefault(); }
   });

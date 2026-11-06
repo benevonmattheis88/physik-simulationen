@@ -114,11 +114,13 @@ table.res td,table.res th{border-bottom:1px solid var(--line);padding:3px 4px;te
 #cmp td:first-child{font-weight:700;color:#c8d3ea;border-radius:8px 0 0 8px;width:22%}#cmp td:last-child{border-radius:0 8px 8px 0}
 #cmp tr.on td{background:rgba(255,214,102,.2);color:#fff}
 @media (max-width:640px) and (orientation:portrait){#cmp{left:4px;right:4px;bottom:4px}#cmp td{padding:4px 5px}}
+
+.ico{width:1.25em;height:1.25em;vertical-align:middle;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:inline-block}
 </style>
 </head>
 <body>
 <div id="app">
-  <header><h1>☀︎ Fusionslabor</h1><nav id="tabs"></nav><div id="tools"><button id="t_fsm" title="Schrift kleiner">A−</button><button id="t_fsp" title="Schrift größer">A+</button><button id="t_view" title="3D-Ansicht / Symbolansicht">3D</button><button id="t_panel" title="Bedienfeld ein-/ausblenden">◨</button><button id="t_full" title="Vollbild">⛶</button></div></header>
+  <header><h1>☀︎ Fusionslabor</h1><nav id="tabs"></nav><div id="tools"><button id="t_fsm" title="Schrift kleiner">A−</button><button id="t_fsp" title="Schrift größer">A+</button><button id="t_view" title="3D-Ansicht / Symbolansicht">3D</button><button id="t_full" title="Vollbild"><svg class="ico" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button id="t_panel" title="Bedienfeld ein-/ausblenden"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg></button></div></header>
   <main>
     <div id="stage"><canvas id="cv"></canvas><div id="eq"></div><div id="hint"></div></div>
     <aside id="panel"></aside>
@@ -225,7 +227,7 @@ function nucText(A, Z, sym, x, y, size, col, align){
   ctx.restore();
 }
 function label(t, x, y, size, col, align, weight){
-  size *= FS;
+  size *= FS; if (W < 500) size = Math.max(size, 11); // Handy: Beschriftungen nicht unter 11 px
   ctx.save(); ctx.fillStyle = col || '#fff'; ctx.font = `${weight||600} ${size}px -apple-system,Segoe UI,Roboto,Arial`;
   // Text, der über den Rand ragen würde, wird kleiner gesetzt (wichtig bei großer Schrift)
   const room = align === 'right' ? x - 4 : align === 'center' ? 2*Math.min(x, W - x) - 8 : W - x - 4, tw = ctx.measureText(t).width;
@@ -463,7 +465,7 @@ const Fuse = {
     ${sw('u_zoom', 'Energieachse gespreizt (bis 50 keV)', this.zoom)}
     <div class="info" id="u_info"></div>
     <details><summary>Warum stoßen sich die Kerne ab?</summary><div>Beide Kerne sind positiv geladen. Gleiche Ladungen stoßen sich ab, und zwar umso stärker, je näher sie sich kommen. Das zeigt der „Energieberg“ unten. Erst wenn sich die Kerne berühren, hält die Kernkraft sie zusammen. Sie ist stärker als die Abstoßung, reicht aber nicht weit.</div></details>
-    <details><summary>Durchschlüpfen (Tunneleffekt)</summary><div>Selbst bei 150 Millionen Grad sind die Kerne rund 20-mal zu langsam, um über den Berg zu kommen. Nach den Regeln, die wir aus dem Alltag kennen, gäbe es also keine Kernfusion, auch nicht in der Sonne.<br>Trotzdem schlüpfen ab und zu Kerne durch den Berg hindurch. Das ist ein Effekt der <b>Quantenphysik</b>, man nennt ihn Tunneleffekt. Er funktioniert nicht wie ein echter Tunnel: Es gibt kein Loch im Berg, der Kern ist einfach mit einer kleinen Wahrscheinlichkeit plötzlich auf der anderen Seite. Je schneller der Kern ist, desto eher klappt es.</div></details>
+    <details><summary>Durchschlüpfen (Tunneleffekt)</summary><div>Selbst bei 150 Millionen Grad haben die Kerne im Mittel rund 20-mal zu wenig Bewegungsenergie, um über den Berg zu kommen (sie sind dafür etwa 5-mal zu langsam). Nach den Regeln, die wir aus dem Alltag kennen, gäbe es also keine Kernfusion, auch nicht in der Sonne.<br>Trotzdem schlüpfen ab und zu Kerne durch den Berg hindurch. Das ist ein Effekt der <b>Quantenphysik</b>, man nennt ihn Tunneleffekt. Er funktioniert nicht wie ein echter Tunnel: Es gibt kein Loch im Berg, der Kern ist einfach mit einer kleinen Wahrscheinlichkeit plötzlich auf der anderen Seite. Je schneller der Kern ist, desto eher klappt es.</div></details>
     <details><summary>Was ist hier vereinfacht?</summary><div>• Die Kerne sind etwa 10-mal zu groß gezeichnet, die Abstände stimmen (Maßstabsbalken).<br>• In der Simulation schlüpfen viel mehr Kerne durch als in Wirklichkeit, sonst müsstest du tausende Male schießen. Die echte Chance steht im Kasten oben.<br>• Der schwere Kern bleibt der Einfachheit halber stehen.<br>• 1 fm (Femtometer) = 0,000 000 000 000 001 m. 1 keV und 1 MeV sind Energieeinheiten für Teilchen: 1 MeV = 1000 keV.</div></details>`;
   },
   bind(){
@@ -485,7 +487,7 @@ const Fuse = {
     let real;
     if (R.S === 0) real = 'Zwei Protonen verschmelzen fast nie, auch wenn sie durchschlüpfen (siehe Reiter „Sonne“).';
     else {const p = R.S*this.pg(Em); real = p < 1e-12 ? 'In Wirklichkeit verschmelzen bei dieser Temperatur praktisch nie zwei Kerne.' : `In Wirklichkeit verschmilzt grob nur <b>einer von ${fmtInt(Math.max(1, 1/p))}</b> Zusammenstößen.`;}
-    el.innerHTML = `Mittlere Bewegungsenergie: <b>${fmtE(Em)}</b><br>Höhe des Energiebergs: <b>${fmtE(Vc)}</b><br>Die Kerne sind etwa <b>${fmtInt(Vc/Em)}-mal</b> zu langsam. ${real}`;
+    el.innerHTML = `Mittlere Bewegungsenergie: <b>${fmtE(Em)}</b><br>Höhe des Energiebergs: <b>${fmtE(Vc)}</b><br>Die Kerne haben etwa <b>${fmtInt(Vc/Em)}-mal</b> zu wenig Bewegungsenergie. ${real}`;
   },
   fire(){
     if (this.shot && this.shot.ph !== 'done') return;
@@ -555,7 +557,7 @@ const Fuse = {
     // Maßstab
     const sb = 50*g.px; ctx.strokeStyle = '#cfd8e8'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(g.x1 - sb, g.lane + 58); ctx.lineTo(g.x1, g.lane + 58); ctx.moveTo(g.x1 - sb, g.lane + 52); ctx.lineTo(g.x1 - sb, g.lane + 64); ctx.moveTo(g.x1, g.lane + 52); ctx.lineTo(g.x1, g.lane + 64); ctx.stroke();
     label('50 fm', g.x1 - sb/2, g.lane + 74, 12, '#cfd8e8', 'center');
-    label(`Kerne etwa ${fmtInt(s/(0.85*g.px))}-fach vergrößert gezeichnet`, g.x1, g.lane - 58, 11.5, '#8798b8', 'right');
+    label(`Kerne etwa ${fmtInt(s/(0.85*g.px))}-fach vergrößert gezeichnet`, g.x1, PORT() ? Math.max(g.lane - 58, this.eqBottom() + 20) : g.lane - 58, 11.5, '#8798b8', 'right');
     // Zielkern
     const fused = sh && sh.ph === 'fused';
     if (!fused){cluster(R.t[0], R.t[1] - (R.t[2] === 'p' ? 0 : 0), g.x0, g.lane, s, this.t0 = (this.t0 || 0) + 0.01);
@@ -580,8 +582,10 @@ const Fuse = {
     // Energieberg
     this.drawHill(g);
     // Zähler
-    label(`Versuche: ${this.tries} · verschmolzen: ${this.hits}`, g.x0 - (PORT() ? 20 : 50), PORT() ? g.lane - 72 : 18, 14, '#aab8d4', 'left', 700);
+    // Hochformat: Zähler unter die Reaktionsgleichung (#eq) setzen, damit nichts überlappt
+    label(`Versuche: ${this.tries} · verschmolzen: ${this.hits}`, g.x0 - (PORT() ? 20 : 50), PORT() ? Math.max(g.lane - 72, this.eqBottom()) : 18, 14, '#aab8d4', 'left', 700);
   },
+  eqBottom(){return $('#eq').getBoundingClientRect().bottom - cv.getBoundingClientRect().top + 14;},
   drawHill(g){
     const {x0, x1, gy, gh, px, emax} = g, yb = gy + gh, Y = e => yb - e/emax*gh, rc = this.rc(), sh = this.shot;
     ctx.save(); ctx.fillStyle = 'rgba(255,255,255,0.04)'; rrect(x0 - 50, gy - 40, x1 - x0 + 70, gh + 68, 10); ctx.fill();
