@@ -463,7 +463,14 @@ let tab=1;
 function goTab(n){ tab=n;
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',+t.dataset.tab===n));
   [1,2,3,4].forEach(k=>document.getElementById('page'+k).classList.toggle('on',tab===k));
-  if(tab===1) render1(); else if(tab===2) render2(); else if(tab===3) render3(); else render4(); }
+  if(tab===1) render1(); else if(tab===2) render2(); else if(tab===3) render3(); else render4();
+  linkSet(TABLINK[tab-1]); }
+/* Direktlink: Datei.html#reihe öffnet diesen Reiter; beim Umschalten zeigt die Adresse den Reiter */
+const TABLINK=['parallel','reihe','uebungen','uebersicht'];
+function linkGet(){ try{ return decodeURIComponent(location.hash.slice(1)).toLowerCase(); }catch(e){ return ''; } }
+function linkSet(k){ try{ if(location.hash!=='#'+k) history.replaceState(null,'','#'+k); }catch(e){} }
+function linkOpen(){ const i=TABLINK.indexOf(linkGet()); if(i>=0&&i+1!==tab) goTab(i+1); }
+window.addEventListener('hashchange',linkOpen);
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>goTab(+b.dataset.tab));
 
 /* =================================================================
@@ -939,7 +946,7 @@ document.querySelectorAll('.fold').forEach(b=>b.onclick=()=>b.closest('.left').c
 document.getElementById('rotOk').onclick=()=>document.body.classList.add('norotate');
 { const el=document.documentElement; if(!el.requestFullscreen&&!el.webkitRequestFullscreen) document.getElementById('fs').style.display='none'; }
 /* Start */
-applyFs(); render1(); render2(); render3(); render4();
+applyFs(); render1(); render2(); render3(); render4(); linkOpen();
 </script>
 <!-- KI-Hinweis: einheitlich in allen Simulationen, immer sichtbar unten rechts -->
 <style>

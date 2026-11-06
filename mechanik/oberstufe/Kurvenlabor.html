@@ -485,12 +485,18 @@
   }
 
   // ------------------------------------------------------------ Steuerung
-  document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
-    tab = b.dataset.tab;
-    document.querySelectorAll(".tabs button").forEach(c => c.classList.toggle("on", c === b));
+  function setTab(t) {
+    tab = t; linkSet(t);
+    document.querySelectorAll(".tabs button").forEach(c => c.classList.toggle("on", c.dataset.tab === tab));
     document.querySelectorAll(".pane").forEach(pn => pn.classList.toggle("on", pn.id === "p-" + tab));
     if (tab === "loop") lReset(); if (tab === "kurve") kReset();
-  });
+  }
+  document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => setTab(b.dataset.tab));
+  /* Direktlink: Kurvenlabor.html#looping öffnet diesen Reiter; beim Umschalten zeigt die Adresse den Reiter */
+  const LINKS = { kurve:"kurve", kette:"kettenkarussell", loop:"looping" };
+  function linkGet() { let h = ""; try { h = decodeURIComponent(location.hash.slice(1)).toLowerCase(); } catch (e) {} return Object.keys(LINKS).find(k => LINKS[k] === h); }
+  function linkSet(k) { try { if (location.hash !== "#" + LINKS[k]) history.replaceState(null, "", "#" + LINKS[k]); } catch (e) {} }
+  window.addEventListener("hashchange", () => { const k = linkGet(); if (k && k !== tab) setTab(k); });
   // Schrift, Vollbild, Bedienfeld, Drehhinweis
   function setFS(f) {
     FS = f; document.documentElement.style.setProperty("--fs", f);
@@ -512,6 +518,7 @@
   setFS(FS);
 
   resize(); kReset(); lReset();
+  if (linkGet()) setTab(linkGet());
   let last = performance.now();
   function loop(t) {
     const dt = Math.min(0.05, (t - last) / 1000); last = t;

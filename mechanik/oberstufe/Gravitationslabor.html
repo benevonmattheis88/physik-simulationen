@@ -619,8 +619,13 @@
   $("noteUndo").onclick = () => { NOTES[S.scene].pop(); showNotes(); };
   $("noteClear").onclick = () => { if (confirm("Alle notierten Messwerte löschen?")) { NOTES[S.scene].length = 0; showNotes(); } };
 
+  /* Direktlink: Gravitationslabor.html#weltall öffnet diesen Reiter; beim Umschalten zeigt die Adresse den Reiter */
+  const LINKS = { lab:"labor", space:"weltall" };
+  function linkGet() { let h = ""; try { h = decodeURIComponent(location.hash.slice(1)).toLowerCase(); } catch (e) {} return Object.keys(LINKS).find(k => LINKS[k] === h); }
+  function linkSet(k) { try { if (location.hash !== "#" + LINKS[k]) history.replaceState(null, "", "#" + LINKS[k]); } catch (e) {} }
+  window.addEventListener("hashchange", () => { const k = linkGet(); if (k && k !== S.scene) setScene(k); });
   function setScene(s) {
-    S.scene = s;
+    S.scene = s; linkSet(s);
     $("tabLab").classList.toggle("on", s === "lab"); $("tabSpace").classList.toggle("on", s === "space");
     document.querySelectorAll(".lab").forEach(e => e.classList.toggle("hidden", s !== "lab"));
     document.querySelectorAll(".space").forEach(e => e.classList.toggle("hidden", s !== "space"));
@@ -689,7 +694,7 @@
   window.addEventListener("resize", resize);
   if (window.ResizeObserver) new ResizeObserver(resize).observe(cv);
   S.view = store.get("gravi_view") === "sym" ? "sym" : "3d"; $("view").textContent = S.view === "3d" ? "Symbol" : "3D";
-  setScene("lab");
+  setScene(linkGet() || "lab");
   setFs(+store.get("gravi_fs") || 1);
 })();
 </script>

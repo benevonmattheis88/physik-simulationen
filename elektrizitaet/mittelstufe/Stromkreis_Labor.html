@@ -2019,7 +2019,12 @@ $('btnFull').onclick=()=>{ const d=document, el=d.documentElement;
   }catch(e){ flash(FULLHINT); } };
 ['fullscreenchange','webkitfullscreenchange'].forEach(ev=>document.addEventListener(ev,()=>setTimeout(resize,50)));
 $('miniUSlider').addEventListener('input',()=>{ st.U=+$('miniUSlider').value/10; $('uSlider').value=$('miniUSlider').value; solve(); });
+/* Direktlink: Stromkreis_Labor.html#reihe-lampen öffnet diese Schaltung; beim Umschalten zeigt die Adresse die Schaltung */
+const SCENELINK={R:'widerstand',RR:'reihe-widerstaende',RP:'parallel-widerstaende',L:'lampe',LR:'reihe-lampen',LP:'parallel-lampen',M:'gemischt',K:'kennlinie',D:'draht'};
+function linkScene(){ let h=''; try{ h=decodeURIComponent(location.hash.slice(1)).toLowerCase(); }catch(e){} return Object.keys(SCENELINK).find(k=>SCENELINK[k]===h); }
+window.addEventListener('hashchange',()=>{ const id=linkScene(); if(id&&id!==st.scene) loadScene(id); });
 function loadScene(id){
+  try{ if(location.hash!=='#'+SCENELINK[id]) history.replaceState(null,'','#'+SCENELINK[id]); }catch(e){}
   st.scene=id; document.querySelectorAll('.scene[data-s]').forEach(b=>b.classList.toggle('on',b.dataset.s===id));
   const def=SCENES[id];
   buildScene(id); $('title').textContent=def.title; $('uSlider').value=Math.round(st.U*10);
@@ -2049,7 +2054,7 @@ function frame(now){
 window.addEventListener('resize',resize);
 $('toolHint').innerHTML=TOOLHINT.select;
 try{ const pr=JSON.parse(localStorage.getItem('stromkreislabor')||'{}'); if(pr.fs) setFs(+pr.fs); else if(pr.big) setFs(1.3); if(pr.nopanel){ document.body.classList.add('nopanel'); $('btnPanel').classList.add('on'); } }catch(e){}
-loadScene('R'); resize(); requestAnimationFrame(frame);
+loadScene(linkScene()||'R'); resize(); requestAnimationFrame(frame);
 
 /* Prüfhilfen (für Tests) */
 window.__VT=()=>VT;

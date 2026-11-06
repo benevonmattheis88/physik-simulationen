@@ -798,8 +798,13 @@
   $("noteUndo").onclick = () => { NOTES.pop(); showNotes(); };
   $("noteClear").onclick = () => { if (confirm("Alle notierten Messwerte löschen?")) { NOTES.length = 0; showNotes(); } };
 
+  /* Direktlink: Bewegungsdiagramme.html#nachfahren öffnet diesen Reiter; beim Umschalten zeigt die Adresse den Reiter */
+  const LINKS = { bew:"bewegungen", steu:"selbst-steuern", ziel:"nachfahren" };
+  function linkGet() { let h = ""; try { h = decodeURIComponent(location.hash.slice(1)).toLowerCase(); } catch (e) {} return Object.keys(LINKS).find(k => LINKS[k] === h); }
+  function linkSet(k) { try { if (location.hash !== "#" + LINKS[k]) history.replaceState(null, "", "#" + LINKS[k]); } catch (e) {} }
+  window.addEventListener("hashchange", () => { const k = linkGet(); if (k && k !== S.tab) setTab(k); });
   function setTab(t) {
-    S.tab = t;
+    S.tab = t; linkSet(t);
     for (const k of ["bew", "steu", "ziel"]) {
       $("tab_" + k).classList.toggle("on", k === t);
       document.querySelectorAll(".sec." + k).forEach(e => e.classList.toggle("hidden", k !== t));
@@ -894,7 +899,7 @@
   if (window.ResizeObserver) new ResizeObserver(resize).observe(cv);
   S.view = store.get("bewdia_view") === "sym" ? "sym" : "3d"; $("view").textContent = S.view === "3d" ? "Symbol" : "3D";
   syncInputs(); markPreset(); markTarget(); showNotes();
-  setTab("bew");
+  setTab(linkGet() || "bew");
   setFs(+store.get("bewdia_fs") || 1);
 })();
 </script>

@@ -56,3 +56,135 @@ archiv/                       eingefrorene ältere Stände, gleiche Ordnerstrukt
 - Ältere Stände: Seite „Ältere Versionen“ (`versionen.html`, verlinkt von der Startseite). Archivierte Stände in `archiv/` laufen direkt im Browser und werden nicht mehr verändert (außer KI-Hinweis), ihre Links bleiben fest. Alle übrigen Stände findet man im GitHub-Verlauf der jeweiligen Datei.
 - Startseite: Wer schon einmal da war, sieht oben „Neu seit deinem letzten Besuch“ mit den seitdem geänderten Simulationen. Der Besuchszeitpunkt bleibt nur im eigenen Browser. **Jede Änderung an einer Simulation bekommt einen Eintrag in `aenderungen.html`** (Datenblock `aenderungsdaten`: Zeitpunkt, Simulation, kurzer Text).
 - Änderungen an `Kernlabor.html` müssen auch in die Dateien in `Kernlabor_einzeln/` übernommen werden.
+- Einzelne Reiter lassen sich direkt verlinken, siehe [Direktlinks zu einzelnen Reitern](#direktlinks-zu-einzelnen-reitern).
+
+## Direktlinks zu einzelnen Reitern
+
+Hängt man an den Link einer Simulation `#` und den Namen eines Reiters an, öffnet sie sich gleich in diesem Reiter. Beim Umschalten zeigt die Adresszeile immer den passenden Direktlink, man kann ihn also auch einfach von dort kopieren. Ohne `#…` startet die Simulation wie bisher.
+
+- Das funktioniert mit Links (z. B. Moodle-Aktivität „Link/URL“, QR-Code). Bei einer in Moodle hochgeladenen Datei kann man kein `#…` anhängen.
+- Für das Kernlabor gibt es zusätzlich weiterhin die Einzelseiten in `Kernlabor_einzeln/` (nur ein Reiter, ohne Reiterleiste).
+
+### Kernlabor
+
+| Reiter | Direktlink |
+|---|---|
+| Atomkern bauen | https://simulationen.familiemueller.space/kernphysik/mittelstufe/Kernlabor.html#bau |
+| Rutherford | https://simulationen.familiemueller.space/kernphysik/mittelstufe/Kernlabor.html#rutherford |
+| Zerfälle | https://simulationen.familiemueller.space/kernphysik/mittelstufe/Kernlabor.html#zerfall |
+| Ablenkung | https://simulationen.familiemueller.space/kernphysik/mittelstufe/Kernlabor.html#ablenkung |
+| Abschirmung | https://simulationen.familiemueller.space/kernphysik/mittelstufe/Kernlabor.html#abschirmung |
+| Strahlenschutz | https://simulationen.familiemueller.space/kernphysik/mittelstufe/Kernlabor.html#strahlenschutz |
+| Halbwertszeit | https://simulationen.familiemueller.space/kernphysik/mittelstufe/Kernlabor.html#halbwertszeit |
+| Spaltung | https://simulationen.familiemueller.space/kernphysik/mittelstufe/Kernlabor.html#spaltung |
+| Spaltung: Ablauf | https://simulationen.familiemueller.space/kernphysik/mittelstufe/Kernlabor.html#ablauf |
+| Kettenreaktion | https://simulationen.familiemueller.space/kernphysik/mittelstufe/Kernlabor.html#kette |
+| Reaktor | https://simulationen.familiemueller.space/kernphysik/mittelstufe/Kernlabor.html#reaktor |
+
+### Fusionslabor
+
+| Reiter | Direktlink |
+|---|---|
+| Verschmelzen | https://simulationen.familiemueller.space/kernphysik/mittelstufe/Fusionslabor.html#verschmelzen |
+| Woher kommt die Energie? | https://simulationen.familiemueller.space/kernphysik/mittelstufe/Fusionslabor.html#energie |
+| Sonne | https://simulationen.familiemueller.space/kernphysik/mittelstufe/Fusionslabor.html#sonne |
+| Fusionsreaktor | https://simulationen.familiemueller.space/kernphysik/mittelstufe/Fusionslabor.html#reaktor |
+| Spaltung und Fusion | https://simulationen.familiemueller.space/kernphysik/mittelstufe/Fusionslabor.html#vergleich |
+
+### Stromkreis-Labor
+
+| Reiter | Direktlink |
+|---|---|
+| Widerstand | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Stromkreis_Labor.html#widerstand |
+| Reihe (Widerstände) | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Stromkreis_Labor.html#reihe-widerstaende |
+| Parallel (Widerstände) | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Stromkreis_Labor.html#parallel-widerstaende |
+| Lampe | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Stromkreis_Labor.html#lampe |
+| Reihe (Lampen) | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Stromkreis_Labor.html#reihe-lampen |
+| Parallel (Lampen) | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Stromkreis_Labor.html#parallel-lampen |
+| Gemischt | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Stromkreis_Labor.html#gemischt |
+| Kennlinie | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Stromkreis_Labor.html#kennlinie |
+| Draht | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Stromkreis_Labor.html#draht |
+
+### Ersatzwiderstand herleiten
+
+| Reiter | Direktlink |
+|---|---|
+| 1 · Parallel | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Ersatzwiderstand_herleiten.html#parallel |
+| 2 · Reihe | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Ersatzwiderstand_herleiten.html#reihe |
+| 3 · Übungen | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Ersatzwiderstand_herleiten.html#uebungen |
+| 4 · Übersicht | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Ersatzwiderstand_herleiten.html#uebersicht |
+
+### Energiefluss-Baukasten
+
+| Reiter | Direktlink |
+|---|---|
+| Frei bauen | https://simulationen.familiemueller.space/energie/mittelstufe/Energiefluss_Baukasten.html#frei |
+| Aufgaben (Liste) | https://simulationen.familiemueller.space/energie/mittelstufe/Energiefluss_Baukasten.html#aufgaben |
+| Aufgabe Fahrraddynamo | https://simulationen.familiemueller.space/energie/mittelstufe/Energiefluss_Baukasten.html#aufgabe-fahrraddynamo |
+| Aufgabe Wasserkocher | https://simulationen.familiemueller.space/energie/mittelstufe/Energiefluss_Baukasten.html#aufgabe-wasserkocher |
+| Aufgabe Solarventilator | https://simulationen.familiemueller.space/energie/mittelstufe/Energiefluss_Baukasten.html#aufgabe-solarventilator |
+| Aufgabe Auto | https://simulationen.familiemueller.space/energie/mittelstufe/Energiefluss_Baukasten.html#aufgabe-auto |
+| Aufgabe Wasserkraftwerk | https://simulationen.familiemueller.space/energie/mittelstufe/Energiefluss_Baukasten.html#aufgabe-wasserkraftwerk |
+| Aufgabe Zentralheizung | https://simulationen.familiemueller.space/energie/mittelstufe/Energiefluss_Baukasten.html#aufgabe-zentralheizung |
+| Aufgabe Kohlekraftwerk | https://simulationen.familiemueller.space/energie/mittelstufe/Energiefluss_Baukasten.html#aufgabe-kohlekraftwerk |
+
+### Bewegungsdiagramme
+
+| Reiter | Direktlink |
+|---|---|
+| Bewegungen | https://simulationen.familiemueller.space/mechanik/oberstufe/Bewegungsdiagramme.html#bewegungen |
+| Selbst steuern | https://simulationen.familiemueller.space/mechanik/oberstufe/Bewegungsdiagramme.html#selbst-steuern |
+| Nachfahren | https://simulationen.familiemueller.space/mechanik/oberstufe/Bewegungsdiagramme.html#nachfahren |
+
+### Gravitationslabor
+
+| Reiter | Direktlink |
+|---|---|
+| Labor | https://simulationen.familiemueller.space/mechanik/oberstufe/Gravitationslabor.html#labor |
+| Weltall | https://simulationen.familiemueller.space/mechanik/oberstufe/Gravitationslabor.html#weltall |
+
+### Kreisbewegung
+
+| Reiter | Direktlink |
+|---|---|
+| Beschreiben | https://simulationen.familiemueller.space/mechanik/oberstufe/Kreisbewegung.html#beschreiben |
+| Kraft | https://simulationen.familiemueller.space/mechanik/oberstufe/Kreisbewegung.html#kraft |
+
+### Kurvenlabor
+
+| Reiter | Direktlink |
+|---|---|
+| Kurve | https://simulationen.familiemueller.space/mechanik/oberstufe/Kurvenlabor.html#kurve |
+| Kettenkarussell | https://simulationen.familiemueller.space/mechanik/oberstufe/Kurvenlabor.html#kettenkarussell |
+| Looping | https://simulationen.familiemueller.space/mechanik/oberstufe/Kurvenlabor.html#looping |
+
+### Stoßlabor (Fälle)
+
+| Reiter | Direktlink |
+|---|---|
+| Demo C: elastisch m/m | https://simulationen.familiemueller.space/mechanik/oberstufe/Stosslabor.html#fall-c |
+| A: plastisch m/m | https://simulationen.familiemueller.space/mechanik/oberstufe/Stosslabor.html#fall-a |
+| B: plastisch 2m/m | https://simulationen.familiemueller.space/mechanik/oberstufe/Stosslabor.html#fall-b |
+| D: elastisch 2m/m | https://simulationen.familiemueller.space/mechanik/oberstufe/Stosslabor.html#fall-d |
+| E: elastisch m/2m | https://simulationen.familiemueller.space/mechanik/oberstufe/Stosslabor.html#fall-e |
+| F: Gegenstoß | https://simulationen.familiemueller.space/mechanik/oberstufe/Stosslabor.html#fall-f |
+| G: plastischer Gegenstoß | https://simulationen.familiemueller.space/mechanik/oberstufe/Stosslabor.html#fall-g |
+| Hausaufgabe | https://simulationen.familiemueller.space/mechanik/oberstufe/Stosslabor.html#hausaufgabe |
+
+### Prisma-Labor
+
+| Reiter | Direktlink |
+|---|---|
+| Weißes Licht | https://simulationen.familiemueller.space/optik/mittelstufe/Prisma_Labor.html#weisses-licht |
+| Einfarbiges Licht | https://simulationen.familiemueller.space/optik/mittelstufe/Prisma_Labor.html#einfarbig |
+
+### Beugungslabor
+
+| Reiter | Direktlink |
+|---|---|
+| Einzelspalt | https://simulationen.familiemueller.space/optik/oberstufe/Beugungslabor.html#einzelspalt |
+| Doppelspalt | https://simulationen.familiemueller.space/optik/oberstufe/Beugungslabor.html#doppelspalt |
+| Gitter | https://simulationen.familiemueller.space/optik/oberstufe/Beugungslabor.html#gitter |
+| Einzelspalt mit Herleitung | https://simulationen.familiemueller.space/optik/oberstufe/Beugungslabor.html#einzelspalt-herleitung |
+| Doppelspalt mit Herleitung | https://simulationen.familiemueller.space/optik/oberstufe/Beugungslabor.html#doppelspalt-herleitung |
+| Gitter mit Herleitung | https://simulationen.familiemueller.space/optik/oberstufe/Beugungslabor.html#gitter-herleitung |
