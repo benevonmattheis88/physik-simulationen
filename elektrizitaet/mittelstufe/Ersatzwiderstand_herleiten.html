@@ -25,6 +25,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 #top.hidden ~ #showTop{display:block}
 .page{display:none;grid-template-columns:minmax(0,44fr) minmax(0,56fr);min-height:0;min-width:0}
 .page.on{display:grid}
+/* Übungen am iPad quer: Schaltplan bekommt mehr Breite, damit er größer gezeichnet wird */
+@media (orientation:landscape) and (min-width:641px){#page3{grid-template-columns:minmax(0,58fr) minmax(0,42fr)}}
 .left{background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;padding:.4rem .5rem;gap:.25rem;overflow:hidden}
 .cap{display:flex;justify-content:space-between;align-items:center;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:700;padding:0 .2rem}
 .svgbox{flex:1 1 0;min-height:0;display:flex;align-items:center;justify-content:center}
@@ -451,7 +453,10 @@ function setHL(ids){ document.querySelectorAll('svg g.hl').forEach(e=>e.classLis
 
 /* ============ Oberfläche: Reiter, Schrift, Vollbild ============ */
 const FS=[.9,1,1.15,1.3,1.5,1.75]; const PHONE=matchMedia('(max-width:640px)'); let fsI=PHONE.matches?1:2;
-function applyFs(){ document.documentElement.style.setProperty('--fs',FS[fsI]); }
+/* Gewählte Schriftgröße im Browser merken (getrennt für Handy und größere Bildschirme) */
+const FS_KEY='ersatz_fs'+(PHONE.matches?'_handy':'');
+try{ const v=parseInt(localStorage.getItem(FS_KEY),10); if(v>=0&&v<FS.length) fsI=v; }catch(e){}
+function applyFs(){ document.documentElement.style.setProperty('--fs',FS[fsI]); try{ localStorage.setItem(FS_KEY,String(fsI)); }catch(e){} }
 document.getElementById('aplus').onclick=()=>{ fsI=Math.min(FS.length-1,fsI+1); applyFs(); };
 document.getElementById('aminus').onclick=()=>{ fsI=Math.max(0,fsI-1); applyFs(); };
 document.getElementById('fs').onclick=()=>{ const d=document, el=d.documentElement;
