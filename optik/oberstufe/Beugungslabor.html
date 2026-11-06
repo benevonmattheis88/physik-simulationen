@@ -34,9 +34,9 @@
            background:#eef2f7; color:var(--ink); cursor:pointer; touch-action:manipulation; min-height:2.6rem; }
   button.on { background:var(--blue); color:#fff; border-color:var(--blue); }
   .row { display:flex; align-items:center; gap:8px; font-size:1rem; }
-  .row label { flex:0 0 7.6rem; }
+  .row label { flex:0 0 8.3rem; }
   .row input[type=range] { flex:1; min-width:0; height:1.9rem; }
-  .row output { flex:0 0 5.4rem; text-align:right; font-variant-numeric:tabular-nums; }
+  .row output { flex:0 0 4.9rem; text-align:right; font-variant-numeric:tabular-nums; }
   .row .kb { flex:1; display:flex; gap:6px; }
   .row .kb button { flex:1; min-height:2.2rem; padding:.2rem; min-width:0; }
   .row .kb select { flex:0 0 4.2rem; padding:.2rem; font-size:.95rem; }
@@ -45,12 +45,21 @@
          border-radius:6px; -webkit-appearance:none; appearance:none; height:1.3rem !important; }
   #lam::-webkit-slider-thumb { -webkit-appearance:none; width:1.7rem; height:1.7rem; border-radius:50%; background:var(--lc,#fff); border:3px solid #fff; box-shadow:0 0 0 1px #333, 0 1px 4px rgba(0,0,0,.5); }
   #lam::-moz-range-thumb { width:1.5rem; height:1.5rem; border-radius:50%; background:var(--lc,#fff); border:3px solid #fff; box-shadow:0 0 0 1px #333; }
-  #lamName { display:flex; align-items:center; gap:.5rem; font-size:.95rem; color:var(--muted); margin:-.15rem 0 .1rem 8.2rem; }
+  #lamName { display:flex; align-items:center; gap:.5rem; font-size:.95rem; color:var(--muted); margin:-.15rem 0 .1rem 8.9rem; }
   #swatch { width:2.2rem; height:1.1rem; border-radius:4px; border:1px solid #333; box-shadow:0 0 8px var(--lc,#fff); background:var(--lc,#fff); }
   select { font:inherit; font-size:1rem; padding:.3rem; flex:1; min-width:0; }
   .checks { display:flex; flex-wrap:wrap; gap:.25rem .9rem; font-size:1rem; }
   .checks label { display:flex; align-items:center; gap:5px; min-height:1.9rem; }
-  .checks input { width:1.3rem; height:1.3rem; }
+  .checks input { width:1.5rem; height:1.5rem; margin:0; }
+  .checks label { min-height:2.2rem; }
+  .row .kb button { min-height:2.6rem !important; font-size:1.05rem; }
+  tr.miss td { color:var(--muted); }
+  tr.miss td.fa { color:var(--red); font-weight:600; }
+  #mess { display:flex; flex-direction:column; gap:.3rem; }
+  #mess .btns button { font-size:.9rem; padding-left:.2rem; padding-right:.2rem; }
+  #mTab th, #mTab td { text-align:right; }
+  details.simpl summary { cursor:pointer; color:var(--muted); font-size:.9rem; padding:.2rem 0; min-height:1.8rem; }
+  #panel { padding-bottom:1.15rem; }
   table { border-collapse:collapse; width:100%; font-size:.9rem; font-variant-numeric:tabular-nums; }
   td, th { border-bottom:1px solid var(--line); padding:.2rem .25rem; text-align:right; }
   td:first-child, th:first-child { text-align:left; }
@@ -95,9 +104,17 @@
     button { padding:.35rem .6rem; min-height:2.4rem; }
     td, th { padding:.12rem .25rem; }
     .row input[type=range] { height:1.6rem; }
-    .checks label { min-height:1.6rem; }
+    .checks label { min-height:1.85rem; }
+    .tabs.sub button { min-height:2rem; }
+    td, th { padding:.08rem .25rem; }
+    details.simpl summary { padding:0; min-height:1.5rem; }
+    .checks { row-gap:0; }
+    #expl { font-size:.9rem; line-height:1.3; padding:.3rem .5rem; }
+    #panel { gap:.3rem; }
+    .col { gap:.28rem; }
     #vScr { flex-basis:6.2rem; }
   }
+  @media (max-height: 800px) and (orientation: landscape) and (min-width: 641px) { #lamName { display:none; } }
   @media (max-width: 900px) and (orientation: landscape) { #panel { flex-basis:22rem; } .row label { flex-basis:6.8rem; } #lamName { margin-left:7.4rem; } }
 
   /* iPad hochkant: Simulation oben, Bedienfeld zweispaltig darunter */
@@ -119,8 +136,9 @@
     #panel { flex:none; width:100%; max-width:none; border-left:0; border-top:1px solid var(--line); overflow:visible; }
     h1 { display:block; }
     #tools button { min-width:40px; height:40px; min-height:40px; padding:0 8px; }
-    .row label { flex-basis:6.6rem; }
-    #lamName { margin-left:7.2rem; }
+    .row label { flex-basis:7.4rem; font-size:.95rem; }
+    .row output { flex-basis:5rem; white-space:nowrap; }
+    #lamName { margin-left:8rem; }
   }
 
   /* Drehhinweis, wenn das Handy quer gehalten wird */
@@ -168,10 +186,10 @@
       <div class="row m-doppel"><label>Spaltabstand g</label><input id="gD" type="range" min="100" max="1000" step="10" value="300"><output id="gDo"></output></div>
       <div class="row m-doppel"><label>Spaltbreite b</label><input id="bD" type="range" min="10" max="200" step="5" value="100"><output id="bDo"></output></div>
       <div class="row m-gitter"><label>Gitterkonstante g</label><input id="gG" type="range" min="1" max="10" step="0.01" value="3.33"><output id="gGo"></output></div>
-      <div class="small m-gitter" id="gGlines" style="margin:-.2rem 0 0 8.2rem"></div>
+      <div class="small m-gitter" id="gGlines" style="margin:-.2rem 0 0 8.9rem"></div>
       <div class="row"><label>Schirmabstand a</label><input id="a" type="range" min="0.2" max="5" step="0.05" value="1.5"><output id="ao"></output></div>
       <div class="row"><label id="kLab">Ordnung k</label><div class="kb" id="kb"><button data-k="0">0</button><button data-k="1" class="on">1</button><button data-k="2">2</button><button data-k="3">3</button><button data-k="4">4</button><select id="kMore" title="höhere Ordnungen"></select></div></div>
-      <div class="row"><label>Zoom Nahaufnahme</label><div class="kb" id="zb"><button data-z="0">weit</button><button data-z="1">mittel</button><button data-z="2" class="on">nah</button></div></div>
+      <div class="row"><label>Nahaufnahme</label><div class="kb" id="zb"><button data-z="0">weit</button><button data-z="1">mittel</button><button data-z="2" class="on">nah</button></div></div>
       <div class="row"><label>Schirmausschnitt</label>
         <select id="scrW">
           <option value="2">2 m breit</option>
@@ -195,10 +213,14 @@
         <label><input id="cbField" type="checkbox">Interferenzbild</label>
         <label id="lbAvg"><input id="cbAvg" type="checkbox">Helligkeit (gemittelt)</label>
       </div>
-      <div class="btns"><button id="reset">Zurücksetzen</button></div>
+      <div class="btns"><button id="mNote">Messwert notieren</button><button id="reset">Zurücksetzen</button></div>
       <div id="expl"></div>
       <table id="vals"></table>
-      <div class="small" id="simpl"></div>
+      <div id="mess" class="hidden">
+        <table id="mTab"></table>
+        <div class="btns"><button id="mUndo">Letzten löschen</button><button id="mClear">Alle löschen</button><button id="mCsv">Tabelle speichern</button></div>
+      </div>
+      <details class="simpl"><summary>Vereinfachungen im Modell</summary><div class="small" id="simpl"></div></details>
     </div>
     <div class="col wide hidden" id="pDer"></div>
   </div>
@@ -293,6 +315,12 @@
     if (s >= 1) return null;
     const th = Math.asin(s), dEx = p.a * Math.tan(th), dAp = k * p.L * p.a / p.d;
     return { k, s, th, dEx, dAp, dev:(dAp - dEx) / dEx };
+  }
+  // Fehlende Ordnung: Ein Maximum (Doppelspalt, Gitter) fällt aus, wenn es genau auf ein Minimum des Einzelspalts fällt (k · b = m · g)
+  function missing(p, k) {
+    if (p.mode === "einzel" || k < 1) return 0;
+    const m = k * p.b / p.g, r = Math.round(m);
+    return r >= 1 && Math.abs(m - r) < 1e-6 ? r : 0;
   }
   function len(m, dig) {
     const a = Math.abs(m);
@@ -710,7 +738,7 @@
       const x2 = xc + o.dEx * kk;
       c.strokeStyle = "#ffb54d"; c.lineWidth = 1.5; c.beginPath(); c.moveTo(xc, top - 5); c.lineTo(x2, top - 5); c.stroke();
       c.beginPath(); c.moveTo(xc, top - 9); c.lineTo(xc, top - 1); c.stroke();
-      txt(c, "d_" + p.k, (xc + x2) / 2, top - 13, fz * 0.9, "#ffb54d", "center", true);
+      txt(c, "d_" + p.k + (missing(p, p.k) ? " (fällt aus)" : ""), (xc + x2) / 2, top - 13, fz * 0.9, "#ffb54d", "center", true);
     }
     txt(c, W < 520 ? "Schirmbild (" + len(Wm, 0) + " breit)" : "Schirmbild: Ausschnitt " + len(Wm, 0) + " breit, Mitte = 0", 8, 10, fz * 0.9, "rgba(255,255,255,.8)", "left");
   }
@@ -731,6 +759,8 @@
       const o1 = order(p, 1);
       t = "Breites helles Hauptmaximum (Breite 2 · d<sub>1</sub> ≈ " + (o1 ? len(2 * o1.dEx) : "–") + "), daneben schwache Nebenmaxima. <b>Je schmaler der Spalt, desto breiter das Muster.</b>";
     }
+    const mk = missing(p, p.k);
+    if (mk && order(p, p.k)) { warn = true; t += " <b>Das " + p.k + ". Maximum fällt aus:</b> Genau dort hat jeder einzelne Spalt sein " + mk + ". Minimum (" + p.k + " · b = " + (mk > 1 ? mk + " · " : "") + "g), also kommt aus keinem Spalt Licht in diese Richtung."; }
     if (!order(p, p.k)) { warn = true; t += " <b>Die " + p.k + ". Ordnung gibt es bei diesen Werten nicht</b> (k · λ wäre größer als " + (p.mode === "einzel" ? "b" : "g") + ")."; }
     ex.innerHTML = t; ex.classList.toggle("warn", warn);
     const what = p.mode === "einzel" ? "Minimum" : "Maximum";
@@ -739,13 +769,17 @@
     for (let k = 1; k <= nmax; k++) {
       const o = order(p, k);
       if (!o) { if (k <= 3) h += "<tr" + (k === p.k ? " class=sel" : "") + "><td>" + k + "</td><td colspan=4>gibt es nicht</td></tr>"; continue; }
+      if (missing(p, k)) { h += "<tr class='miss" + (k === p.k ? " sel" : "") + "'><td>" + k + "</td><td>" + angTxt(o.th) + "</td><td>" + len(o.dEx) + "</td><td>" + len(o.dAp) + "</td><td class=fa>fällt aus</td></tr>"; continue; }
       h += "<tr" + (k === p.k ? " class=sel" : "") + "><td>" + k + "</td><td>" + angTxt(o.th) + "</td><td>" + len(o.dEx) + "</td><td>" + len(o.dAp) + "</td><td>" + (Math.abs(o.dev) < 1e-4 ? "&lt; 0,01" : fmt(Math.abs(o.dev) * 100, Math.abs(o.dev) < 0.01 ? 2 : 1)) + " %</td></tr>";
     }
     if (p.k > nmax) {
       const o = order(p, p.k);
       h += "<tr class=sel><td>" + p.k + "</td>" + (o ? "<td>" + angTxt(o.th) + "</td><td>" + len(o.dEx) + "</td><td>" + len(o.dAp) + "</td><td>" + fmt(Math.abs(o.dev) * 100, 1) + " %</td>" : "<td colspan=4>gibt es nicht</td>") + "</tr>";
     }
-    h += "<tr><td colspan=5 class=small style='text-align:left'>" + (p.mode === "einzel" ? "Minima" : "Maxima") + "; genähert: d<sub>k</sub> ≈ k · λ · a / " + (p.mode === "einzel" ? "b" : "g") + " (Kleinwinkelnäherung)</td></tr>";
+    let miss = [];
+    for (let k = 1; k <= Math.max(nmax, p.k); k++) if (order(p, k) && missing(p, k)) miss.push(k);
+    h += "<tr><td colspan=5 class=small style='text-align:left'>" + (p.mode === "einzel" ? "Minima" : "Maxima") + ", genähert mit sin α ≈ tan α: d<sub>k</sub> ≈ k · λ · a / " + (p.mode === "einzel" ? "b" : "g") +
+         (miss.length ? "<br><b style='color:var(--red)'>fällt aus</b>: liegt auf einem Minimum des Einzelspalts, bleibt dunkel" : "") + "</td></tr>";
     $("vals").innerHTML = h;
     $("simpl").innerHTML = "Vereinfachungen: Schirm weit entfernt (Fraunhofer), α wird exakt aus tan α = d / a berechnet. " +
       (p.mode === "gitter" ? "Gitter mit sehr vielen Spalten, Spaltbreite fest 0,3 · g; die Helligkeit der Linien ist nur angedeutet. " : "") +
@@ -928,6 +962,37 @@
     $("cbCurve").checked = false; $("cbAvg").checked = false; $("cbField").checked = false; S.zoom = 2;
     resize(); outs(); drawStatic();
   };
+  // ---------- Messwerte notieren ----------
+  const MESS = [];
+  const SHORT = { einzel:"Einzel", doppel:"Doppel", gitter:"Gitter" };
+  function renderMess() {
+    $("mess").classList.toggle("hidden", !MESS.length);
+    let h = "<tr><th>Nr</th><th></th><th>λ in nm</th><th>g, b in µm</th><th>a in m</th><th>k</th><th>d<sub>k</sub> in mm</th></tr>";
+    MESS.forEach((m, i) => {
+      h += "<tr><td>" + (i + 1) + "</td><td style='text-align:left'>" + SHORT[m.mode] + "</td><td>" + m.lam + "</td><td>" + m.dName + " = " + fmt(m.d * 1e6, m.d < 1e-5 ? 2 : 0) + "</td><td>" + fmt(m.a, 2) + "</td><td>" + m.k + (m.miss ? "*" : "") + "</td><td>" + fmt(m.dk * 1000, m.dk < 0.1 ? 2 : 1) + "</td></tr>";
+    });
+    if (MESS.some(m => m.miss)) h += "<tr><td colspan=7 class=small style='text-align:left'>* Maximum fällt aus (bleibt dunkel)</td></tr>";
+    $("mTab").innerHTML = h;
+  }
+  function flash(id, t) { const b = $(id), o = b.dataset.t || b.textContent; b.dataset.t = o; b.textContent = t; setTimeout(() => { b.textContent = o; }, 1400); }
+  $("mNote").onclick = () => {
+    const p = P(), o = order(p, p.k);
+    if (!o) { flash("mNote", "Ordnung gibt es nicht"); return; }
+    MESS.push({ mode:p.mode, lam:p.lam, d:p.d, dName:p.mode === "einzel" ? "b" : "g", a:p.a, k:p.k, dk:o.dEx, miss:!!missing(p, p.k), ext:p.mode === "einzel" ? "Minimum" : "Maximum" });
+    renderMess(); flash("mNote", "✓ notiert (" + MESS.length + ")");
+    const t = $("mess"); if (t.scrollIntoView) t.scrollIntoView({ block:"nearest" });
+  };
+  $("mUndo").onclick = () => { MESS.pop(); renderMess(); };
+  $("mClear").onclick = () => { if (MESS.length && confirm("Alle " + MESS.length + " Messwerte löschen?")) { MESS.length = 0; renderMess(); } };
+  $("mCsv").onclick = () => {
+    const q = v => '"' + String(v).replace(/"/g, '""') + '"';
+    const rows = [["Nr", "Anordnung", "Wellenlänge λ in nm", "Spaltabstand g bzw. Spaltbreite b", "in µm", "Schirmabstand a in m", "Ordnung k", "Abstand d_k von der Mitte in mm", "Bemerkung"]];
+    MESS.forEach((m, i) => rows.push([i + 1, NAME[m.mode], m.lam, m.dName, fmt(m.d * 1e6, m.d < 1e-5 ? 2 : 0), fmt(m.a, 2), m.k, fmt(m.dk * 1000, 3), m.k + ". " + m.ext + (m.miss ? " (fällt aus, dunkel)" : "")]));
+    const csv = "\ufeff" + rows.map(r => r.map(v => typeof v === "number" || /^-?\d+(,\d+)?$/.test(v) ? v : q(v)).join(";")).join("\r\n");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type:"text/csv;charset=utf-8" }));
+    a.download = "Messreihe_Beugungslabor.csv"; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  };
+
   // Doppelspalt: Spaltbreite höchstens halber Spaltabstand
   function clampB() { if (+$("bD").value > +$("gD").value / 2) $("bD").value = Math.floor(+$("gD").value / 2 / 5) * 5; }
   ["lam", "bS", "gD", "bD", "gG", "a"].forEach(id => {
