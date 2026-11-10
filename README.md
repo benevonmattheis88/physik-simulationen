@@ -105,6 +105,10 @@ Hängt man an den Link einer Simulation `#` und den Namen eines Reiters an, öff
 | Gemischt | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Stromkreis_Labor.html#gemischt |
 | Kennlinie | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Stromkreis_Labor.html#kennlinie |
 | Draht | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Stromkreis_Labor.html#draht |
+| Aufgabe 1 | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Stromkreis_Labor.html#aufgabe-1 |
+| Aufgabe 2 | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Stromkreis_Labor.html#aufgabe-2 |
+| Aufgabe 3 | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Stromkreis_Labor.html#aufgabe-3 |
+| Aufgabe 4 | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Stromkreis_Labor.html#aufgabe-4 |
 
 ### Ersatzwiderstand herleiten
 
