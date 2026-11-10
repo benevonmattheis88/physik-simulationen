@@ -110,6 +110,8 @@ Hängt man an den Link einer Simulation `#` und den Namen eines Reiters an, öff
 | Aufgabe 3 | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Stromkreis_Labor.html#aufgabe-3 |
 | Aufgabe 4 | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Stromkreis_Labor.html#aufgabe-4 |
 
+Mit Elektronen als Ladungsträgern: `?ladung=elektronen` vor das `#` setzen, z. B. https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Stromkreis_Labor.html?ladung=elektronen#aufgabe-1
+
 ### Ersatzwiderstand herleiten
 
 | Reiter | Direktlink |

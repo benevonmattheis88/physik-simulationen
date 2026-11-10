@@ -121,6 +121,13 @@ body.nopanel #taskBox{top:62px}
 #taskBox.open .tkt{display:block}
 #taskBox .tkt p{margin:0 0 5px}
 #taskBox .tkl{background:#eff6ff;border-radius:8px;padding:5px 8px;margin-top:4px}
+#taskBox .tkl ol{margin:4px 0 2px;padding-left:22px}
+#taskBox .tkl li{margin:5px 0}
+#taskBox .tkl .gl{display:block;margin:2px 0 0 4px;white-space:nowrap;overflow-x:auto}
+#taskBox .tkl .ok{color:#15803d;font-weight:700}
+#taskBox.sol .tkt{max-height:min(66vh,470px)}
+.fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;font-size:92%;line-height:1.15;margin:0 2px}
+.fr>span:first-child{border-bottom:1.3px solid currentColor;padding:0 2px}
 #taskBox .tkw{color:#9a3412;font-size:12px}
 body.big #taskBox{font-size:15.5px}
 body.big{font-size:16px}
@@ -150,7 +157,7 @@ body.big #title{font-size:17px}
   #banner,#stage.withside #banner{top:8px;bottom:auto;left:50%;max-width:94%;flex-direction:column}
   #meshBox,#stage.withside #meshBox,body.nopanel #meshBox{left:8px;right:8px;top:62px;max-width:none}
   #taskBox,#stage.withside #taskBox,body.nopanel #taskBox{position:static;max-width:none;margin:6px 8px 0;order:-1}
-  #taskBox .tkt{max-height:none}
+  #taskBox .tkt,#taskBox.sol .tkt{max-height:none}
   body #bottom{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);height:auto}
   #bottom .blk{border-bottom:1px solid var(--line)}
   #bottom .blk:nth-child(3),#bottom .blk:nth-child(4){grid-column:1 / span 2;border-right:0}
@@ -301,6 +308,7 @@ body.big #title{font-size:17px}
     <li><b>↻ Masche</b>: zeigt einen geschlossenen Weg. Die Summe der Anstiege ist gleich der Summe der Abfälle (Maschenregel).</li>
     <li><b>Energiefluss</b> (nach KPK): Pfeilbreite ∝ Energiestromstärke P. In der Schaltung fließt durch ein Kabel der Energiestrom P = φ · I, bezogen auf die Erdung.</li>
     <li><b>Tastatur</b>: Pfeiltaste rechts/links (oder die Knöpfe − und + am Netzgerät) stellt die Spannung um 0,1 V höher/tiefer.</li>
+    <li><b>Link mit Elektronen</b>: Hängt man an die Adresse <code>?ladung=elektronen</code> an (vor einem #, z. B. <code>Stromkreis_Labor.html?ladung=elektronen#aufgabe-1</code>), startet das Labor gleich mit Elektronen als Ladungsträgern.</li>
     <li><b>Messreihe</b>: „⤓ Tabelle“ speichert die Messwerte als CSV-Datei, die Excel und Numbers als Tabelle öffnen.</li>
     <li><b>KPK-Energieflussdiagramm</b> (+ KPK-Energie): Energie = grüner Pfeil, Träger = gelbe Linie, Energieumlader = rotes Kästchen. Erhaltene Träger (Elektrizität, Drehimpuls) laufen auf einer geschlossenen Bahn; Entropie und Licht entstehen im Umlader und verlassen ihn.</li>
   </ul>
@@ -393,15 +401,37 @@ Object.assign(SCENES,{
     meters:[['A',560,460]]}
 });
 const WARN220='<p class="tkw">Nur in der Simulation! 220 V (heute 230 V) aus der Steckdose sind lebensgefährlich. Im Schulversuch nur Kleinspannung.</p>';
+const fr=(a,b)=>`<span class="fr"><span>${a}</span><span>${b}</span></span>`; // Bruch mit Bruchstrich
+const G=t=>`<span class="gl">${t}</span>`; // eigene Zeile für eine Gleichung
 const TASKS={
   T1:{text:'<p>Durch zwei parallelgeschaltete Widerstände von R<sub>1</sub> = 8 Ω und R<sub>2</sub> = 12 Ω fließt ein Gesamtstrom von I<sub>G</sub> = 2,6 A. Wie groß ist die angelegte Spannung U und wie groß sind die Teilströme I<sub>1</sub> und I<sub>2</sub>?</p><p>Im Labor: Das Amperemeter misst I<sub>G</sub>. Stelle U so ein, dass es 2,6 A anzeigt, oder stelle deinen Rechenwert ein und prüfe.</p>',
-    sol:'R<sub>G</sub> = 4,8 Ω · U = R<sub>G</sub> · I<sub>G</sub> = 12,48 V<br>I<sub>1</sub> = 1,56 A · I<sub>2</sub> = 1,04 A'},
+    erg:'U = 12,48 V; I<sub>1</sub> = 1,56 A; I<sub>2</sub> = 1,04 A',
+    weg:[`Gesamtwiderstand der Parallelschaltung:${G(`${fr(1,'R<sub>G</sub>')} = ${fr(1,'R<sub>1</sub>')} + ${fr(1,'R<sub>2</sub>')} = ${fr(1,'8 Ω')} + ${fr(1,'12 Ω')} = ${fr(3,'24 Ω')} + ${fr(2,'24 Ω')} = ${fr(5,'24 Ω')}`)}${G(`R<sub>G</sub> = ${fr('24 Ω',5)} = 4,8 Ω`)}`,
+      `Spannung mit dem ohmschen Gesetz:${G(`U = R<sub>G</sub> · I<sub>G</sub> = 4,8 Ω · 2,6 A = 12,48 V`)}`,
+      `In der Parallelschaltung liegt an jedem Widerstand die volle Spannung U:${G(`I<sub>1</sub> = ${fr('U','R<sub>1</sub>')} = ${fr('12,48 V','8 Ω')} = 1,56 A`)}${G(`I<sub>2</sub> = ${fr('U','R<sub>2</sub>')} = ${fr('12,48 V','12 Ω')} = 1,04 A`)}`,
+      `Probe mit der Knotenregel:${G(`I<sub>1</sub> + I<sub>2</sub> = 1,56 A + 1,04 A = 2,6 A = I<sub>G</sub> <span class="ok">✓</span>`)}`]},
   T2:{text:'<p>Drei parallelgeschaltete Widerstände haben Teilstromstärken von I<sub>1</sub> = 3 A, I<sub>2</sub> = 1,5 A und I<sub>3</sub> = 4,5 A. Die angelegte Spannung beträgt U = 30 V. Wie groß sind die einzelnen Widerstände R<sub>1</sub>, R<sub>2</sub> und R<sub>3</sub>, der Gesamtwiderstand R<sub>G</sub> und die Gesamtstromstärke I<sub>G</sub>?</p><p>Im Labor: Die drei Amperemeter zeigen die Teilströme. Die Widerstände sind gesucht (?). Baue ein weiteres Amperemeter für I<sub>G</sub> ein.</p>',
-    sol:'R<sub>1</sub> = 10 Ω · R<sub>2</sub> = 20 Ω · R<sub>3</sub> ≈ 6,67 Ω<br>I<sub>G</sub> = 9 A · R<sub>G</sub> = U / I<sub>G</sub> ≈ 3,33 Ω'},
+    erg:'R<sub>1</sub> = 10 Ω; R<sub>2</sub> = 20 Ω; R<sub>3</sub> ≈ 6,67 Ω; R<sub>G</sub> ≈ 3,33 Ω; I<sub>G</sub> = 9 A',
+    weg:[`In der Parallelschaltung liegt an jedem Widerstand die volle Spannung U = 30 V. Ohmsches Gesetz für jeden Zweig:${G(`R<sub>1</sub> = ${fr('U','I<sub>1</sub>')} = ${fr('30 V','3 A')} = 10 Ω`)}${G(`R<sub>2</sub> = ${fr('U','I<sub>2</sub>')} = ${fr('30 V','1,5 A')} = 20 Ω`)}${G(`R<sub>3</sub> = ${fr('U','I<sub>3</sub>')} = ${fr('30 V','4,5 A')} ≈ 6,67 Ω`)}`,
+      `Knotenregel: Die Teilströme ergeben zusammen den Gesamtstrom.${G(`I<sub>G</sub> = I<sub>1</sub> + I<sub>2</sub> + I<sub>3</sub> = 3 A + 1,5 A + 4,5 A = 9 A`)}`,
+      `Gesamtwiderstand mit dem ohmschen Gesetz:${G(`R<sub>G</sub> = ${fr('U','I<sub>G</sub>')} = ${fr('30 V','9 A')} ≈ 3,33 Ω`)}`,
+      `Probe: Der Gesamtwiderstand ist kleiner als der kleinste Einzelwiderstand (6,67 Ω). <span class="ok">✓</span>`]},
   T3:{text:'<p>Zwei parallelgeschaltete Widerstände R<sub>1</sub> = 100 Ω und R<sub>2</sub> = 200 Ω sind mit einem weiteren Widerstand R<sub>3</sub> = 25 Ω hintereinandergeschaltet. Die angelegte Spannung beträgt 220 V. Wie groß ist die Gesamtstromstärke I<sub>G</sub> und die Stromstärke in jedem der drei Widerstände?</p><p>Im Labor: Rechnen, dann Amperemeter einbauen und prüfen.</p>'+WARN220,
-    sol:'R<sub>12</sub> ≈ 66,7 Ω · R<sub>G</sub> ≈ 91,7 Ω · I<sub>G</sub> = I<sub>3</sub> = 2,4 A<br>U<sub>3</sub> = 60 V · U<sub>12</sub> = 160 V · I<sub>1</sub> = 1,6 A · I<sub>2</sub> = 0,8 A'},
+    erg:'I<sub>G</sub> = 2,4 A; I<sub>3</sub> = 2,4 A; I<sub>1</sub> = 1,6 A; I<sub>2</sub> = 0,8 A',
+    weg:[`Ersatzwiderstand der Parallelschaltung aus R<sub>1</sub> und R<sub>2</sub>:${G(`${fr(1,'R<sub>12</sub>')} = ${fr(1,'100 Ω')} + ${fr(1,'200 Ω')} = ${fr(2,'200 Ω')} + ${fr(1,'200 Ω')} = ${fr(3,'200 Ω')}`)}${G(`R<sub>12</sub> = ${fr('200 Ω',3)} ≈ 66,7 Ω`)}`,
+      `R<sub>12</sub> und R<sub>3</sub> sind in Reihe, die Widerstände werden addiert:${G(`R<sub>G</sub> = R<sub>12</sub> + R<sub>3</sub> ≈ 66,7 Ω + 25 Ω ≈ 91,7 Ω`)}`,
+      `Gesamtstrom mit dem ohmschen Gesetz:${G(`I<sub>G</sub> = ${fr('U','R<sub>G</sub>')} = ${fr('220 V','91,7 Ω')} ≈ 2,4 A`)}`,
+      `Durch R<sub>3</sub> fließt der ganze Strom (Reihe): I<sub>3</sub> = I<sub>G</sub> = 2,4 A. Spannung an R<sub>3</sub>:${G(`U<sub>3</sub> = R<sub>3</sub> · I<sub>3</sub> = 25 Ω · 2,4 A = 60 V`)}`,
+      `Der Rest der Spannung liegt an der Parallelschaltung (Maschenregel):${G(`U<sub>12</sub> = U − U<sub>3</sub> = 220 V − 60 V = 160 V`)}`,
+      `Teilströme mit dem ohmschen Gesetz:${G(`I<sub>1</sub> = ${fr('U<sub>12</sub>','R<sub>1</sub>')} = ${fr('160 V','100 Ω')} = 1,6 A`)}${G(`I<sub>2</sub> = ${fr('U<sub>12</sub>','R<sub>2</sub>')} = ${fr('160 V','200 Ω')} = 0,8 A`)}`,
+      `Probe mit der Knotenregel:${G(`I<sub>1</sub> + I<sub>2</sub> = 1,6 A + 0,8 A = 2,4 A = I<sub>G</sub> <span class="ok">✓</span>`)}`]},
   T4:{text:'<p>Zwei gleich große Widerstände R<sub>1</sub> und R<sub>2</sub> sind parallel und dann mit einem dritten Widerstand R<sub>3</sub> = 100 Ω hintereinandergeschaltet. Bei einer Spannung von 220 V wird eine Stromstärke von 1,1 A gemessen. Wie groß sind die Widerstände R<sub>1</sub> und R<sub>2</sub> und wie groß ist in jedem die Stromstärke?</p><p>Im Labor: Das Amperemeter misst die 1,1 A. R<sub>1</sub> und R<sub>2</sub> sind gesucht (?).</p>'+WARN220,
-    sol:'R<sub>G</sub> = 200 Ω · R<sub>12</sub> = 100 Ω · R<sub>1</sub> = R<sub>2</sub> = 200 Ω<br>I<sub>3</sub> = 1,1 A · I<sub>1</sub> = I<sub>2</sub> = 0,55 A'}
+    erg:'R<sub>1</sub> = R<sub>2</sub> = 200 Ω; I<sub>3</sub> = 1,1 A; I<sub>1</sub> = I<sub>2</sub> = 0,55 A',
+    weg:[`Gesamtwiderstand mit dem ohmschen Gesetz:${G(`R<sub>G</sub> = ${fr('U','I')} = ${fr('220 V','1,1 A')} = 200 Ω`)}`,
+      `R<sub>3</sub> ist in Reihe zur Parallelschaltung, also R<sub>G</sub> = R<sub>12</sub> + R<sub>3</sub>:${G(`R<sub>12</sub> = R<sub>G</sub> − R<sub>3</sub> = 200 Ω − 100 Ω = 100 Ω`)}`,
+      `Zwei gleich große Widerstände R parallel:${G(`${fr(1,'R<sub>12</sub>')} = ${fr(1,'R')} + ${fr(1,'R')} = ${fr(2,'R')}`)}${G(`R = 2 · R<sub>12</sub> = 2 · 100 Ω = 200 Ω`)}Also R<sub>1</sub> = R<sub>2</sub> = 200 Ω.`,
+      `Durch R<sub>3</sub> fließt der ganze Strom: I<sub>3</sub> = 1,1 A. Er teilt sich auf zwei gleiche Widerstände gleichmäßig auf:${G(`I<sub>1</sub> = I<sub>2</sub> = ${fr('1,1 A',2)} = 0,55 A`)}`,
+      `Probe mit der Maschenregel:${G(`U<sub>3</sub> = 100 Ω · 1,1 A = 110 V`)}${G(`U<sub>12</sub> = 200 Ω · 0,55 A = 110 V`)}${G(`U<sub>3</sub> + U<sub>12</sub> = 110 V + 110 V = 220 V <span class="ok">✓</span>`)}`]}
 };
 
 /* ===================== Zustand ===================== */
@@ -2020,10 +2050,10 @@ document.querySelectorAll('.scene[data-s]').forEach(b=>b.addEventListener('click
 /* Aufgabenkarte */
 function renderTask(){
   const box=$('taskBox'), id=st.scene, T=TASKS[id]; box.classList.toggle('on',!!T); if(!T) return;
-  box.classList.toggle('open',st.taskOpen);
+  box.classList.toggle('open',st.taskOpen); box.classList.toggle('sol',st.reveal);
   box.innerHTML=`<div class="tkh"><b>Aufgabe</b>${Object.keys(TASKS).map((k,i)=>`<button class="tkn ${k===id?'on':''}" data-k="${k}">${i+1}</button>`).join('')}
     <button class="tkb ${st.taskOpen?'on':''}" data-a="txt">Text ${st.taskOpen?'▴':'▾'}</button><button class="tkb ${st.reveal?'on':''}" data-a="sol">Lösung</button></div>
-    <div class="tkt">${T.text}${st.reveal?`<div class="tkl"><b>Lösung:</b><br>${T.sol}</div>`:''}<p class="small" style="margin-top:5px">Farbskala hier fest von 0 bis ${st.Umax} V.</p></div>`;
+    <div class="tkt">${T.text}${st.reveal?`<div class="tkl"><b>Ergebnis</b><br>${T.erg}<br><b style="display:block;margin-top:6px">Lösungsweg</b><ol>${T.weg.map(x=>'<li>'+x+'</li>').join('')}</ol></div>`:''}<p class="small" style="margin-top:5px">Farbskala hier fest von 0 bis ${st.Umax} V.</p></div>`;
   box.querySelectorAll('.tkn').forEach(b=>b.onclick=()=>loadScene(b.dataset.k));
   box.querySelector('[data-a="txt"]').onclick=()=>{ st.taskOpen=!st.taskOpen; renderTask(); };
   box.querySelector('[data-a="sol"]').onclick=()=>{ st.reveal=!st.reveal; if(st.reveal) st.taskOpen=true; renderTask(); renderSel(); };
@@ -2138,6 +2168,9 @@ function frame(now){
 window.addEventListener('resize',resize);
 $('toolHint').innerHTML=TOOLHINT.select;
 try{ const pr=JSON.parse(localStorage.getItem('stromkreislabor')||'{}'); if(pr.fs) setFs(+pr.fs); else if(pr.big) setFs(1.3); if(pr.nopanel){ document.body.classList.add('nopanel'); $('btnPanel').classList.add('on'); } }catch(e){}
+/* Adresszusatz ?ladung=elektronen (oder ?elektronen): Elektronen als Ladungsträger, z. B. Stromkreis_Labor.html?ladung=elektronen#aufgabe-1 */
+try{ const q=new URLSearchParams(location.search), l=(q.get('ladung')||'').toLowerCase();
+  if(q.has('elektronen')||l==='elektronen'||l==='e'){ st.dir='e'; $('segDir').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.v==='e')); } }catch(e){}
 loadScene(linkScene()||'R'); resize(); requestAnimationFrame(frame);
 
 /* Prüfhilfen (für Tests) */
