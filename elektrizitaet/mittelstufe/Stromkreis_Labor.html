@@ -106,6 +106,23 @@ body.nopanel #btnHelp::before{content:"?";font-size:18px}
 #miniU{display:none;position:absolute;left:10px;top:8px;z-index:6;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:12px;padding:4px 12px;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
 body.nopanel #miniU{display:flex}
 #miniU input{width:200px}
+/* Aufgabenkarte (Szenen „Aufgaben“) */
+#taskBox{display:none;position:absolute;left:10px;top:8px;z-index:7;background:rgba(255,255,255,.96);border:1px solid #93c5fd;border-radius:12px;padding:5px 8px;box-shadow:0 2px 10px rgba(0,0,0,.12);max-width:min(470px,calc(100% - 20px));font-size:13.5px;line-height:1.35}
+#taskBox.on{display:block}
+body.nopanel #taskBox{top:62px}
+#stage.withside #taskBox{max-width:min(430px,calc(59% - 20px))}
+#taskBox .tkh{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+#taskBox .tkh b{margin-right:2px}
+#taskBox .tkn{min-width:38px;min-height:38px;border:1px solid var(--line);border-radius:9px;background:#f6f8fb;font-weight:700;font-size:15px;padding:0}
+#taskBox .tkn.on{background:#3b82f6;border-color:#3b82f6;color:#fff}
+#taskBox .tkb{min-height:38px;border:1px solid var(--line);border-radius:9px;background:#f6f8fb;padding:0 10px;font-size:13px}
+#taskBox .tkb.on{background:#1d4ed8;border-color:#1d4ed8;color:#fff}
+#taskBox .tkt{display:none;margin-top:6px;border-top:1px solid #dbeafe;padding-top:6px;max-height:min(52vh,330px);overflow-y:auto}
+#taskBox.open .tkt{display:block}
+#taskBox .tkt p{margin:0 0 5px}
+#taskBox .tkl{background:#eff6ff;border-radius:8px;padding:5px 8px;margin-top:4px}
+#taskBox .tkw{color:#9a3412;font-size:12px}
+body.big #taskBox{font-size:15.5px}
 body.big{font-size:16px}
 .tbtn:disabled{opacity:.4}
 .ustep{flex:0 0 auto;width:40px;height:40px;border:1px solid var(--line);border-radius:10px;background:#f6f8fb;font-size:22px;font-weight:700;line-height:1;padding:0;touch-action:manipulation}
@@ -132,6 +149,8 @@ body.big #title{font-size:17px}
   #measBar{width:calc(100% - 16px)}
   #banner,#stage.withside #banner{top:8px;bottom:auto;left:50%;max-width:94%;flex-direction:column}
   #meshBox,#stage.withside #meshBox,body.nopanel #meshBox{left:8px;right:8px;top:62px;max-width:none}
+  #taskBox,#stage.withside #taskBox,body.nopanel #taskBox{position:static;max-width:none;margin:6px 8px 0;order:-1}
+  #taskBox .tkt{max-height:none}
   body #bottom{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);height:auto}
   #bottom .blk{border-bottom:1px solid var(--line)}
   #bottom .blk:nth-child(3),#bottom .blk:nth-child(4){grid-column:1 / span 2;border-right:0}
@@ -172,6 +191,7 @@ body.big #title{font-size:17px}
     <button class="scene" data-s="M"><svg viewBox="0 0 26 20" width="26" height="20"><path d="M3 4h20v12H3zM15 4v12" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M6 1.5h5v5H6z" fill="#2d3b54" stroke="currentColor" stroke-width="1.6"/><circle cx="15" cy="10" r="3" fill="#2d3b54" stroke="currentColor" stroke-width="1.6"/><circle cx="23" cy="10" r="3" fill="#2d3b54" stroke="currentColor" stroke-width="1.6"/></svg><span class="lbl">Gemischt</span></button>
     <button class="scene" data-s="K"><svg viewBox="0 0 26 20" width="26" height="20"><path d="M4 2v15h20" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 16c6 0 8-2 10-6s4-6 8-7" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="10" cy="14" r="1.5" fill="currentColor"/><circle cx="16" cy="9" r="1.5" fill="currentColor"/><circle cx="21" cy="4.5" r="1.5" fill="currentColor"/></svg><span class="lbl">Kenn&shy;linie</span></button>
     <button class="scene" data-s="D"><svg viewBox="0 0 26 20" width="26" height="20"><path d="M2 14h3l2-5 3 10 3-10 3 10 3-10 2 5h3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="3" cy="14" r="1.8" fill="currentColor"/><circle cx="23" cy="14" r="1.8" fill="currentColor"/></svg><span class="lbl">Draht</span></button>
+    <button class="scene" data-s="T"><svg viewBox="0 0 26 20" width="26" height="20"><path d="M6 1.5h14v17H6z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9 6h8M9 10h8M9 14h5" fill="none" stroke="currentColor" stroke-width="1.4"/></svg><span class="lbl">Auf&shy;gaben</span></button>
     <div class="spacer"></div>
     <button class="scene" id="btnReset" style="min-height:36px;background:#24314a">↺ Neu laden</button>
     <button class="scene" id="btnHelp" style="min-height:36px;background:#24314a">? Hilfe</button>
@@ -193,6 +213,7 @@ body.big #title{font-size:17px}
       <div id="banner"></div>
       <div id="measBar"><div class="seg" id="measMode"><button data-v="IU" class="on">I über U</button><button data-v="Rl">R über l</button><button data-v="RA">R über A</button></div><button class="chip go" id="mAdd">＋ Messpunkt</button><button class="chip" id="mUndo" title="Letzten Messpunkt löschen">↶</button><button class="chip" id="mClr">✕ alle</button><button class="chip" id="mCsv" title="Messwerte als Tabelle für Excel und Numbers speichern">⤓ Tabelle</button></div>
       <div id="meshBox"></div>
+      <div id="taskBox"></div>
       <div id="miniU"><b style="white-space:nowrap">U<sub>0</sub> = <span id="miniUVal">6,0 V</span></b><input type="range" id="miniUSlider" min="0" max="120" value="60" aria-label="Spannung"></div>
       <div id="sidePop"></div>
       <div id="viewPop">
@@ -254,6 +275,11 @@ body.big #title{font-size:17px}
     <li><b>Draht</b>: Material, Länge und Durchmesser einstellen. „R über l“ und „R über A“ zeigen, wie R von Länge und Querschnitt abhängt. Ohne Wasserbad erwärmt sich der Draht.</li>
     <li><b>Motor</b>: läuft erst an, wenn der Strom die Haftreibung überwindet. Festgehalten fehlt die Gegenspannung, der Strom wird groß.</li>
   </ul>
+  <h3>Aufgaben</h3>
+  <ul>
+    <li><b>Aufgaben</b> (links): vier Rechenaufgaben zu Parallel- und gemischten Schaltungen mit den Werten vom Aufgabenblatt. Oben links Aufgabe 1 bis 4 wählen, „Text“ zeigt die Aufgabe.</li>
+    <li>Gegebene Größen sind eingestellt (Netzgerät, eingebaute Amperemeter). Gesuchte Widerstände stehen als „?“ da. Rechnen, dann mit Messgeräten nachprüfen. „Lösung“ deckt die Werte auf.</li>
+  </ul>
   <h3>Messgeräte</h3>
   <ul>
     <li><b>A</b> oder <b>V</b> wählen und ein Kabel <b>antippen</b>: Das Gerät wird in Reihe eingebaut.</li>
@@ -267,7 +293,7 @@ body.big #title{font-size:17px}
   <div>
   <h3>Was man sieht</h3>
   <ul>
-    <li><b>Farbe</b> = elektrisches Potenzial φ. Jede Farbe steht für genau ein Potenzial, 0 V (Erdung) ist grün. Die Skala ist fest und gilt in allen Schaltungen.</li>
+    <li><b>Farbe</b> = elektrisches Potenzial φ. Jede Farbe steht für genau ein Potenzial, 0 V (Erdung) ist grün. Die Skala ist fest und gilt in allen Schaltungen (0 bis 12 V). Ausnahme: In den Aufgaben mit 30 V bzw. 220 V reicht die feste Skala bis 30 V bzw. 240 V; die Zahlen an der Farbleiste zeigen das.</li>
     <li><b>Punkte</b> = Ladungsträger. Kein Teilchen entsteht oder verschwindet. Die Dichte ist überall gleich. In einem Kabel mit gleichem Querschnitt ist das Tempo (Driftgeschwindigkeit) proportional zur Stromstärke. Tippe ein Kabel an, um seinen Querschnitt zu ändern (mit dem Werkzeug „Knoten“ teilst du ein Kabel vorher in zwei): Bei doppeltem Querschnitt driften doppelt so viele Ladungsträger nebeneinander, jeder nur halb so schnell, die Stromstärke bleibt gleich (I = n · e · A · v). An jedem Knoten fließen genau so viele Teilchen ab, wie zufließen.</li>
     <li><b>Lampen realistisch</b>: Der Glühdraht hat kalt etwa ein Zwölftel seines Betriebswiderstands, also gilt das ohmsche Gesetz für Lampen nicht.</li>
     <li><b>Wasserkreis</b> (nach Plappert): Druck ≙ Potenzial, Druckunterschied ≙ Spannung, Wasserstrom ≙ Stromstärke, Engstelle ≙ Widerstand, Turbine ≙ Lampe, Pumpe ≙ Netzgerät. Die Steigrohre zeigen den Druck.</li>
@@ -345,9 +371,44 @@ const SCENES = {
     meters:[['A',840,300],['V','A','B',500,205]]}
 };
 
+/* Aufgaben (Aufgabenblatt Parallel- und gemischte Schaltungen). U<sub>max</sub>: Bereich von Netzgerät und fester Farbskala,
+   fuse: Sicherung in A, pmax: Belastbarkeit der (Hochlast-)Widerstände in W, hid: gesuchter Widerstand (als „?“ angezeigt) */
+Object.assign(SCENES,{
+  T1:{title:'Aufgabe 1: Zwei Widerstände parallel',U:6,Umax:30,fuse:5,pmax:50,
+    nodes:{Sp:[160,230],Sm:[160,330],J1:[600,100],J2:[600,460],A:[600,220],B:[600,340],C:[840,220],D:[840,340]},
+    edges:[['S','Sm','Sp'],['W','Sp','J1',[[160,100]]],['W','J1','A'],['C','A','B',{k:'R',n:'1',R:8,side:'left'}],['W','B','J2'],['W','J1','C',[[840,100]]],['C','C','D',{k:'R',n:'2',R:12,side:'right'}],['W','D','J2',[[840,460]]],['W','J2','Sm',[[160,460]]]],
+    meters:[['A',380,460]]},
+  T2:{title:'Aufgabe 2: Drei Widerstände parallel',U:30,Umax:30,fuse:10,pmax:200,
+    nodes:{Sp:[160,230],Sm:[160,330],J1:[440,100],J2:[440,460],A:[440,230],B:[440,330],J3:[650,100],J4:[650,460],C:[650,230],D:[650,330],E:[860,230],F:[860,330]},
+    edges:[['S','Sm','Sp'],['W','Sp','J1',[[160,100]]],['W','J1','A'],['C','A','B',{k:'R',n:'1',R:10,side:'left',hid:1}],['W','B','J2'],
+      ['W','J1','J3'],['W','J3','C'],['C','C','D',{k:'R',n:'2',R:20,side:'left',hid:1}],['W','D','J4'],
+      ['W','J3','E',[[860,100]]],['C','E','F',{k:'R',n:'3',R:20/3,side:'right',hid:1}],['W','F','J4',[[860,460]]],['W','J4','J2'],['W','J2','Sm',[[160,460]]]],
+    meters:[['A',440,165],['A',650,165],['A',860,165]]},
+  T3:{title:'Aufgabe 3: Parallel und in Reihe',U:220,Umax:240,fuse:5,pmax:500,
+    nodes:{Sp:[160,230],Sm:[160,330],A:[330,460],B:[450,460],J1:[640,100],J2:[640,460],C:[640,220],D:[640,340],E:[860,220],F:[860,340]},
+    edges:[['S','Sm','Sp'],['W','Sp','J1',[[160,100]]],['W','J1','C'],['C','C','D',{k:'R',n:'1',R:100,side:'left'}],['W','D','J2'],['W','J1','E',[[860,100]]],['C','E','F',{k:'R',n:'2',R:200,side:'right'}],['W','F','J2',[[860,460]]],['W','J2','B'],['C','B','A',{k:'R',n:'3',R:25,side:'down'}],['W','A','Sm',[[160,460]]]]},
+  T4:{title:'Aufgabe 4: Gleiche Widerstände parallel, einer in Reihe',U:220,Umax:240,fuse:5,pmax:500,link:['1','2'],
+    nodes:{Sp:[160,230],Sm:[160,330],A:[330,460],B:[450,460],J1:[640,100],J2:[640,460],C:[640,220],D:[640,340],E:[860,220],F:[860,340]},
+    edges:[['S','Sm','Sp'],['W','Sp','J1',[[160,100]]],['W','J1','C'],['C','C','D',{k:'R',n:'1',R:200,side:'left',hid:1}],['W','D','J2'],['W','J1','E',[[860,100]]],['C','E','F',{k:'R',n:'2',R:200,side:'right',hid:1}],['W','F','J2',[[860,460]]],['W','J2','B'],['C','B','A',{k:'R',n:'3',R:100,side:'down'}],['W','A','Sm',[[160,460]]]],
+    meters:[['A',560,460]]}
+});
+const WARN220='<p class="tkw">Nur in der Simulation! 220 V (heute 230 V) aus der Steckdose sind lebensgefährlich. Im Schulversuch nur Kleinspannung.</p>';
+const TASKS={
+  T1:{text:'<p>Durch zwei parallelgeschaltete Widerstände von R<sub>1</sub> = 8 Ω und R<sub>2</sub> = 12 Ω fließt ein Gesamtstrom von I<sub>G</sub> = 2,6 A. Wie groß ist die angelegte Spannung U und wie groß sind die Teilströme I<sub>1</sub> und I<sub>2</sub>?</p><p>Im Labor: Das Amperemeter misst I<sub>G</sub>. Stelle U so ein, dass es 2,6 A anzeigt, oder stelle deinen Rechenwert ein und prüfe.</p>',
+    sol:'R<sub>G</sub> = 4,8 Ω · U = R<sub>G</sub> · I<sub>G</sub> = 12,48 V<br>I<sub>1</sub> = 1,56 A · I<sub>2</sub> = 1,04 A'},
+  T2:{text:'<p>Drei parallelgeschaltete Widerstände haben Teilstromstärken von I<sub>1</sub> = 3 A, I<sub>2</sub> = 1,5 A und I<sub>3</sub> = 4,5 A. Die angelegte Spannung beträgt U = 30 V. Wie groß sind die einzelnen Widerstände R<sub>1</sub>, R<sub>2</sub> und R<sub>3</sub>, der Gesamtwiderstand R<sub>G</sub> und die Gesamtstromstärke I<sub>G</sub>?</p><p>Im Labor: Die drei Amperemeter zeigen die Teilströme. Die Widerstände sind gesucht (?). Baue ein weiteres Amperemeter für I<sub>G</sub> ein.</p>',
+    sol:'R<sub>1</sub> = 10 Ω · R<sub>2</sub> = 20 Ω · R<sub>3</sub> ≈ 6,67 Ω<br>I<sub>G</sub> = 9 A · R<sub>G</sub> = U / I<sub>G</sub> ≈ 3,33 Ω'},
+  T3:{text:'<p>Zwei parallelgeschaltete Widerstände R<sub>1</sub> = 100 Ω und R<sub>2</sub> = 200 Ω sind mit einem weiteren Widerstand R<sub>3</sub> = 25 Ω hintereinandergeschaltet. Die angelegte Spannung beträgt 220 V. Wie groß ist die Gesamtstromstärke I<sub>G</sub> und die Stromstärke in jedem der drei Widerstände?</p><p>Im Labor: Rechnen, dann Amperemeter einbauen und prüfen.</p>'+WARN220,
+    sol:'R<sub>12</sub> ≈ 66,7 Ω · R<sub>G</sub> ≈ 91,7 Ω · I<sub>G</sub> = I<sub>3</sub> = 2,4 A<br>U<sub>3</sub> = 60 V · U<sub>12</sub> = 160 V · I<sub>1</sub> = 1,6 A · I<sub>2</sub> = 0,8 A'},
+  T4:{text:'<p>Zwei gleich große Widerstände R<sub>1</sub> und R<sub>2</sub> sind parallel und dann mit einem dritten Widerstand R<sub>3</sub> = 100 Ω hintereinandergeschaltet. Bei einer Spannung von 220 V wird eine Stromstärke von 1,1 A gemessen. Wie groß sind die Widerstände R<sub>1</sub> und R<sub>2</sub> und wie groß ist in jedem die Stromstärke?</p><p>Im Labor: Das Amperemeter misst die 1,1 A. R<sub>1</sub> und R<sub>2</sub> sind gesucht (?).</p>'+WARN220,
+    sol:'R<sub>G</sub> = 200 Ω · R<sub>12</sub> = 100 Ω · R<sub>1</sub> = R<sub>2</sub> = 200 Ω<br>I<sub>3</sub> = 1,1 A · I<sub>1</sub> = I<sub>2</sub> = 0,55 A'}
+};
+
 /* ===================== Zustand ===================== */
 const st = {fs:1, scene:'R', view:'sym', side:'off', dir:'t', lampReal:true, colors:true, particles:true,
-  energyOverlay:false, phiLabels:false, tempo:1, U:6, Ri:0, cableR:0, tool:'select', sel:null, fuse:false, time:0};
+  energyOverlay:false, phiLabels:false, tempo:1, U:6, Ri:0, cableR:0, tool:'select', sel:null, fuse:false, time:0,
+  Umax:12, fuseI:FUSE, pmax:PMAX_R, reveal:false, task:'T1', taskOpen:false};
+function isHid(c){ return !!c.hid&&!st.reveal; } // gesuchter Widerstand, noch nicht aufgedeckt
 let S = null; // aktuelle Schaltung
 
 /* ===================== Geometrie ===================== */
@@ -402,7 +463,7 @@ function buildScene(id){
     const pts=[S.nodes[a], ...((ed[0]==='W'&&ed[3])?ed[3].map(p=>({x:p[0],y:p[1]})):[]), S.nodes[b]].map(p=>({x:p.x,y:p.y}));
     const e={type:ed[0]==='W'?'wire':ed[0]==='S'?'src':'comp', a, b, path:mkPath(pts), ps:[], pw:[], cr:0, crw:0, I:0};
     if(e.type==='wire'){ e.cable=S.nextCable++; S.cables[e.cable]=st.cableR; e.frac=1; }
-    if(e.type==='comp'){ const c=ed[3]; e.comp={kind:c.k, n:c.n, R:c.R||100, t:c.t||0, side:c.side, open:false, burned:false, Rl:null, ang:0,
+    if(e.type==='comp'){ const c=ed[3]; e.comp={kind:c.k, n:c.n, R:c.R||100, t:c.t||0, side:c.side, hid:!!c.hid, open:false, burned:false, Rl:null, ang:0,
       mat:2, l:1, di:1, cool:false, T:20, rev:false, block:false, run:0, vd:0.5, pts:[]}; }
     S.edges.push(e);
   }
@@ -410,6 +471,10 @@ function buildScene(id){
   S.dut=S.edges.find(e=>e.type==='comp'&&(def.dut?e.a===nm[def.dut]:true))||null;
   if(id==='K') S.rv=S.edges.find(e=>e.type==='comp'&&e.comp.n==='V');
   st.U=def.U; st.fuse=false; st.sel=null;
+  st.Umax=def.Umax||12; st.fuseI=def.fuse||FUSE; st.pmax=def.pmax||PMAX_R; st.reveal=false;
+  // wählbare Widerstandswerte: E12-Reihe plus die Werte der Szene (z. B. 8 Ω, 25 Ω, 200 Ω aus den Aufgaben)
+  const own=def.edges.filter(x=>x[0]==='C'&&x[3].R).map(x=>x[3].R);
+  S.rlist=[...new Set(RVALUES.concat(own))].sort((a,b)=>a-b);
   fillParticles();
   rebuildAdj();
 }
@@ -640,7 +705,7 @@ function solve(){
     }
     let changed=false;
     const src=S.edges.find(e=>e.type==='src');
-    if(!st.fuse && Math.abs(src.I)>FUSE){ st.fuse=true; changed=true; }
+    if(!st.fuse && Math.abs(src.I)>st.fuseI){ st.fuse=true; changed=true; }
     for(const e of lamps){ const c=e.comp;
       const P=powerOf(e); if(P>1.9*lampNom(c).Pn){ c.burned=true; changed=true; } }
     for(const e of drahts){ const c=e.comp; if(c.T>MATS[c.mat].tm){ c.burned=true; changed=true; } }
@@ -704,7 +769,7 @@ function countParticles(key){ return S.edges.reduce((n,e)=>n+e[key].length,0); }
 
 /* ===================== Farben ===================== */
 /* feste, umkehrbar eindeutige Skala: 0 V grün, positiv über gelb nach rot, negativ über türkis und blau nach violett */
-function potHue(v){ v=Math.max(-12,Math.min(12,v)); return v>=0? 125*(1-Math.pow(v/12,0.75)) : 125+(-v)/12*150; }
+function potHue(v){ const m=st.Umax; v=Math.max(-m,Math.min(m,v)); return v>=0? 125*(1-Math.pow(v/m,0.75)) : 125+(-v)/m*150; } // m = 12 V, in den Aufgaben fest 30 V bzw. 240 V
 function potColor(v,l){ return `hsl(${potHue(v).toFixed(1)},78%,${l||46}%)`; }
 function potColorLight(v){ return `hsl(${potHue(v).toFixed(1)},70%,72%)`; }
 
@@ -720,7 +785,7 @@ function compName(c){ return c.kind==='D'?['Draht',c.n==='1'?'':c.n]:[{R:'R',L:'
 function nameHTML(e){ if(e.type==='src') return 'Netzgerät'; const [b,n]=compName(e.comp); return b+(n?'<sub>'+n+'</sub>':''); }
 function rpm(e){ return motorOmega(e)*60/(2*Math.PI); }
 function compValue(e){ const c=e.comp; switch(c.kind){
-  case 'R': return fR(c.R); case 'L': return lampTxt(c.t);
+  case 'R': return isHid(c)?'R = ?':fR(c.R); case 'L': return lampTxt(c.t);
   case 'D': return MATS[c.mat].n+', '+nf(c.l,2)+' m, Ø '+nf(DIAS[c.di],1)+' mm'+(c.cool?' (Wasserbad)':'');
   case 'Di': return c.rev?'Sperrrichtung':'Durchlassrichtung';
   case 'Mo': return c.block?'festgehalten':c.run?'n = '+nf(Math.abs(rpm(e)),0)+' /min':'steht'; } return ''; }
@@ -904,7 +969,7 @@ function supply3D(c,e,f){
   c.save(); c.shadowColor='#4ade80'; c.shadowBlur=7*DPR; c.fillStyle='#a7f3c0'; c.textAlign='center'; c.textBaseline='middle';
   c.font=fnt('700',16,'Menlo,Consolas,monospace'); c.fillText(nf(st.fuse?0:uOf(e),1)+' V',dx+dw/2,dy+15);
   c.font=fnt('600',12,'Menlo,Consolas,monospace'); c.fillText(nf(Math.abs(e.I),2)+' A',dx+dw/2,dy+34); c.restore();
-  const kx=bx-16, ky=by+36, kr=14, ang=-2.36+4.71*st.U/12; // Knopf dreht sich mit der Spannung
+  const kx=bx-16, ky=by+36, kr=14, ang=-2.36+4.71*st.U/st.Umax; // Knopf dreht sich mit der Spannung
   c.save(); shadowOn(c,5,2,3); sphere(c,kx,ky,kr,'#6b7280','#111827'); c.restore();
   c.strokeStyle='rgba(255,255,255,.18)'; c.lineWidth=1; for(let i=0;i<16;i++){ const a=i*Math.PI/8; c.beginPath(); c.moveTo(kx+Math.cos(a)*(kr-3),ky+Math.sin(a)*(kr-3)); c.lineTo(kx+Math.cos(a)*kr,ky+Math.sin(a)*kr); c.stroke(); }
   c.strokeStyle='#f8fafc'; c.lineWidth=2.5; c.lineCap='round'; c.beginPath(); c.moveTo(kx+Math.cos(ang)*3,ky+Math.sin(ang)*3); c.lineTo(kx+Math.cos(ang)*(kr-3),ky+Math.sin(ang)*(kr-3)); c.stroke();
@@ -1042,8 +1107,8 @@ function drawComp(c,e,w){
   if(comp.kind==='Mo'){ c.restore(); drawMotor(c,e,f,half,icon); return; }
   if(comp.kind==='R'){
     const P=powerOf(e);
-    if(icon){ resistor3D(c,half,comp.R,S.phi[e.a],S.phi[e.b],P>0.5?(P-0.5)/PMAX_R:0,Math.atan2(f.uy,f.ux)); c.restore(); return; }
-    if(P>0.5){ const a=Math.min(0.7,(P-0.5)/PMAX_R*0.7); c.fillStyle=`rgba(255,80,20,${a})`; c.beginPath(); c.ellipse(0,0,half+16,26,0,0,7); c.fill(); }
+    if(icon){ resistor3D(c,half,isHid(comp)?null:comp.R,S.phi[e.a],S.phi[e.b],P>st.pmax/8?(P-st.pmax/8)/st.pmax:0,Math.atan2(f.uy,f.ux)); c.restore(); return; }
+    if(P>st.pmax/8){ const a=Math.min(0.7,(P-st.pmax/8)/st.pmax*0.7); c.fillStyle=`rgba(255,80,20,${a})`; c.beginPath(); c.ellipse(0,0,half+16,26,0,0,7); c.fill(); }
     if(!icon){
       c.fillStyle=st.colors?gradAlong(c,e,f.L/2-half,f.L/2+half):'#fff';
       // Verlauf im gedrehten System: neu anlegen
@@ -1051,7 +1116,7 @@ function drawComp(c,e,w){
       c.fillRect(-half,-12,half*2,24); c.strokeStyle='#111'; c.lineWidth=2.5; c.strokeRect(-half,-12,half*2,24);
     } else {
       c.fillStyle='#e9d3a6'; c.strokeStyle='#8c6d3f'; c.lineWidth=1.5; roundRect(c,-half,-11,half*2,22,10); c.fill(); c.stroke();
-      const bands=colorBands(comp.R); const xs=[-20,-10,0,18];
+      const bands=colorBands(isHid(comp)?null:comp.R); const xs=[-20,-10,0,18];
       bands.forEach((col,i)=>{ c.fillStyle=col; c.fillRect(xs[i]-2.5,-11,5,22); });
       if(st.colors){ const g=c.createLinearGradient(-half,0,half,0); const pa=S.phi[e.a], pb=S.phi[e.b]; for(let i=0;i<=6;i++) g.addColorStop(i/6,potColor(pa+(pb-pa)*i/6,55)); c.strokeStyle=g; c.lineWidth=3; roundRect(c,-half,-11,half*2,22,10); c.stroke(); }
     }
@@ -1152,7 +1217,8 @@ function drawMotor(c,e,f,half,icon){
   }
   if(comp.block){ c.save(); c.strokeStyle='rgba(180,35,24,.85)'; c.lineWidth=3.5; c.setLineDash([6,5]); c.beginPath(); c.arc(x,y,half+(icon?16:10),0,7); c.stroke(); c.restore(); }
 }
-function colorBands(R){ const cols=['#000','#8b4513','#e53935','#fb8c00','#fdd835','#43a047','#1e88e5','#8e24aa','#9e9e9e','#fff'];
+function colorBands(R){ if(R==null) return ['#bfa572','#bfa572','#bfa572','#bfa572']; // gesuchter Wert: ohne Farbringe
+  const cols=['#000','#8b4513','#e53935','#fb8c00','#fdd835','#43a047','#1e88e5','#8e24aa','#9e9e9e','#fff'];
   let e=Math.floor(Math.log10(R)+1e-9)-1; let m=Math.round(R/Math.pow(10,e)); if(m>=100){m/=10;e++;}
   const d1=Math.floor(m/10), d2=m%10; const mult=e<0?'#d4af37':cols[e]; return [cols[d1],cols[d2],mult,'#d4af37']; }
 function drawLabels(c){
@@ -1310,12 +1376,12 @@ function drawLegend(c){
   c.setTransform(DPR,0,0,DPR,0,0); FK=st.fs;
   const W=cv._w, y=cv._h-30, x0=Math.max(70,W*0.12), x1=W-Math.max(30,W*0.06), L=x1-x0;
   const neg=S.phi.some(v=>v<-0.005);
-  const vmin=neg?-12:0, vmax=12, xOf=v=>x0+(v-vmin)/(vmax-vmin)*L;
+  const vmax=st.Umax, vmin=neg?-vmax:0, xOf=v=>x0+(v-vmin)/(vmax-vmin)*L;
   if(st.colors){ for(let i=0;i<L;i++){ c.fillStyle=potColor(vmin+(vmax-vmin)*i/L); c.fillRect(x0+i,y,1.5,12); } }
   else { c.fillStyle='#d5dbe5'; c.fillRect(x0,y,L,12); }
   c.strokeStyle='#5d6779'; c.lineWidth=1; c.strokeRect(x0,y,L,12);
   c.fillStyle='#5d6779'; c.font=fnt('600',11,'Arial'); c.textAlign='center'; c.textBaseline='top';
-  for(let v=vmin;v<=vmax;v+=neg?4:2){ const x=xOf(v); c.fillRect(x,y+12,1,4); c.fillText(nf(v,0),x,y+17); }
+  for(let v=vmin;v<=vmax+1e-9;v+=vmax/(neg?3:6)){ const x=xOf(v); c.fillRect(x,y+12,1,4); c.fillText(nf(v,0),x,y+17); }
   c.textAlign='right'; c.textBaseline='middle'; c.font=fnt('700',12,'Arial'); c.fillText('φ in V',x0-10,y+6);
   const seen=[]; for(let i=0;i<S.nodes.length;i++){ if(!S.adj[i].length) continue; const v=S.phi[i]; if(!seen.some(s=>Math.abs(s-v)<0.05)) seen.push(v); }
   c.fillStyle='#111'; for(const v of seen){ const x=xOf(Math.max(vmin,Math.min(vmax,v))); c.beginPath(); c.moveTo(x,y-1); c.lineTo(x-5,y-9); c.lineTo(x+5,y-9); c.closePath(); c.fill(); }
@@ -1379,7 +1445,7 @@ function drawTubes(c){
     let bi=-1,bl=0; for(let i=1;i<e.path.pts.length;i++){ const A=e.path.pts[i-1],B=e.path.pts[i]; const l=e.path.cum[i]-e.path.cum[i-1]; if(Math.abs(A.y-B.y)<1&&l>bl){bl=l;bi=i;} }
     if(bi<0||bl<90) continue;
     const s=(e.path.cum[bi-1]+e.path.cum[bi])/2, q=pathAt(e.path,s), v=phiAt(e,s);
-    const up=q.y<S.cy?-1:-1; const x=q.x, y0=q.y-12, h=Math.max(0,(v-pmin)/12*H);
+    const up=q.y<S.cy?-1:-1; const x=q.x, y0=q.y-12, h=Math.max(0,(v-pmin)/st.Umax*H);
     c.fillStyle='rgba(255,255,255,.9)'; c.fillRect(x-7,y0-H,14,H);
     c.fillStyle=st.colors?potColorLight(v):'#a9d6f5'; c.fillRect(x-6,y0-h,12,h);
     c.strokeStyle='#33415c'; c.lineWidth=2; c.beginPath(); c.moveTo(x-7,y0-H); c.lineTo(x-7,y0); c.moveTo(x+7,y0-H); c.lineTo(x+7,y0); c.stroke();
@@ -1665,7 +1731,7 @@ function drawHeightPanel(){
   const c=sctx, W=side._w, H=side._h; c.setTransform(DPR,0,0,DPR,0,0); FK=st.fs; c.clearRect(0,0,W,H);
   c.fillStyle='#1d2433'; c.font=fnt('700',14,'-apple-system,Arial'); c.textAlign='left'; c.textBaseline='top'; c.fillText('Höhenmodell',12,10);
   c.font=fnt('500',12,'-apple-system,Arial'); c.fillStyle='#5d6779'; c.fillText('Höhe ≙ Potenzial φ, Höhenunterschied ≙ Spannung U',12,28);
-  const neg=S.phi.some(v=>v<-0.005), vmax=12, vmin=neg?-12:0;
+  const neg=S.phi.some(v=>v<-0.005), vmax=st.Umax, vmin=neg?-vmax:0;
   const top=60, capH=92, left=50, Wf=W-left-14, Dg=Math.min((H-top-capH)*0.3,Wf*0.42), avail=H-top-capH-Dg-8;
   const hk=avail/(vmax-vmin), y0=top+vmax*hk, Wg=Wf*0.8, sh=Wf*0.2;
   const P=(x,y,v)=>{ const u=(x-BB.x)/BB.w, w=(y-BB.y)/BB.h; return {x:left+u*Wg+(1-w)*sh, y:y0+w*Dg-v*hk}; };
@@ -1680,7 +1746,7 @@ function drawHeightPanel(){
   // Höhenachse
   const ax=g3.x-14; c.strokeStyle='#5d6779'; c.lineWidth=1.2; c.beginPath(); c.moveTo(ax,g3.y-vmin*hk); c.lineTo(ax,g3.y-vmax*hk); c.stroke();
   c.font=fnt('600',10.5,'Arial'); c.textAlign='right'; c.textBaseline='middle';
-  for(let v=vmin;v<=vmax;v+=neg?4:2){ const y=g3.y-v*hk; c.fillStyle='#5d6779'; c.fillRect(ax-3,y,6,1); c.fillStyle=st.colors?potColor(v,38):'#5d6779'; c.fillText(nf(v,0),ax-5,y); }
+  for(let v=vmin;v<=vmax+1e-9;v+=vmax/(neg?3:6)){ const y=g3.y-v*hk; c.fillStyle='#5d6779'; c.fillRect(ax-3,y,6,1); c.fillStyle=st.colors?potColor(v,38):'#5d6779'; c.fillText(nf(v,0),ax-5,y); }
   c.fillStyle='#5d6779'; c.textAlign='center'; c.textBaseline='bottom'; c.fillText('φ in V',ax,g3.y-vmax*hk-6);
   // Abschnitte sammeln und von hinten nach vorn zeichnen
   const skip=e=>e.type==='lead'||(e.meter&&e.meter.mode==='parallel');
@@ -1828,14 +1894,14 @@ const $=id=>document.getElementById(id);
 function select(s){ st.sel=s; if(s&&s.kind==='edge'&&s.e.type==='comp'){ S.dut=s.e; updateMeasBar(); } renderSel(); }
 function collectWarnings(){
   const w=[];
-  if(st.fuse) w.push({t:'Kurzschluss! Die Sicherung im Netzgerät hat ausgelöst (Stromstärke über 5 A).',b:'Sicherung zurücksetzen',f:()=>{st.fuse=false;solve();}});
+  if(st.fuse) w.push({t:'Kurzschluss! Die Sicherung im Netzgerät hat ausgelöst (Stromstärke über '+nf(st.fuseI,0)+' A).',b:'Sicherung zurücksetzen',f:()=>{st.fuse=false;solve();}});
   for(const e of S.edges){ if(e.type!=='comp') continue; const c=e.comp;
     const nm=nameHTML(e);
     if(c.burned){ if(c.kind==='D') w.push({h:`Der Draht ist durchgeschmolzen (über ${MATS[c.mat].tm} °C).`,b:'Neuer Draht',f:()=>{c.burned=false;c.T=20;solve();}});
       else if(c.kind==='Di') w.push({h:`${nm} ist zerstört: Der Strom war größer als 1 A. Ein Vorwiderstand begrenzt den Strom.`,b:'Neue Diode',f:()=>{c.burned=false;c.vd=0.5;solve();}});
       else w.push({h:`${nm} ist durchgebrannt: Die Spannung war zu hoch.`,b:'Neue Lampe',f:()=>{c.burned=false;c.Rl=null;solve();}}); }
     if(c.open||c.burned) continue;
-    if(c.kind==='R'&&powerOf(e)>PMAX_R) w.push({h:`${nm} wird sehr heiß (P über ${PMAX_R} W).`});
+    if(c.kind==='R'&&powerOf(e)>st.pmax) w.push({h:`${nm} wird sehr heiß (P über ${st.pmax} W).`});
     if(c.kind==='D'&&c.T>250) w.push({h:`Der Draht ist ${nf(c.T,0)} °C heiß${c.T>500?' und glüht':''}. Sein Widerstand ist dadurch ${c.mat===2?'kaum':'deutlich'} größer.`});
     if(c.kind==='Mo'&&c.block&&powerOf(e)>2) w.push({h:`${nm} ist festgehalten: Ohne Drehung fehlt die Gegenspannung, der Strom ist groß und der Motor wird heiß.`}); }
   for(const m of S.meters){
@@ -1877,7 +1943,8 @@ function renderSel(){
     h=c.kind==='D'?'Draht':`${nameHTML(s.e)} · ${KINDNAME[c.kind]}`;
     const opt=(arr,cur)=>arr.map((t,i)=>`<option value="${i}" ${cur===i?'selected':''}>${t}</option>`).join('');
     ctl+=`<div class="row"><select class="sel" id="kSel" aria-label="Bauteil">${KINDS.map(([k,t])=>`<option value="${k}" ${c.kind===k?'selected':''}>${t}</option>`).join('')}</select><button class="chip ${c.open?'red':''}" data-a="open">${c.open?'einsetzen':'ausbauen'}</button></div>`;
-    if(c.kind==='R'){ const i=RVALUES.indexOf(c.R); ctl+=`<div class="row"><b style="min-width:62px">${fR(c.R)}</b><input type="range" id="rSl" min="0" max="${RVALUES.length-1}" value="${i<0?24:i}"></div>`; }
+    if(c.kind==='R'&&isHid(c)){ ctl+=`<div class="row"><b style="min-width:62px">R = ?</b><span class="small">gesucht · „Lösung“ deckt den Wert auf</span></div>`; }
+    else if(c.kind==='R'){ const L=S.rlist, i=L.indexOf(c.R); ctl+=`<div class="row"><b style="min-width:62px">${fR(c.R)}</b><input type="range" id="rSl" min="0" max="${L.length-1}" value="${i<0?L.indexOf(100):i}"></div>`; }
     else if(c.kind==='L'){ ctl+=`<div class="row"><select class="sel" id="tSel" aria-label="Lampentyp">${opt(LAMPS.map((L,i)=>lampTxt(i)),c.t)}</select></div>`; }
     else if(c.kind==='D'){ ctl+=`<div class="row"><select class="sel" id="matSel" aria-label="Material">${opt(MATS.map(m=>m.n),c.mat)}</select><select class="sel" id="diSel" aria-label="Durchmesser">${opt(DIAS.map(d=>'Ø '+nf(d,1)+' mm'),c.di)}</select></div>
       <div class="row"><b style="min-width:52px">${nf(c.l,2)} m</b><input type="range" id="lSl" min="1" max="20" value="${Math.round(c.l*10)}" aria-label="Länge"><button class="chip ${c.cool?'on':''}" data-a="cool">Wasserbad</button></div>`; }
@@ -1899,7 +1966,9 @@ function renderSel(){
   }
   box.innerHTML=`<div class="bh"><span>${h}</span></div><div id="selBody"><div id="selCtl">${ctl}</div><div id="selRead"></div></div>${wide}`;
   box.querySelectorAll('[data-a]').forEach(b=>b.addEventListener('click',()=>selAction(b.dataset.a,b)));
-  const rs=$('rSl'); if(rs) rs.addEventListener('input',()=>{ s.e.comp.R=RVALUES[+rs.value]; rs.previousElementSibling.textContent=fR(s.e.comp.R); solve(); });
+  const rs=$('rSl'); if(rs) rs.addEventListener('input',()=>{ const R=S.rlist[+rs.value], lk=SCENES[st.scene].link; s.e.comp.R=R;
+    if(lk&&lk.includes(s.e.comp.n)) for(const x of S.edges) if(x.type==='comp'&&x.comp.kind==='R'&&lk.includes(x.comp.n)) x.comp.R=R; // gleich große Widerstände bleiben gleich
+    rs.previousElementSibling.textContent=fR(s.e.comp.R); solve(); });
   const on=(id,fn)=>{ const el=$(id); if(el) el.addEventListener(el.tagName==='SELECT'?'change':'input',()=>fn(el)); };
   on('kSel',el=>setKind(s.e,el.value));
   on('tSel',el=>{ const c=s.e.comp; c.t=+el.value; c.Rl=null; c.burned=false; c.pts=[]; solve(); renderSel(); });
@@ -1947,7 +2016,18 @@ function renderReadout(){
 }
 
 /* Bedienelemente verbinden */
-document.querySelectorAll('.scene[data-s]').forEach(b=>b.addEventListener('click',()=>loadScene(b.dataset.s)));
+document.querySelectorAll('.scene[data-s]').forEach(b=>b.addEventListener('click',()=>loadScene(b.dataset.s==='T'?st.task:b.dataset.s)));
+/* Aufgabenkarte */
+function renderTask(){
+  const box=$('taskBox'), id=st.scene, T=TASKS[id]; box.classList.toggle('on',!!T); if(!T) return;
+  box.classList.toggle('open',st.taskOpen);
+  box.innerHTML=`<div class="tkh"><b>Aufgabe</b>${Object.keys(TASKS).map((k,i)=>`<button class="tkn ${k===id?'on':''}" data-k="${k}">${i+1}</button>`).join('')}
+    <button class="tkb ${st.taskOpen?'on':''}" data-a="txt">Text ${st.taskOpen?'▴':'▾'}</button><button class="tkb ${st.reveal?'on':''}" data-a="sol">Lösung</button></div>
+    <div class="tkt">${T.text}${st.reveal?`<div class="tkl"><b>Lösung:</b><br>${T.sol}</div>`:''}<p class="small" style="margin-top:5px">Farbskala hier fest von 0 bis ${st.Umax} V.</p></div>`;
+  box.querySelectorAll('.tkn').forEach(b=>b.onclick=()=>loadScene(b.dataset.k));
+  box.querySelector('[data-a="txt"]').onclick=()=>{ st.taskOpen=!st.taskOpen; renderTask(); };
+  box.querySelector('[data-a="sol"]').onclick=()=>{ st.reveal=!st.reveal; if(st.reveal) st.taskOpen=true; renderTask(); renderSel(); };
+}
 $('btnReset').onclick=()=>loadScene(st.scene);
 $('btnHelp').onclick=()=>$('help').classList.add('open');
 $('helpClose').onclick=()=>$('help').classList.remove('open');
@@ -1998,7 +2078,7 @@ function exportCsv(){
 }
 $('mCsv').onclick=exportCsv;
 /* Pfeiltasten links/rechts und Knöpfe −/+: Spannung in Schritten von 0,1 V */
-function stepU(d){ st.U=Math.max(0,Math.min(12,Math.round((st.U+d)*10)/10)); $('uSlider').value=Math.round(st.U*10); solve(); }
+function stepU(d){ st.U=Math.max(0,Math.min(st.Umax,Math.round((st.U+d)*10)/10)); $('uSlider').value=Math.round(st.U*10); solve(); }
 $('uMinus').onclick=()=>stepU(-0.1); $('uPlus').onclick=()=>stepU(0.1);
 document.addEventListener('keydown',ev=>{
   if(ev.key!=='ArrowLeft'&&ev.key!=='ArrowRight') return;
@@ -2022,14 +2102,16 @@ $('btnFull').onclick=()=>{ const d=document, el=d.documentElement;
 ['fullscreenchange','webkitfullscreenchange'].forEach(ev=>document.addEventListener(ev,()=>setTimeout(resize,50)));
 $('miniUSlider').addEventListener('input',()=>{ st.U=+$('miniUSlider').value/10; $('uSlider').value=$('miniUSlider').value; solve(); });
 /* Direktlink: Stromkreis_Labor.html#reihe-lampen öffnet diese Schaltung; beim Umschalten zeigt die Adresse die Schaltung */
-const SCENELINK={R:'widerstand',RR:'reihe-widerstaende',RP:'parallel-widerstaende',L:'lampe',LR:'reihe-lampen',LP:'parallel-lampen',M:'gemischt',K:'kennlinie',D:'draht'};
+const SCENELINK={R:'widerstand',RR:'reihe-widerstaende',RP:'parallel-widerstaende',L:'lampe',LR:'reihe-lampen',LP:'parallel-lampen',M:'gemischt',K:'kennlinie',D:'draht',
+  T1:'aufgabe-1',T2:'aufgabe-2',T3:'aufgabe-3',T4:'aufgabe-4'};
 function linkScene(){ let h=''; try{ h=decodeURIComponent(location.hash.slice(1)).toLowerCase(); }catch(e){} return Object.keys(SCENELINK).find(k=>SCENELINK[k]===h); }
 window.addEventListener('hashchange',()=>{ const id=linkScene(); if(id&&id!==st.scene) loadScene(id); });
 function loadScene(id){
   try{ if(location.hash!=='#'+SCENELINK[id]) history.replaceState(null,'','#'+SCENELINK[id]); }catch(e){}
-  st.scene=id; document.querySelectorAll('.scene[data-s]').forEach(b=>b.classList.toggle('on',b.dataset.s===id));
+  st.scene=id; if(TASKS[id]) st.task=id; document.querySelectorAll('.scene[data-s]').forEach(b=>b.classList.toggle('on',b.dataset.s===id||(b.dataset.s==='T'&&!!TASKS[id])));
   const def=SCENES[id];
-  buildScene(id); $('title').textContent=def.title; $('uSlider').value=Math.round(st.U*10);
+  buildScene(id); $('title').textContent=def.title;
+  $('uSlider').max=$('miniUSlider').max=st.Umax*10; $('uSlider').value=Math.round(st.U*10); renderTask();
   solve();
   for(const m of def.meters||[]){ // fest eingebaute Messgeräte
     if(typeof m[1]==='number'){ const h=hitWire(m[1],m[2],true); if(h) insertSeries(h.edge,h.s,m[0]); }
