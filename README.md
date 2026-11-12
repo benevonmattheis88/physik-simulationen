@@ -29,6 +29,7 @@ elektrizitaet/
   mittelstufe/
     Stromkreis_Labor.html
     Ersatzwiderstand_herleiten.html
+    Heiss_Kaltleiter.html      Heißleiter (NTC) und Kaltleiter (PTC): R-ϑ- und U-I-Diagramm
 energie/
   mittelstufe/
     Energiefluss_Baukasten.html
@@ -120,6 +121,14 @@ Mit Elektronen als Ladungsträgern: `?ladung=elektronen` vor das `#` setzen, z. 
 | 2 · Reihe | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Ersatzwiderstand_herleiten.html#reihe |
 | 3 · Übungen | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Ersatzwiderstand_herleiten.html#uebungen |
 | 4 · Übersicht | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Ersatzwiderstand_herleiten.html#uebersicht |
+
+### Heißleiter und Kaltleiter
+
+| Reiter | Direktlink |
+|---|---|
+| Heißleiter | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Heiss_Kaltleiter.html#heissleiter |
+| Kaltleiter | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Heiss_Kaltleiter.html#kaltleiter |
+| Vergleich | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Heiss_Kaltleiter.html#vergleich |
 
 ### Energiefluss-Baukasten
 
