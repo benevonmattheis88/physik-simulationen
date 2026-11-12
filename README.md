@@ -129,6 +129,7 @@ Mit Elektronen als Ladungsträgern: `?ladung=elektronen` vor das `#` setzen, z. 
 | Heißleiter | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Heiss_Kaltleiter.html#heissleiter |
 | Kaltleiter | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Heiss_Kaltleiter.html#kaltleiter |
 | Vergleich | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Heiss_Kaltleiter.html#vergleich |
+| Bauteile | https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Heiss_Kaltleiter.html#bauteile |
 
 ### Energiefluss-Baukasten
 

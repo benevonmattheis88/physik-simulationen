@@ -51,6 +51,14 @@
   #expl { font-size:.95rem; background:#f1f6fc; border:1px solid #d3e2f3; border-radius:8px; padding:.4rem .55rem; line-height:1.38; }
   .small { font-size:.85rem; color:var(--muted); line-height:1.35; }
   .hidden { display:none !important; }
+  body.list .lab { display:none !important; }
+  body:not(.list) .cat { display:none !important; }
+  #cat { font-size:.86rem; }
+  #cat td { vertical-align:top; padding-top:.3rem; padding-bottom:.3rem; }
+  #cat tr { cursor:pointer; }
+  #cat input { width:1.4rem; height:1.4rem; margin:0; }
+  #cat .nr { display:inline-block; min-width:1.35rem; height:1.35rem; line-height:1.35rem; border-radius:50%; color:#fff; text-align:center; font-weight:700; font-size:.85rem; }
+  #cat .typ { font-size:.78rem; color:var(--muted); border:1px solid var(--line); border-radius:4px; padding:0 .25rem; }
 
   #tools { position:absolute; top:8px; right:8px; display:flex; gap:6px; z-index:5; }
   #tools button { min-width:44px; height:44px; min-height:44px; padding:0 10px; font-size:16px; font-weight:600;
@@ -116,44 +124,48 @@
         <button data-m="ntc">Heißleiter</button>
         <button data-m="ptc">Kaltleiter</button>
         <button data-m="both">Vergleich</button>
+        <button data-m="list">Bauteile</button>
       </div>
-      <div class="lbl">Wo steckt das Bauteil?</div>
-      <div class="seg" id="envs">
+      <div class="row cat"><label>Temperatur ϑ</label><input id="ct" type="range" min="0" max="200" step="1" value="25"><output id="cto"></output></div>
+      <div class="lbl lab">Wo steckt das Bauteil?</div>
+      <div class="seg lab" id="envs">
         <button data-e="water">Im Wasserbad</button>
         <button data-e="air">In Luft (erwärmt sich selbst)</button>
       </div>
-      <div class="row water"><label>Wasser ϑ</label><input id="tw" type="range" min="0" max="100" step="1" value="20"><output id="two"></output></div>
-      <div class="btns water">
+      <div class="row water lab"><label>Wasser ϑ</label><input id="tw" type="range" min="0" max="100" step="1" value="20"><output id="two"></output></div>
+      <div class="btns water lab">
         <button id="heat">▲ Erwärmen</button>
         <button id="cool">▼ Abkühlen</button>
         <button id="stop">■ Halt</button>
       </div>
-      <div class="row"><label>Spannung U</label><button class="pm" id="uMinus">−</button><input id="u" type="range" min="0" max="12" step="0.1" value="6"><button class="pm" id="uPlus">+</button><output id="uo"></output></div>
-      <div class="lbl">Diagramm</div>
-      <div class="seg" id="dias">
+      <div class="row lab"><label>Spannung U</label><button class="pm" id="uMinus">−</button><input id="u" type="range" min="0" max="12" step="0.1" value="6"><button class="pm" id="uPlus">+</button><output id="uo"></output></div>
+      <div class="lbl lab">Diagramm</div>
+      <div class="seg lab" id="dias">
         <button data-d="rt">R-ϑ-Diagramm</button>
         <button data-d="ui">U-I-Diagramm</button>
       </div>
-      <div class="checks">
+      <div class="checks lab">
         <label><input id="cbDia" type="checkbox" checked>Diagramm</label>
         <label><input id="cbIn" type="checkbox" checked>Blick ins Innere</label>
         <label><input id="cbKl" type="checkbox">Kennlinie zeigen</label>
         <label><input id="cbEl" type="checkbox">Elektronen im Kabel</label>
       </div>
-      <div class="btns">
+      <div class="btns lab">
         <button id="mark">Messpunkt speichern</button>
         <button id="auto">Messreihe automatisch</button>
       </div>
-      <div class="btns">
+      <div class="btns lab">
         <button id="clear">Messwerte löschen</button>
         <button id="reset">Zurücksetzen</button>
       </div>
     </div>
     <div id="info">
       <div id="expl"></div>
-      <table id="vals"></table>
-      <div id="mwWrap"><table id="mw"></table></div>
-      <div class="small"><b>Vereinfachungen:</b> Ausgedachte, aber typische Bauteile: Heißleiter mit 1 kΩ bei 25 °C (B = 3950 K),
+      <table id="vals" class="lab"></table>
+      <div id="mwWrap" class="lab"><table id="mw"></table></div>
+      <table id="cat" class="cat"></table>
+      <div class="small cat"><b>Vereinfachungen:</b> Typische, gerundete Werte, keine Angaben eines bestimmten Herstellers. Heißleiter nach der B-Formel. Kaltleiter vereinfacht: unterhalb der Schalttemperatur konstant, darüber steiler Anstieg, begrenzt (in Wirklichkeit fällt R weit oberhalb wieder). Pt100 linear genähert.</div>
+      <div class="small lab"><b>Vereinfachungen:</b> Ausgedachte, aber typische Bauteile: Heißleiter mit 1 kΩ bei 25 °C (B = 3950 K),
         Kaltleiter mit 100 Ω und Schalttemperatur 60 °C (unterhalb fast konstant, darunter in Wirklichkeit leicht fallend).
         Strommesser ideal (ohne Widerstand), die Spannung zeigt das Netzgerät. Im Wasserbad hat das Bauteil fast die Wassertemperatur.
         In Luft (20 °C) erwärmt es sich durch den eigenen Strom, das Abkühlen in Luft ist stark vereinfacht. Erwärmen im Zeitraffer.
@@ -185,9 +197,9 @@
   };
   const ENV = { water:{ delta:2, tau:0.8 }, air:{ delta:0.014, tau:2.5 } };   // Wärmeabgabe in W/K, Zeitkonstante in s
   const T_AIR = 20, HEAT_RATE = 3, UMAX = 12, KQ = 600, SP = 26;           // Punkte im Kabel: Geschwindigkeit KQ·I, Abstand SP
-  const S = { mode:"ntc", env:"water", dia:"rt", view:"3d", fs:1, Tw:20, heat:0, U:6,
+  const S = { mode:"ntc", env:"water", dia:"rt", view:"3d", fs:1, Tw:20, heat:0, U:6, catT:25,
               T:{ ntc:20, ptc:20 }, pts:[], seq:null, t:0, ph:{}, part:{}, bub:[], k:1 };
-  const keys = () => S.mode === "both" ? ["ntc", "ptc"] : [S.mode];
+  const keys = () => S.mode === "both" ? ["ntc", "ptc"] : S.mode === "list" ? [] : [S.mode];
   const amb = () => S.env === "water" ? S.Tw : T_AIR;
   const R = k => M[k].R(S.T[k]);
   const I = k => S.U / R(k);
@@ -762,7 +774,7 @@
   let CW = 0, CH = 0;
   function resize() {
     const phone = window.innerWidth <= 640 && !document.body.classList.contains("nopanel");
-    if (phone) { const L = layout(stage.clientWidth || window.innerWidth, 1000); stage.style.height = Math.ceil(L.total + 8) + "px"; }
+    if (phone) { const w = stage.clientWidth || window.innerWidth, L = layout(w, 1000); stage.style.height = Math.ceil(S.mode === "list" ? w * 1.05 + 64 : L.total + 8) + "px"; }
     else stage.style.height = "";
     const dpr = window.devicePixelRatio || 1, r = cv.getBoundingClientRect();
     CW = r.width; CH = r.height;
@@ -774,6 +786,7 @@
     const W = CW, H = CH; if (!W || !H) return;
     ctx.clearRect(0, 0, W, H);
     ctx.fillStyle = "#e9edf2"; ctx.fillRect(0, 0, W, H);
+    if (S.mode === "list") { drawCatalog(ctx, W < 560 ? { x:6, y:54, w:W - 12, h:W * 1.05 } : { x:8, y:56, w:W - 16, h:H - 64 }); return; }
     const Lo = layout(W, H), s = Lo.setup;
     const VX = S.mode === "ptc" ? 330 : 15, VY = 14, VW = S.mode === "both" ? 985 : 670, VH = 604, k = Math.min(s.w / VW, s.h / VH), ox = s.x + (s.w - VW * k) / 2 - VX * k, oy = s.y + (s.h - VH * k) / 2 - VY * k;
     ctx.save(); ctx.beginPath(); ctx.rect(s.x, 0, s.w, s.y + s.h); ctx.clip();
@@ -783,6 +796,79 @@
     ctx.restore();
     if (Lo.dia) drawDia(ctx, Lo.dia);
     if (Lo.inner) drawInner(ctx, Lo.inner);
+  }
+
+  // ---------- Reiter „Bauteile“: typische Bauteile und ihre R-ϑ-Kurven ----------
+  // Typische, gerundete Werte (keine bestimmten Herstellerangaben).
+  const ntcR = (R25, B) => t => R25 * Math.exp(B * (1 / (t + T0) - 1 / 298.15));
+  // Anstieg um x = kk·(ϑ − T_S) Zehnerpotenzen, oberhalb von D − 1 sanft auf höchstens D begrenzt
+  const ptcR = (Rmin, Tr, kk, D) => t => { const x = kk * (t - Tr); return Rmin * (1 + Math.pow(10, x <= D - 1 ? x : D - 1 + Math.tanh(x - D + 1))); };
+  const CAT = [
+    { typ:"NTC", name:"Heißleiter aus dieser Simulation", r25:"1 kΩ", kenn:"B = 3950 K", use:"Übungsbauteil", R:ntcR(1000, 3950), col:"#c0561b", on:true },
+    { typ:"NTC", name:"Temperaturfühler 10 kΩ", r25:"10 kΩ", kenn:"B = 3435 K", use:"Heizung, Kühlschrank, Waschmaschine", R:ntcR(10000, 3435), col:"#e08a00", on:true },
+    { typ:"NTC", name:"Temperaturfühler 100 kΩ", r25:"100 kΩ", kenn:"B = 4250 K", use:"3D-Drucker (heiße Düse)", R:ntcR(100000, 4250), col:"#a0306a", on:false },
+    { typ:"NTC", name:"Einschaltstrombegrenzer", r25:"5 Ω", kenn:"B = 2900 K", use:"Netzteile: kalt bremst er den Stromstoß beim Einschalten", R:ntcR(5, 2900), col:"#7a3d0c", on:false },
+    { typ:"PTC", name:"Kaltleiter aus dieser Simulation", r25:"100 Ω", kenn:"Schalttemp. 60 °C", use:"Übungsbauteil", R:ptcR(100, 60, 0.1, 5), col:"#1f6fb2", on:true },
+    { typ:"PTC", name:"Überlastschutz (Keramik)", r25:"25 Ω", kenn:"Schalttemp. 80 °C", use:"Schutz von Motoren und Trafos vor zu großem Strom", R:ptcR(25, 80, 0.08, 4), col:"#0a8fa3", on:true },
+    { typ:"PTC", name:"Motorschutz-Fühler", r25:"100 Ω", kenn:"Schalttemp. 120 °C", use:"In der Motorwicklung: meldet Überhitzung", R:ptcR(100, 120, 0.15, 4.5), col:"#3b3fb6", on:false },
+    { typ:"PTC", name:"Selbstrückstellende Sicherung (Kunststoff)", r25:"0,1 Ω", kenn:"löst bei ca. 125 °C aus", use:"USB-Anschlüsse, Akkus", R:ptcR(0.1, 125, 0.25, 5), col:"#6f8fc9", on:false },
+    { typ:"Metall", name:"Platin-Messwiderstand Pt100", r25:"110 Ω", kenn:"100 Ω bei 0 °C", use:"Genaue Thermometer im Labor und in der Industrie", R:t => 100 * (1 + 0.00385 * t), col:"#2E7D32", on:true }
+  ];
+  CAT.forEach((c, i) => c.nr = i + 1);
+  const CAT_Y0 = -1, CAT_Y1 = 7;           // Achse R: 0,1 Ω bis 10 MΩ (logarithmisch)
+  function fRc(r) { return r < 1 ? dez(r, 2) + " Ω" : r < 10 ? dez(r, 1) + " Ω" : fR(r); }
+  function catTable() {
+    let h = "<tr><th></th><th style='text-align:left'>Bauteil</th><th>R (25 °C)</th><th>R (" + S.catT + " °C)</th></tr>";
+    CAT.forEach((c, i) => {
+      h += "<tr data-i='" + i + "'><td><input type='checkbox'" + (c.on ? " checked" : "") + "></td><td style='white-space:normal;text-align:left'>" +
+        "<span class='nr' style='background:" + c.col + "'>" + c.nr + "</span> <b>" + c.name + "</b> <span class='typ'>" + c.typ + "</span>" +
+        "<div class='small'>" + c.kenn + " · " + c.use + "</div></td><td>" + fRc(c.R(25)) + "</td><td><b>" + fRc(c.R(S.catT)) + "</b></td></tr>";
+    });
+    $("cat").innerHTML = h;
+  }
+  function drawCatalog(c, r) {
+    const f = S.fs;
+    rr(c, r.x, r.y, r.w, r.h, 10); c.fillStyle = "#fff"; c.fill(); c.strokeStyle = "#d5dbe3"; c.lineWidth = 1; c.stroke();
+    text(c, "R-ϑ-Kurven verschiedener Bauteile", r.x + 12, r.y + 16 * f, 15 * f, "#1F4E79", "left", "700");
+    text(c, "R-Achse logarithmisch: eine Stufe höher = 10-mal so groß", r.x + 12, r.y + 36 * f, 12 * f, "#5b6675", "left", "400");
+    const L = r.x + 62 * f, Rr = r.x + r.w - 40 * f, T = r.y + 58 * f, B = r.y + r.h - 34 * f;
+    if (B - T < 40 || Rr - L < 80) return;
+    const X = t => L + t / 200 * (Rr - L), Y = v => B - (Math.log10(Math.max(v, 1e-3)) - CAT_Y0) / (CAT_Y1 - CAT_Y0) * (B - T);
+    const lab = ["0,1 Ω", "1 Ω", "10 Ω", "100 Ω", "1 kΩ", "10 kΩ", "100 kΩ", "1 MΩ", "10 MΩ"];
+    for (let d = CAT_Y0; d <= CAT_Y1; d++) {
+      c.strokeStyle = "#dfe4ea"; c.lineWidth = 1; c.beginPath(); c.moveTo(L, Y(Math.pow(10, d))); c.lineTo(Rr, Y(Math.pow(10, d))); c.stroke();
+      if (d < CAT_Y1) for (let m = 2; m <= 9; m++) { c.strokeStyle = "#f3f5f8"; c.beginPath(); c.moveTo(L, Y(m * Math.pow(10, d))); c.lineTo(Rr, Y(m * Math.pow(10, d))); c.stroke(); }
+      text(c, lab[d - CAT_Y0], L - 6, Y(Math.pow(10, d)), 11 * f, "#5b6675", "right");
+    }
+    for (let t = 0; t <= 200; t += 20) { c.strokeStyle = "#e8ecf1"; c.beginPath(); c.moveTo(X(t), T); c.lineTo(X(t), B); c.stroke(); text(c, String(t), X(t), B + 10 * f, 11 * f, "#5b6675", "center"); }
+    c.strokeStyle = "#1d2733"; c.lineWidth = 1.5; c.beginPath(); c.moveTo(L, T - 6); c.lineTo(L, B); c.lineTo(Rr + 4, B); c.stroke();
+    text(c, "ϑ in °C", Rr, B + 24 * f, 12 * f, "#1d2733", "right", "600");
+    text(c, "R", L - 6, T - 14 * f, 12 * f, "#1d2733", "right", "600");
+    // Kurven
+    c.save(); c.beginPath(); c.rect(L, T - 2, Rr - L + 2, B - T + 4); c.clip();
+    const on = CAT.filter(e => e.on);
+    on.forEach(e => {
+      c.strokeStyle = e.col; c.lineWidth = 3; c.setLineDash(e.typ === "Metall" ? [9, 5] : []); c.beginPath();
+      for (let t = 0; t <= 200; t += 1) { const y = Y(e.R(t)); t ? c.lineTo(X(t), y) : c.moveTo(X(t), y); }
+      c.stroke(); c.setLineDash([]);
+    });
+    // senkrechte Linie bei der gewählten Temperatur
+    const xt = X(S.catT);
+    c.strokeStyle = "rgba(29,39,51,.55)"; c.lineWidth = 1.5; c.setLineDash([5, 4]); c.beginPath(); c.moveTo(xt, T); c.lineTo(xt, B); c.stroke(); c.setLineDash([]);
+    on.forEach(e => { c.fillStyle = "#fff"; c.strokeStyle = e.col; c.lineWidth = 2.5; c.beginPath(); c.arc(xt, Y(e.R(S.catT)), 5, 0, 7); c.fill(); c.stroke(); });
+    c.restore();
+    text(c, "ϑ = " + S.catT + " °C", xt, T - 8 * f, 12 * f, "#1d2733", "center", "700");
+    // Nummern am rechten Ende, so verschoben, dass sie sich nicht überdecken
+    const tags = on.map(e => ({ e, y:Math.max(T, Math.min(B, Y(e.R(200)))) })).sort((a, b) => a.y - b.y);
+    const gap = 18 * f;
+    for (let i = 1; i < tags.length; i++) if (tags[i].y < tags[i - 1].y + gap) tags[i].y = tags[i - 1].y + gap;
+    for (let i = tags.length - 1; i >= 0; i--) { if (tags[i].y > B) tags[i].y = B; if (i < tags.length - 1 && tags[i].y > tags[i + 1].y - gap) tags[i].y = tags[i + 1].y - gap; }
+    tags.forEach(t => {
+      const y0 = Math.max(T, Math.min(B, Y(t.e.R(200))));
+      c.strokeStyle = t.e.col; c.lineWidth = 1.2; c.beginPath(); c.moveTo(Rr, y0); c.lineTo(Rr + 12 * f, t.y); c.stroke();
+      c.fillStyle = t.e.col; c.beginPath(); c.arc(Rr + 22 * f, t.y, 8.5 * f, 0, 7); c.fill();
+      text(c, String(t.e.nr), Rr + 22 * f, t.y + 0.5, 11 * f, "#fff", "center", "700");
+    });
   }
 
   // ---------- Ablauf ----------
@@ -859,6 +945,13 @@
   function expl() {
     const air = S.env === "air", ui = S.dia === "ui";
     let t = "";
+    if (S.mode === "list") {
+      $("expl").innerHTML = "<b>Verschiedene Bauteile im Vergleich.</b> <b>NTC</b> (<i>Negative Temperature Coefficient</i>): Die Kurve fällt, wärmer bedeutet kleinerer Widerstand. " +
+        "<b>PTC</b> (<i>Positive Temperature Coefficient</i>): Die Kurve bleibt erst flach und steigt ab der Schalttemperatur steil an. " +
+        "<b>Metall</b> (gestrichelt): Auch Metalle sind Kaltleiter, ihr Widerstand steigt aber nur langsam und gleichmäßig. " +
+        "Tippe eine Zeile an, um ihre Kurve ein- oder auszublenden. Mit dem Regler liest du die Widerstände bei einer Temperatur ab.";
+      return;
+    }
     const ntc = "<b>Heißleiter (NTC):</b> NTC steht für <i>Negative Temperature Coefficient</i>, also negativer Temperaturkoeffizient: Steigt die Temperatur, sinkt der Widerstand. Je <b>wärmer</b> er ist, desto <b>kleiner</b> ist sein Widerstand. Heiß leitet er also besser.";
     const ptc = "<b>Kaltleiter (PTC):</b> PTC steht für <i>Positive Temperature Coefficient</i>, also positiver Temperaturkoeffizient: Steigt die Temperatur, steigt der Widerstand. Kalt leitet er gut. Bis etwa 60 °C ändert sich sein Widerstand kaum, darüber wird er sehr schnell <b>sehr groß</b>.";
     if (S.mode === "ntc") t = ntc; else if (S.mode === "ptc") t = ptc;
@@ -888,11 +981,11 @@
   }
   function setHeat(h) { S.heat = h; $("heat").classList.toggle("on", h > 0); $("cool").classList.toggle("on", h < 0); }
   function stopSeq() { if (S.seq) { S.seq = null; $("auto").classList.remove("on"); $("auto").textContent = "Messreihe automatisch"; } }
-  const LINKS = { ntc:"heissleiter", ptc:"kaltleiter", both:"vergleich" };
+  const LINKS = { ntc:"heissleiter", ptc:"kaltleiter", both:"vergleich", list:"bauteile" };
   function linkGet() { let h = ""; try { h = decodeURIComponent(location.hash.slice(1)).toLowerCase(); } catch (e) {} return Object.keys(LINKS).find(k => LINKS[k] === h); }
   function linkSet(k) { try { if (location.hash !== "#" + LINKS[k]) history.replaceState(null, "", "#" + LINKS[k]); } catch (e) {} }
   window.addEventListener("hashchange", () => { const k = linkGet(); if (k && k !== S.mode) setMode(k); });
-  function setMode(m) { stopSeq(); S.mode = m; linkSet(m); outs(); resize(); }
+  function setMode(m) { stopSeq(); setHeat(0); S.mode = m; linkSet(m); document.body.classList.toggle("list", m === "list"); if (m === "list") catTable(); outs(); resize(); }
   function setEnv(e) {
     stopSeq(); S.env = e; setHeat(0);
     outs(); draw();
@@ -909,6 +1002,12 @@
     store.set("hk_view", v); draw();
   }
   document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => setMode(b.dataset.m));
+  $("ct").addEventListener("input", () => { S.catT = +$("ct").value; $("cto").textContent = S.catT + " °C"; catTable(); draw(); });
+  $("cto").textContent = S.catT + " °C";
+  $("cat").addEventListener("click", e => {
+    const tr = e.target.closest("tr[data-i]"); if (!tr) return;
+    const c = CAT[+tr.dataset.i]; c.on = !c.on; catTable(); draw();
+  });
   document.querySelectorAll("#envs button").forEach(b => b.onclick = () => setEnv(b.dataset.e));
   document.querySelectorAll("#dias button").forEach(b => b.onclick = () => { S.dia = b.dataset.d; outs(); });
   $("tw").addEventListener("input", () => { setHeat(0); S.Tw = +$("tw").value; outs(); });
