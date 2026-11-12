@@ -155,7 +155,7 @@
       <div id="mwWrap"><table id="mw"></table></div>
       <div class="small"><b>Vereinfachungen:</b> Ausgedachte, aber typische Bauteile: Heißleiter mit 1 kΩ bei 25 °C (B = 3950 K),
         Kaltleiter mit 100 Ω und Schalttemperatur 60 °C (unterhalb fast konstant, darunter in Wirklichkeit leicht fallend).
-        Messgeräte ideal (Strommesser ohne Widerstand, Spannungsmesser ohne Strom). Im Wasserbad hat das Bauteil fast die Wassertemperatur.
+        Strommesser ideal (ohne Widerstand), die Spannung zeigt das Netzgerät. Im Wasserbad hat das Bauteil fast die Wassertemperatur.
         In Luft (20 °C) erwärmt es sich durch den eigenen Strom, das Abkühlen in Luft ist stark vereinfacht. Erwärmen im Zeitraffer.
         Das Teilchenbild ist nur ein Modell. Die Punkte im Kabel laufen umso schneller, je größer die Stromstärke ist.</div>
     </div>
@@ -240,77 +240,56 @@
   }
   const cat = (...parts) => parts.reduce((a, b) => a.concat(a.length ? b.slice(1) : b), []);
 
-  // Aufbau: Wege in Stromrichtung (technisch). pot: "U" oder 0, cur: Bauteil, "sum" oder 0 (Spannungsmesser)
+  // Aufbau: Heißleiter immer links, Kaltleiter immer rechts, jeder mit eigenem Netzgerät und Strommesser.
+  // Wege in Stromrichtung (technisch). pot: "U" oder 0, cur: Bauteil
+  const BK = { x0:400, x1:640, top:255, bot:545, wt:300 };
   function geo3d(mode) {
-    const g = { wires:[], comps:[], meters:[], posts:[], plugs:[] };
+    const g = { wires:[], comps:[], meters:[], posts:[], plugs:[], psus:[], thermoX:520 };
     const W = (id, pts, pot, c, plugs) => { g.wires.push({ id, p:mk(pts), pot, cur:c }); (plugs || []).forEach(q => g.plugs.push({ x:q[0], y:q[1], pot })); };
-    if (mode !== "both") {
-      const k = mode;
-      g.meters.push({ x:300, y:40, w:150, h:185, kind:"A", key:k, sock:[[340, 205, "mA", "#c62828"], [410, 205, "COM", "#222"]] });
-      g.meters.push({ x:840, y:40, w:150, h:185, kind:"V", sock:[[880, 205, "V", "#c62828"], [950, 205, "COM", "#222"]] });
-      g.posts = [[610, 165, "#c62828"], [760, 165, "#222"]];
-      g.thermoX = 800;
-      W("a1", bz([205, 548], [215, 470], [335, 330], [340, 205]), "U", k, [[205, 548], [340, 205]]);
-      W("a2", bz([410, 205], [415, 320], [600, 290], [610, 165]), "U", k, [[410, 205]]);
-      W("l1", bz([610, 165], [615, 260], [668, 360], [672, 455]), "U", k);
-      g.comps.push({ key:k, a:[672, 455], b:[698, 455] });
-      W("l2", bz([698, 455], [702, 360], [755, 260], [760, 165]), 0, k);
-      W("r", cat(bz([760, 165], [840, 180], [870, 400], [868, 600]), [[868, 600], [125, 606]], bz([125, 606], [100, 606], [95, 590], [95, 548])), 0, k, [[95, 548]]);
-      W("v1", bz([880, 205], [870, 330], [640, 300], [610, 165]), "U", 0, [[880, 205]]);
-      W("v2", bz([950, 205], [950, 310], [780, 270], [760, 165]), 0, 0, [[950, 205]]);
-    } else {
-      g.meters.push({ x:285, y:40, w:140, h:185, kind:"A", key:"ntc", sock:[[322, 205, "mA", "#c62828"], [388, 205, "COM", "#222"]] });
-      g.meters.push({ x:445, y:40, w:140, h:185, kind:"A", key:"ptc", sock:[[482, 205, "mA", "#c62828"], [548, 205, "COM", "#222"]] });
-      g.posts = [[600, 165, "#c62828"], [690, 165, "#222"], [780, 165, "#c62828"]];
-      g.thermoX = 805;
-      W("a1", bz([199, 548], [205, 470], [318, 330], [322, 205]), "U", "ntc", [[199, 548], [322, 205]]);
-      W("b1", bz([211, 548], [222, 480], [478, 340], [482, 205]), "U", "ptc", [[211, 548], [482, 205]]);
-      W("a2", bz([388, 205], [393, 320], [590, 290], [600, 165]), "U", "ntc", [[388, 205]]);
-      W("b2", bz([548, 205], [560, 90], [760, 60], [780, 165]), "U", "ptc", [[548, 205]]);
-      W("la", bz([600, 165], [604, 260], [628, 360], [632, 455]), "U", "ntc");
-      g.comps.push({ key:"ntc", a:[632, 455], b:[658, 455] });
-      W("lb", bz([658, 455], [662, 360], [686, 260], [690, 165]), 0, "ntc");
-      W("lc", bz([780, 165], [776, 260], [752, 360], [748, 455]), "U", "ptc");
-      g.comps.push({ key:"ptc", a:[748, 455], b:[722, 455] });
-      W("ld", bz([722, 455], [718, 360], [694, 260], [690, 165]), 0, "ptc");
-      W("r", cat(bz([690, 165], [700, 105], [880, 130], [878, 600]), [[878, 600], [125, 606]], bz([125, 606], [100, 606], [95, 590], [95, 548])), 0, "sum", [[95, 548]]);
+    if (mode !== "ptc") {
+      g.psus.push({ x:15, w:200, plus:[65, 548], minus:[165, 548] });
+      g.meters.push({ x:100, y:40, w:130, h:185, kind:"A", key:"ntc", sock:[[130, 205, "mA", "#c62828"], [200, 205, "COM", "#222"]] });
+      g.posts.push([475, 165, "#c62828"], [425, 165, "#222"]);
+      W("a1", bz([65, 548], [0, 560], [20, 300], [130, 205]), "U", "ntc", [[65, 548], [130, 205]]);
+      W("a2", bz([200, 205], [225, 90], [460, 70], [475, 165]), "U", "ntc", [[200, 205]]);
+      W("la", bz([475, 165], [476, 260], [465, 360], [463, 455]), "U", "ntc");
+      g.comps.push({ key:"ntc", a:[463, 455], b:[437, 455], side:-1 });
+      W("lb", bz([437, 455], [435, 360], [424, 260], [425, 165]), 0, "ntc");
+      W("r1", bz([425, 165], [370, 260], [260, 600], [165, 548]), 0, "ntc", [[165, 548]]);
+    }
+    if (mode !== "ntc") {
+      g.psus.push({ x:785, w:200, plus:[935, 548], minus:[835, 548] });
+      g.meters.push({ x:770, y:40, w:130, h:185, kind:"A", key:"ptc", sock:[[800, 205, "COM", "#222"], [870, 205, "mA", "#c62828"]] });
+      g.posts.push([565, 165, "#c62828"], [615, 165, "#222"]);
+      W("b1", bz([935, 548], [1000, 560], [980, 300], [870, 205]), "U", "ptc", [[935, 548], [870, 205]]);
+      W("b2", bz([800, 205], [775, 90], [580, 70], [565, 165]), "U", "ptc", [[800, 205]]);
+      W("lc", bz([565, 165], [564, 260], [575, 360], [577, 455]), "U", "ptc");
+      g.comps.push({ key:"ptc", a:[577, 455], b:[603, 455], side:1 });
+      W("ld", bz([603, 455], [605, 360], [616, 260], [615, 165]), 0, "ptc");
+      W("r2", bz([615, 165], [670, 260], [780, 600], [835, 548]), 0, "ptc", [[835, 548]]);
     }
     return g;
   }
   function geoSym(mode) {
-    const g = { wires:[], comps:[], meters:[], nodes:[] };
+    const g = { wires:[], comps:[], meters:[], srcs:[], gnds:[], bath:mode === "both" ? [340, 215, 320, 190] : mode === "ntc" ? [340, 215, 160, 190] : [500, 215, 160, 190] };
     const W = (id, pts, pot, c) => g.wires.push({ id, p:mk(pts), pot, cur:c });
-    if (mode !== "both") {
-      const k = mode;
-      g.src = { x:150, y1:300, y2:320 };
-      W("a1", [[150, 300], [150, 120], [374, 120]], "U", k);
-      g.meters.push({ x:400, y:120, kind:"A", key:k, lab:"right" });
-      W("a2", [[426, 120], [650, 120], [650, 270]], "U", k);
-      g.comps.push({ key:k, x:650, y1:270, y2:350 });
-      W("r", [[650, 350], [650, 500], [150, 500], [150, 320]], 0, k);
-      W("v1", [[650, 170], [850, 170], [850, 284]], "U", 0);
-      g.meters.push({ x:850, y:310, kind:"V", lab:"right" });
-      W("v2", [[850, 336], [850, 450], [650, 450]], 0, 0);
-      g.nodes = [[650, 170], [650, 450]];
-      g.bath = [565, 230, 170, 160];
-      g.gnd = [300, 500];
-    } else {
-      g.src = { x:120, y1:300, y2:320 };
-      W("m1", [[120, 300], [120, 100], [480, 100]], "U", "sum");
-      W("b1a", [[480, 100], [480, 164]], "U", "ntc");
-      g.meters.push({ x:480, y:190, kind:"A", key:"ntc", lab:"left" });
-      W("b1b", [[480, 216], [480, 300]], "U", "ntc");
-      g.comps.push({ key:"ntc", x:480, y1:300, y2:380 });
-      W("b1c", [[480, 380], [480, 520]], 0, "ntc");
-      W("b2a", [[480, 100], [760, 100], [760, 164]], "U", "ptc");
-      g.meters.push({ x:760, y:190, kind:"A", key:"ptc", lab:"right" });
-      W("b2b", [[760, 216], [760, 300]], "U", "ptc");
-      g.comps.push({ key:"ptc", x:760, y1:300, y2:380 });
-      W("b2c", [[760, 380], [760, 520], [480, 520]], 0, "ptc");
-      W("m2", [[480, 520], [120, 520], [120, 320]], 0, "sum");
-      g.nodes = [[480, 100], [480, 520]];
-      g.bath = [395, 262, 450, 156];
-      g.gnd = [300, 520];
+    if (mode !== "ptc") {
+      g.srcs.push({ x:100, y1:300, y2:320, side:1 });
+      W("a1", [[100, 300], [100, 120], [234, 120]], "U", "ntc");
+      g.meters.push({ x:260, y:120, kind:"A", key:"ntc" });
+      W("a2", [[286, 120], [420, 120], [420, 270]], "U", "ntc");
+      g.comps.push({ key:"ntc", x:420, y1:270, y2:350, side:-1 });
+      W("r1", [[420, 350], [420, 500], [100, 500], [100, 320]], 0, "ntc");
+      g.gnds.push([260, 500]);
+    }
+    if (mode !== "ntc") {
+      g.srcs.push({ x:900, y1:300, y2:320, side:-1 });
+      W("b1", [[900, 300], [900, 120], [766, 120]], "U", "ptc");
+      g.meters.push({ x:740, y:120, kind:"A", key:"ptc" });
+      W("b2", [[714, 120], [580, 120], [580, 270]], "U", "ptc");
+      g.comps.push({ key:"ptc", x:580, y1:270, y2:350, side:1 });
+      W("r2", [[580, 350], [580, 500], [900, 500], [900, 320]], 0, "ptc");
+      g.gnds.push([740, 500]);
     }
     return g;
   }
@@ -357,17 +336,18 @@
   }
 
   // ---------- 3D-Geräte ----------
-  function drawPSU(c) {
-    const x = 30, y = 390, w = 240, h = 190;
+  function drawPSU(c, p) {
+    const x = p.x, y = 390, w = p.w, h = 190;
     box3d(c, x, y, w, h, 16, "#c9ced6", "#e7eaee", "#9aa2ad", 10);
     let g = c.createLinearGradient(0, y + 10, 0, y + h - 10); g.addColorStop(0, "#34495e"); g.addColorStop(1, "#22303d");
     rr(c, x + 10, y + 10, w - 20, h - 20, 7); c.fillStyle = g; c.fill();
     text(c, "Netzgerät", x + 22, y + 26, 14, "#dfe6ee", "left", "600");
-    rr(c, x + 22, y + 42, 128, 48, 5); c.fillStyle = "#0b0b0b"; c.fill();
+    const dw = w - 108;
+    rr(c, x + 20, y + 42, dw, 48, 5); c.fillStyle = "#0b0b0b"; c.fill();
     c.strokeStyle = "#566573"; c.lineWidth = 2; c.stroke();
-    text(c, dez(S.U, 1) + " V", x + 142, y + 67, 30, "#ff5040", "right", "700");
+    text(c, dez(S.U, 1) + " V", x + 12 + dw, y + 67, dw > 110 ? 30 : 26, "#ff5040", "right", "700");
     // Drehknopf
-    const kx = x + 192, ky = y + 72, a = (-135 + 270 * S.U / UMAX) * Math.PI / 180;
+    const kx = x + w - 46, ky = y + 72, a = (-135 + 270 * S.U / UMAX) * Math.PI / 180;
     for (let i = 0; i <= 12; i += 2) { const b = (-135 + 270 * i / 12) * Math.PI / 180;
       c.strokeStyle = "#cfd8e3"; c.lineWidth = 1.5; c.beginPath(); c.moveTo(kx + Math.sin(b) * 31, ky - Math.cos(b) * 31); c.lineTo(kx + Math.sin(b) * 36, ky - Math.cos(b) * 36); c.stroke(); }
     c.save(); c.shadowColor = "rgba(0,0,0,.6)"; c.shadowBlur = 8; c.shadowOffsetY = 3;
@@ -376,9 +356,9 @@
     c.strokeStyle = "#fff"; c.lineWidth = 3.5; c.lineCap = "round"; c.beginPath(); c.moveTo(kx + Math.sin(a) * 8, ky - Math.cos(a) * 8); c.lineTo(kx + Math.sin(a) * 22, ky - Math.cos(a) * 22); c.stroke();
     text(c, "U", kx, ky + 42, 12, "#cfd8e3", "center", "600");
     // Buchsen
-    socket(c, 95, 548, "#333"); socket(c, 205, 548, "#d32f2f");
-    text(c, "−", 95, 520, 20, "#fff", "center", "700"); text(c, "+", 205, 520, 20, "#ff8a80", "center", "700");
-    text(c, "0 V (Erde)", 122, 548, 11, "#7ee08a", "left", "600");
+    socket(c, p.minus[0], p.minus[1], "#333"); socket(c, p.plus[0], p.plus[1], "#d32f2f");
+    text(c, "−", p.minus[0], p.minus[1] - 28, 20, "#fff", "center", "700"); text(c, "+", p.plus[0], p.plus[1] - 28, 20, "#ff8a80", "center", "700");
+    text(c, "0 V (Erde)", p.minus[0], p.minus[1] + 22, 10, "#7ee08a", "center", "600");
   }
   function drawMeter(c, m) {
     const { x, y, w, h } = m;
@@ -388,7 +368,7 @@
     let g = c.createLinearGradient(0, y + 18, 0, y + 66); g.addColorStop(0, "#d3dfbd"); g.addColorStop(1, "#aebb95");
     rr(c, x + 17, y + 18, w - 34, 46, 4); c.fillStyle = g; c.fill();
     text(c, val, x + w - 24, y + 42, val.length > 8 ? 21 : 24, "#1b2412", "right", "700");
-    const t = m.kind === "A" ? (S.mode === "both" ? "Strom " + M[m.key].sym : "Strommesser") : "Spannungsmesser";
+    const t = "Strommesser";
     text(c, t, x + w / 2, y + 78, 14, "#e8edf2", "center", "600");
     const cx = x + w / 2, cy = y + 122;
     g = c.createRadialGradient(cx - 6, cy - 7, 2, cx, cy, 26); g.addColorStop(0, "#9aa3ad"); g.addColorStop(1, "#4a525c");
@@ -399,16 +379,16 @@
     m.sock.forEach(s => { socket(c, s[0], s[1], s[3]); text(c, s[2], s[0], s[1] - 19, 12, "#e8edf2", "center", "600"); });
   }
   function drawHolder(c, g) {
-    let gr = c.createLinearGradient(514, 0, 528, 0); gr.addColorStop(0, "#8d949c"); gr.addColorStop(0.4, "#eef1f4"); gr.addColorStop(1, "#6b727a");
-    c.fillStyle = gr; c.fillRect(515, 150, 12, 445);
-    rr(c, 470, 588, 102, 16, 4); c.fillStyle = "#3d434a"; c.fill();
-    const x2 = g.posts[g.posts.length - 1][0] + 30;
+    const xs = g.posts.map(p => p[0]), xa = Math.min(...xs) - 30, xb = Math.max(...xs) + 30, rx = xa < 520 ? 352 : 676;
+    let gr = c.createLinearGradient(rx, 0, rx + 12, 0); gr.addColorStop(0, "#8d949c"); gr.addColorStop(0.4, "#eef1f4"); gr.addColorStop(1, "#6b727a");
+    c.fillStyle = gr; c.fillRect(rx, 150, 12, 445);
+    rr(c, rx - 44, 588, 100, 16, 4); c.fillStyle = "#3d434a"; c.fill();
+    const x0 = Math.min(rx, xa), x1 = Math.max(rx + 12, xb);
     gr = c.createLinearGradient(0, 157, 0, 173); gr.addColorStop(0, "#eef1f4"); gr.addColorStop(1, "#7d848c");
-    c.fillStyle = gr; c.fillRect(515, 158, x2 - 515, 14);
-    rr(c, 508, 150, 26, 30, 4); c.fillStyle = "#4b525a"; c.fill();
+    c.fillStyle = gr; c.fillRect(x0, 158, x1 - x0, 14);
+    rr(c, rx - 7, 150, 26, 30, 4); c.fillStyle = "#4b525a"; c.fill();
     g.posts.forEach(p => { rr(c, p[0] - 16, 152, 32, 26, 5); c.fillStyle = "#f4f4f0"; c.fill(); c.strokeStyle = "#aaa"; c.lineWidth = 1; c.stroke(); socket(c, p[0], p[1], p[2]); });
   }
-  const BK = { x0:560, x1:820, top:255, bot:545, wt:300 };
   function waterCol(a) { return "rgba(110,170,230," + a + ")"; }
   function drawBeakerBack(c) {
     const { x0, x1, top, bot } = BK;
@@ -423,7 +403,7 @@
     // Blasen beim Erwärmen
     S.bub.forEach(b => { c.strokeStyle = "rgba(255,255,255,.85)"; c.lineWidth = 1.3; c.beginPath(); c.arc(b.x, b.y, b.r, 0, 7); c.stroke(); });
     if (S.heat < 0 || S.Tw < 3) {          // Eiswürfel
-      [[600, -6], [650, 4], [745, -2]].forEach(([x, r]) => {
+      [[0.17, -6], [0.5, 4], [0.83, -2]].forEach(([u, r]) => { const x = x0 + u * (x1 - x0);
         c.save(); c.translate(x, wt + 2); c.rotate(r * Math.PI / 180);
         rr(c, -16, -14, 32, 26, 5); c.fillStyle = "rgba(235,248,255,.85)"; c.fill(); c.strokeStyle = "rgba(150,190,220,.9)"; c.lineWidth = 1.5; c.stroke();
         c.strokeStyle = "rgba(255,255,255,.95)"; c.beginPath(); c.moveTo(-10, -8); c.lineTo(4, -8); c.stroke(); c.restore();
@@ -439,7 +419,7 @@
     for (let i = 1; i <= 4; i++) { const yy = bot - i * 50; c.strokeStyle = "rgba(255,255,255,.7)"; c.lineWidth = 1.5; c.beginPath(); c.moveTo(x1 - 40, yy); c.lineTo(x1 - 22, yy); c.stroke(); }
   }
   function drawHeater(c) {
-    const x = 535, y = 547, w = 310, h = 44;
+    const x = BK.x0 - 25, y = 547, w = BK.x1 - BK.x0 + 50, h = 44;
     box3d(c, x, y, w, h, 10, "#eceff2", "#ffffff", "#b8bec6", 6);
     let g = c.createLinearGradient(0, y - 6, 0, y + 4);
     const glow = S.heat > 0 ? 1 : 0;
@@ -451,7 +431,7 @@
     c.fillStyle = g; c.beginPath(); c.arc(x + w - 34, y + 24, 12, 0, 7); c.fill();
   }
   function drawThermo(c, x) {
-    const yb = 520, y0 = 500, y100 = 232, top = 196;
+    const yb = 520, y0 = 500, y100 = 262, top = 230;
     rr(c, x - 7, top, 14, yb - top, 7); c.fillStyle = "rgba(255,255,255,.7)"; c.fill(); c.strokeStyle = "rgba(90,110,130,.6)"; c.lineWidth = 1.2; c.stroke();
     for (let t = 0; t <= 100; t += 10) { const yy = y0 + (y100 - y0) * t / 100; c.strokeStyle = "#555"; c.lineWidth = 1; c.beginPath(); c.moveTo(x - 6, yy); c.lineTo(x - (t % 50 ? 1 : -1), yy); c.stroke(); }
     const yy = y0 + (y100 - y0) * Math.max(-2, S.Tw) / 100;
@@ -460,7 +440,7 @@
     c.fillStyle = "rgba(255,255,255,.6)"; c.beginPath(); c.arc(x - 3, yb - 3, 3, 0, 7); c.fill();
   }
   function thermoLabel(c, x) {
-    const ly = 330;
+    const ly = 222; x -= 50;
     rr(c, x + 12, ly - 14, 76, 28, 6); c.fillStyle = "rgba(255,255,255,.95)"; c.fill(); c.strokeStyle = "#c62828"; c.lineWidth = 1.5; c.stroke();
     text(c, dez(S.Tw, 0) + " °C", x + 50, ly, 16, "#b71c1c", "center", "700");
   }
@@ -485,7 +465,7 @@
   function compTag(c, cp) {
     const k = cp.key, cx = (cp.a[0] + cp.b[0]) / 2, cy = cp.a[1] + 24, T = S.T[k];
     const tag = M[k].name + (S.env === "air" ? ": " + dez(T, 0) + " °C" : "");
-    const tw = (c.font = "700 16px " + FONT, c.measureText(tag).width + 14), tx = S.mode === "both" ? (k === "ntc" ? cx - 4 - tw : cx + 4) : cx - tw / 2, ty = cy + 40;
+    const tw = (c.font = "700 16px " + FONT, c.measureText(tag).width + 14), tx = cp.side < 0 ? cx - 4 - tw : cx + 4, ty = cy + 40;
     rr(c, tx, ty - 13, tw, 26, 6); c.fillStyle = "rgba(255,255,255,.94)"; c.fill(); c.strokeStyle = M[k].col; c.lineWidth = 1.5; c.stroke();
     text(c, tag, tx + 7, ty, 16, M[k].col, "left", "700");
   }
@@ -523,21 +503,21 @@
     const water = S.env === "water";
     if (water) { drawHeater(c); drawBeakerBack(c); }
     else {
-      text(c, "Luft: " + T_AIR + " °C", 690, 560, 15, "#5b6675", "center", "600");
+      text(c, "Luft: " + T_AIR + " °C", 520, 560, 15, "#5b6675", "center", "600");
     }
     const leads = g.wires.filter(w => w.id[0] === "l");
     leads.forEach(w => cable(c, w));
     g.comps.forEach(cp => drawComp(c, cp));
     if (water) { drawWater(c); drawThermo(c, g.thermoX); drawBeakerFront(c); }
     g.comps.forEach(cp => compTag(c, cp));
-    drawPSU(c);
+    g.psus.forEach(p => drawPSU(c, p));
     g.meters.forEach(m => drawMeter(c, m));
     g.wires.filter(w => w.id[0] !== "l").forEach(w => cable(c, w));
     g.plugs.forEach(p => plug(c, p.x, p.y, p.pot === "U" ? S.U : 0));
     g.posts.forEach(p => { c.fillStyle = "rgba(0,0,0,.25)"; c.beginPath(); c.arc(p[0], p[1], 6, 0, 7); c.fill(); });
     if (water) thermoLabel(c, g.thermoX);
     charges(c, g.wires, 3.8);
-    potLegend(c, 30, 32);
+    potLegend(c, 410, 32);
   }
   function potLegend(c, x, y) {
     const w = 220;
@@ -557,8 +537,9 @@
     c.strokeStyle = "#1d2733"; c.lineWidth = 2;
     c.beginPath(); c.moveTo(x - 30, y2 + 6); c.lineTo(x - 18, y2 + 6); c.lineTo(x + 26, y1 - 8); c.stroke();
     text(c, (k === "ntc" ? "−ϑ" : "+ϑ"), x - 34, y2 + 22, 17, "#1d2733", "left", "700");
-    text(c, M[k].name, x + 24, (y1 + y2) / 2 - 13, 21, M[k].col, "left", "700");
-    text(c, "R = " + fR(R(k)), x + 24, (y1 + y2) / 2 + 13, 19, "#1d2733", "left", "600");
+    const lx = cp.side < 0 ? x - 36 : x + 36, al = cp.side < 0 ? "right" : "left";
+    text(c, M[k].name, lx, (y1 + y2) / 2 - 13, 21, M[k].col, al, "700");
+    text(c, "R = " + fR(R(k)), lx, (y1 + y2) / 2 + 13, 19, "#1d2733", al, "600");
   }
   function drawSetupSym(c, vx0, vx1) {
     const g = geoSym(S.mode);
@@ -571,32 +552,32 @@
     c.setLineDash([8, 6]); rr(c, b[0], b[1], b[2], b[3], 14);
     c.fillStyle = S.env === "water" ? "rgba(120,180,235,.18)" : "rgba(240,240,240,.5)"; c.fill();
     c.strokeStyle = S.env === "water" ? "#4a90d9" : "#9aa3ad"; c.lineWidth = 2; c.stroke(); c.setLineDash([]);
-    text(c, S.env === "water" ? "Wasserbad: " + dez(S.Tw, 0) + " °C" : "Luft: " + T_AIR + " °C", S.mode === "both" ? b[0] + b[2] / 2 : b[0] - 10, b[1] + 18, 19, S.env === "water" ? "#2b6cb0" : "#5b6675", S.mode === "both" ? "center" : "right", "700");
+    text(c, S.env === "water" ? "Wasserbad: " + dez(S.Tw, 0) + " °C" : "Luft: " + T_AIR + " °C", S.mode === "both" ? b[0] + b[2] / 2 : S.mode === "ntc" ? b[0] + b[2] + 10 : b[0] - 10, S.mode === "both" ? b[1] + b[3] - 14 : b[1] + b[3] / 2, S.mode === "both" ? 16 : 19,
+      S.env === "water" ? "#2b6cb0" : "#5b6675", S.mode === "both" ? "center" : S.mode === "ntc" ? "left" : "right", "700");
     g.wires.forEach(w => { polyline(c, w.p.pts); c.strokeStyle = potColor(potOf(w)); c.lineWidth = 5; c.lineCap = "round"; c.lineJoin = "round"; c.stroke(); });
-    g.nodes.forEach(n => { c.fillStyle = potColor(n[1] < 300 ? S.U : 0); c.beginPath(); c.arc(n[0], n[1], 7, 0, 7); c.fill(); });
-    // Spannungsquelle
-    const s = g.src;
-    c.fillStyle = "#fbfcfd"; c.fillRect(s.x - 40, s.y1 + 2, 80, s.y2 - s.y1 - 4);
-    c.strokeStyle = potColor(S.U); c.lineWidth = 3; c.beginPath(); c.moveTo(s.x - 32, s.y1); c.lineTo(s.x + 32, s.y1); c.stroke();
-    c.strokeStyle = potColor(0); c.lineWidth = 8; c.beginPath(); c.moveTo(s.x - 14, s.y2); c.lineTo(s.x + 14, s.y2); c.stroke();
-    text(c, "+", s.x - 44, s.y1 - 8, 18, "#b91c1c", "center", "700"); text(c, "−", s.x - 44, s.y2 + 10, 20, "#1d2733", "center", "700");
-    text(c, "U = " + dez(S.U, 1) + " V", s.x + 40, (s.y1 + s.y2) / 2, 21, "#1d2733", "left", "700");
+    // Spannungsquellen (beide auf dieselbe Spannung eingestellt)
+    g.srcs.forEach(s => {
+      c.fillStyle = "#fbfcfd"; c.fillRect(s.x - 40, s.y1 + 2, 80, s.y2 - s.y1 - 4);
+      c.strokeStyle = potColor(S.U); c.lineWidth = 3; c.beginPath(); c.moveTo(s.x - 32, s.y1); c.lineTo(s.x + 32, s.y1); c.stroke();
+      c.strokeStyle = potColor(0); c.lineWidth = 8; c.beginPath(); c.moveTo(s.x - 14, s.y2); c.lineTo(s.x + 14, s.y2); c.stroke();
+      text(c, "+", s.x - 44 * s.side, s.y1 - 8, 18, "#b91c1c", "center", "700"); text(c, "−", s.x - 44 * s.side, s.y2 + 10, 20, "#1d2733", "center", "700");
+      text(c, "U = " + dez(S.U, 1) + " V", s.x + 40 * s.side, (s.y1 + s.y2) / 2, 21, "#1d2733", s.side > 0 ? "left" : "right", "700");
+    });
     // Erdung
-    const [gx, gy] = g.gnd;
-    c.strokeStyle = potColor(0); c.lineWidth = 4; c.beginPath(); c.moveTo(gx, gy); c.lineTo(gx, gy + 26); c.stroke();
-    [[18, 30], [12, 36], [6, 42]].forEach(([hw, yy]) => { c.beginPath(); c.moveTo(gx - hw, gy + yy); c.lineTo(gx + hw, gy + yy); c.stroke(); });
-    text(c, "0 V", gx + 24, gy + 34, 18, "#2E7D32", "left", "700");
+    g.gnds.forEach(([gx, gy]) => {
+      c.strokeStyle = potColor(0); c.lineWidth = 4; c.beginPath(); c.moveTo(gx, gy); c.lineTo(gx, gy + 26); c.stroke();
+      [[18, 30], [12, 36], [6, 42]].forEach(([hw, yy]) => { c.beginPath(); c.moveTo(gx - hw, gy + yy); c.lineTo(gx + hw, gy + yy); c.stroke(); });
+      text(c, "0 V", gx + 24, gy + 34, 18, "#2E7D32", "left", "700");
+    });
     g.comps.forEach(cp => thermistorSym(c, cp));
     g.meters.forEach(m => {
       c.fillStyle = "#fff"; c.beginPath(); c.arc(m.x, m.y, 26, 0, 7); c.fill();
       c.strokeStyle = "#1d2733"; c.lineWidth = 2.5; c.stroke();
-      text(c, m.kind, m.x, m.y + 1, 22, "#1d2733", "center", "700");
-      const v = m.kind === "A" ? "I = " + fI(I(m.key)) : "U = " + dez(S.U, 2) + " V";
-      const lx = m.lab === "left" ? m.x - 34 : m.x + 34, ly = m.kind === "A" && S.mode !== "both" ? m.y - 40 : m.y;
-      text(c, v, m.kind === "A" && S.mode !== "both" ? m.x : lx, ly, 20, "#1d2733", m.kind === "A" && S.mode !== "both" ? "center" : (m.lab === "left" ? "right" : "left"), "700");
+      text(c, "A", m.x, m.y + 1, 22, "#1d2733", "center", "700");
+      text(c, "I = " + fI(I(m.key)), m.x, m.y - 42, 20, "#1d2733", "center", "700");
     });
     charges(c, g.wires, 4);
-    potLegend(c, 30, 32);
+    potLegend(c, S.mode === "ptc" ? 350 : 30, 32);
   }
 
   // ---------- Diagramm ----------
@@ -698,6 +679,10 @@
       drawBox(c, k, b);
     });
   }
+  function fitText(c, s, x, y, size, maxW, col, weight) {
+    c.font = weight + " " + size + "px " + FONT; const w = c.measureText(s).width;
+    text(c, s, x, y, w > maxW ? Math.max(8, size * maxW / w) : size, col, "left", weight);
+  }
   function drawBox(c, k, b) {
     const f = S.fs, P = S.part[k] || partInit(k), T = S.T[k];
     const capH = 34 * f, bx = b.x, by = b.y + 16 * f, bw = b.w, bh = b.h - 16 * f - capH;
@@ -745,8 +730,8 @@
     let s1, s2;
     if (k === "ntc") { s1 = "Freie Elektronen: " + P.el.length + " (bei " + dez(T, 0) + " °C)"; s2 = "Wärmer → mehr freie Elektronen → R kleiner"; }
     else { const p = pPass(); s1 = T < 55 ? "Elektronen kommen leicht über die Korngrenzen." : "Korngrenzen sperren (rot): nur " + (p > 0.1 ? Math.round(p * 100) + " %" : p > 0.001 ? dez(p * 100, 1) + " %" : "fast keine") + " kommen durch."; s2 = "Ab ca. 60 °C: Sperren wachsen → R steigt stark"; }
-    text(c, s1, bx, by + bh + 11 * f, 12 * f, "#1d2733", "left", "600");
-    text(c, s2, bx, by + bh + 26 * f, 12 * f, "#5b6675", "left", "400");
+    fitText(c, s1, bx, by + bh + 11 * f, 12 * f, bw, "#1d2733", "600");
+    fitText(c, s2, bx, by + bh + 26 * f, 12 * f, bw, "#5b6675", "400");
     if (bw > 180 && S.U > 0.05) text(c, "Elektronen → zum Pluspol", bx + bw - 22, by + 10 * f, 11 * f, "#1565c0", "right", "600");
   }
 
@@ -790,7 +775,7 @@
     ctx.clearRect(0, 0, W, H);
     ctx.fillStyle = "#e9edf2"; ctx.fillRect(0, 0, W, H);
     const Lo = layout(W, H), s = Lo.setup;
-    const VX = 15, VY = 14, VW = 985, VH = 604, k = Math.min(s.w / VW, s.h / VH), ox = s.x + (s.w - VW * k) / 2 - VX * k, oy = s.y + (s.h - VH * k) / 2 - VY * k;
+    const VX = S.mode === "ptc" ? 330 : 15, VY = 14, VW = S.mode === "both" ? 985 : 670, VH = 604, k = Math.min(s.w / VW, s.h / VH), ox = s.x + (s.w - VW * k) / 2 - VX * k, oy = s.y + (s.h - VH * k) / 2 - VY * k;
     ctx.save(); ctx.beginPath(); ctx.rect(s.x, 0, s.w, s.y + s.h); ctx.clip();
     ctx.translate(ox, oy); ctx.scale(k, k);
     const vx0 = (s.x - ox) / k, vx1 = (s.x + s.w - ox) / k;
@@ -874,10 +859,10 @@
   function expl() {
     const air = S.env === "air", ui = S.dia === "ui";
     let t = "";
-    const ntc = "<b>Heißleiter (NTC):</b> Je <b>wärmer</b> er ist, desto <b>kleiner</b> ist sein Widerstand. Heiß leitet er also besser.";
-    const ptc = "<b>Kaltleiter (PTC):</b> Kalt leitet er gut. Bis etwa 60 °C ändert sich sein Widerstand kaum, darüber wird er sehr schnell <b>sehr groß</b>.";
+    const ntc = "<b>Heißleiter (NTC):</b> NTC steht für <i>Negative Temperature Coefficient</i>, also negativer Temperaturkoeffizient: Steigt die Temperatur, sinkt der Widerstand. Je <b>wärmer</b> er ist, desto <b>kleiner</b> ist sein Widerstand. Heiß leitet er also besser.";
+    const ptc = "<b>Kaltleiter (PTC):</b> PTC steht für <i>Positive Temperature Coefficient</i>, also positiver Temperaturkoeffizient: Steigt die Temperatur, steigt der Widerstand. Kalt leitet er gut. Bis etwa 60 °C ändert sich sein Widerstand kaum, darüber wird er sehr schnell <b>sehr groß</b>.";
     if (S.mode === "ntc") t = ntc; else if (S.mode === "ptc") t = ptc;
-    else t = "Beide stecken im selben Wasser und hängen an derselben Spannung. Beim Erwärmen wird der Widerstand des <b class='n'>Heißleiters</b> kleiner, der des <b class='p'>Kaltleiters</b> größer.";
+    else t = "NTC = <i>Negative Temperature Coefficient</i>, PTC = <i>Positive Temperature Coefficient</i>. Beide stecken im selben Wasser. Jeder hat sein eigenes Netzgerät, beide sind immer auf dieselbe Spannung eingestellt. Beim Erwärmen wird der Widerstand des <b class='n'>Heißleiters</b> kleiner, der des <b class='p'>Kaltleiters</b> größer.";
     if (ui && !air) t += " <br>Im Wasserbad bleibt die Temperatur fest. Dann gilt I ~ U: Die U-I-Kennlinie ist eine <b>Gerade</b>. Je nach Wassertemperatur ist sie steiler oder flacher.";
     if (air) {
       if (S.mode !== "ptc") t += " <br>In Luft erwärmt der Strom den Heißleiter. Bei größerer Spannung wird er wärmer, sein Widerstand sinkt: Die U-I-Kennlinie biegt sich <b>nach oben</b>.";
