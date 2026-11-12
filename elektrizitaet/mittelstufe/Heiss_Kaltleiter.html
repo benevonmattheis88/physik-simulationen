@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Heißleiter und Kaltleiter</title>
+<style>
+  :root { --bg:#f4f6f9; --panel:#ffffff; --ink:#1d2733; --muted:#5b6675; --line:#d5dbe3;
+          --blue:#1F4E79; --ntc:#c0561b; --ptc:#1f6fb2; }
+  * { box-sizing:border-box; }
+  html { font-size:14px; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--ink);
+               font-family:-apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow:hidden;
+               -webkit-text-size-adjust:100%; }
+  #app { display:flex; height:100vh; height:100dvh; width:100vw; }
+  #stage { flex:1 1 auto; position:relative; min-width:0; min-height:0; background:#e9edf2; }
+  #cv { position:absolute; inset:0; display:block; width:100%; height:100%; touch-action:none; }
+  #panel { flex:0 0 25rem; max-width:50vw; background:var(--panel); border-left:1px solid var(--line);
+           padding:.6rem .85rem; display:flex; flex-direction:column; gap:.4rem; overflow-y:auto; }
+  body.nopanel #panel { display:none; }
+  #ctrl, #info { display:flex; flex-direction:column; gap:.4rem; min-width:0; }
+  h1 { font-size:1.2rem; margin:0; color:var(--blue); }
+  .seg { display:flex; gap:5px; }
+  .seg button { flex:1; padding-left:.3rem; padding-right:.3rem; }
+  button { font:inherit; font-size:1rem; padding:.45rem .6rem; border-radius:8px; border:1px solid var(--line);
+           background:#eef2f7; color:var(--ink); cursor:pointer; touch-action:manipulation; min-height:2.6rem; }
+  button.on { background:var(--blue); color:#fff; border-color:var(--blue); }
+  button:disabled { opacity:.45; }
+  .lbl { font-size:.86rem; color:var(--muted); margin-top:.1rem; }
+  .row { display:flex; align-items:center; gap:7px; font-size:1rem; }
+  .row label { flex:0 0 6.6rem; }
+  .row input[type=range] { flex:1; min-width:0; height:1.9rem; }
+  .row output { flex:0 0 4.4rem; text-align:right; font-variant-numeric:tabular-nums; font-weight:600; }
+  .row .pm { flex:0 0 2.4rem; min-height:2.3rem; padding:0; font-size:1.15rem; }
+  .checks { display:flex; flex-wrap:wrap; gap:.2rem .9rem; font-size:1rem; }
+  .checks label { display:flex; align-items:center; gap:7px; min-height:2.2rem; cursor:pointer; }
+  .checks input { width:1.5rem; height:1.5rem; margin:0; flex:none; }
+  .btns { display:flex; gap:6px; flex-wrap:wrap; }
+  .btns button { flex:1 1 auto; }
+  #heat.on { background:#c0392b; border-color:#c0392b; }
+  #cool.on { background:#2a7fbf; border-color:#2a7fbf; }
+  #auto.on { background:#2E7D32; border-color:#2E7D32; }
+  table { border-collapse:collapse; width:100%; font-size:.93rem; font-variant-numeric:tabular-nums; }
+  td, th { border-bottom:1px solid var(--line); padding:.18rem .3rem; text-align:right; white-space:nowrap; }
+  td:first-child, th:first-child { text-align:left; }
+  th { color:var(--muted); font-weight:600; }
+  .n { color:var(--ntc); font-weight:600; } .p { color:var(--ptc); font-weight:600; }
+  #mwWrap { max-height:11rem; overflow-y:auto; border:1px solid var(--line); border-radius:8px; }
+  #mwWrap th { position:sticky; top:0; background:#fff; }
+  #expl { font-size:.95rem; background:#f1f6fc; border:1px solid #d3e2f3; border-radius:8px; padding:.4rem .55rem; line-height:1.38; }
+  .small { font-size:.85rem; color:var(--muted); line-height:1.35; }
+  .hidden { display:none !important; }
+
+  #tools { position:absolute; top:8px; right:8px; display:flex; gap:6px; z-index:5; }
+  #tools button { min-width:44px; height:44px; min-height:44px; padding:0 10px; font-size:16px; font-weight:600;
+                  background:rgba(255,255,255,.9); border:1px solid #c3ccd8; border-radius:10px;
+                  box-shadow:0 2px 6px rgba(0,0,0,.2); display:flex; align-items:center; justify-content:center; }
+  #tools button svg { width:22px; height:22px; stroke:var(--ink); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  #tools button:active { background:#dde5ef; }
+
+  @media (max-height: 800px) {
+    h1 { display:none; }
+    button { padding:.3rem .5rem; min-height:2.35rem; }
+    .row input[type=range] { height:1.6rem; }
+    .checks label { min-height:1.8rem; }
+    td, th { padding:.1rem .3rem; }
+  }
+  @media (max-width: 900px) and (orientation: landscape) { #panel { flex-basis:22rem; } .row label { flex-basis:6rem; } }
+
+  /* iPad hochkant: Simulation oben, Bedienfeld zweispaltig darunter */
+  @media (min-width: 641px) and (max-width: 900px) and (orientation: portrait) {
+    #app { flex-direction:column; }
+    #panel { flex:0 0 auto; max-width:none; max-height:42vh; width:100%; border-left:0; border-top:1px solid var(--line);
+             display:grid; grid-template-columns:1fr 1fr; gap:.4rem 1.1rem; align-items:start; }
+    h1 { display:none; }
+  }
+
+  /* Handy hochkant: Simulation oben, Bedienfeld darunter, Seite darf scrollen */
+  @media (max-width: 640px) {
+    html, body { height:auto; overflow:auto; }
+    #app { flex-direction:column; height:auto; min-height:100vh; }
+    #stage { flex:none; height:120vw; }
+    body.nopanel #stage { height:100vh; height:100dvh; }
+    #panel { flex:none; width:100%; max-width:none; border-left:0; border-top:1px solid var(--line); overflow:visible; }
+    h1 { display:block; }
+    #tools button { min-width:40px; height:40px; min-height:40px; padding:0 8px; }
+  }
+
+  #rotate { display:none; position:fixed; inset:0; z-index:50; background:rgba(29,39,51,.94); color:#fff;
+            align-items:center; justify-content:center; text-align:center; padding:20px; }
+  #rotate .box { max-width:420px; display:flex; flex-direction:column; align-items:center; gap:14px; font-size:18px; }
+  #rotate svg { width:80px; height:80px; stroke:#fff; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+  #rotate button { font-size:17px; background:#fff; color:var(--ink); padding:10px 18px; }
+  @media (orientation: landscape) and (max-height: 500px) {
+    body:not(.quer) #rotate { display:flex; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <canvas id="cv"></canvas>
+    <div id="tools">
+      <button id="fsMinus" title="Schrift kleiner">A−</button>
+      <button id="fsPlus" title="Schrift größer">A+</button>
+      <button id="view" title="Darstellung umschalten">Symbol</button>
+      <button id="full" title="Vollbild"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      <button id="panelBtn" title="Bedienfeld aus-/einblenden"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg></button>
+    </div>
+  </div>
+  <div id="panel">
+    <div id="ctrl">
+      <h1>Heißleiter und Kaltleiter</h1>
+      <div class="seg" id="tabs">
+        <button data-m="ntc">Heißleiter</button>
+        <button data-m="ptc">Kaltleiter</button>
+        <button data-m="both">Vergleich</button>
+      </div>
+      <div class="lbl">Wo steckt das Bauteil?</div>
+      <div class="seg" id="envs">
+        <button data-e="water">Im Wasserbad</button>
+        <button data-e="air">In Luft (erwärmt sich selbst)</button>
+      </div>
+      <div class="row water"><label>Wasser ϑ</label><input id="tw" type="range" min="0" max="100" step="1" value="20"><output id="two"></output></div>
+      <div class="btns water">
+        <button id="heat">▲ Erwärmen</button>
+        <button id="cool">▼ Abkühlen</button>
+        <button id="stop">■ Halt</button>
+      </div>
+      <div class="row"><label>Spannung U</label><button class="pm" id="uMinus">−</button><input id="u" type="range" min="0" max="12" step="0.1" value="6"><button class="pm" id="uPlus">+</button><output id="uo"></output></div>
+      <div class="lbl">Diagramm</div>
+      <div class="seg" id="dias">
+        <button data-d="rt">R-ϑ-Diagramm</button>
+        <button data-d="ui">U-I-Diagramm</button>
+      </div>
+      <div class="checks">
+        <label><input id="cbDia" type="checkbox" checked>Diagramm</label>
+        <label><input id="cbIn" type="checkbox" checked>Blick ins Innere</label>
+        <label><input id="cbKl" type="checkbox">Kennlinie zeigen</label>
+        <label><input id="cbEl" type="checkbox">Elektronen im Kabel</label>
+      </div>
+      <div class="btns">
+        <button id="mark">Messpunkt speichern</button>
+        <button id="auto">Messreihe automatisch</button>
+      </div>
+      <div class="btns">
+        <button id="clear">Messwerte löschen</button>
+        <button id="reset">Zurücksetzen</button>
+      </div>
+    </div>
+    <div id="info">
+      <div id="expl"></div>
+      <table id="vals"></table>
+      <div id="mwWrap"><table id="mw"></table></div>
+      <div class="small"><b>Vereinfachungen:</b> Ausgedachte, aber typische Bauteile: Heißleiter mit 1 kΩ bei 25 °C (B = 3950 K),
+        Kaltleiter mit 100 Ω und Schalttemperatur 60 °C (unterhalb fast konstant, darunter in Wirklichkeit leicht fallend).
+        Messgeräte ideal (Strommesser ohne Widerstand, Spannungsmesser ohne Strom). Im Wasserbad hat das Bauteil fast die Wassertemperatur.
+        In Luft (20 °C) erwärmt es sich durch den eigenen Strom, das Abkühlen in Luft ist stark vereinfacht. Erwärmen im Zeitraffer.
+        Das Teilchenbild ist nur ein Modell. Die Punkte im Kabel laufen umso schneller, je größer die Stromstärke ist.</div>
+    </div>
+  </div>
+</div>
+<div id="rotate">
+  <div class="box">
+    <svg viewBox="0 0 64 64"><rect x="20" y="6" width="24" height="42" rx="4"/><path d="M29 42h6"/><path d="M50 30a20 20 0 0 1-12 22M38 52l1-6M38 52l-6-1"/></svg>
+    <div>Bitte das Handy hochkant halten.</div>
+    <button id="rotGo">Trotzdem quer weiter</button>
+  </div>
+</div>
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const cv = $("cv"), ctx = cv.getContext("2d"), stage = $("stage");
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  };
+
+  // ---------- Modell ----------
+  const T0 = 273.15;
+  const M = {
+    ntc: { name:"Heißleiter", sym:"NTC", col:"#c0561b", R:T => 1000 * Math.exp(3950 * (1 / (T + T0) - 1 / 298.15)) },
+    ptc: { name:"Kaltleiter", sym:"PTC", col:"#1f6fb2", R:T => 100 * (1 + Math.pow(10, 0.1 * (T - 60))) }
+  };
+  const ENV = { water:{ delta:2, tau:0.8 }, air:{ delta:0.014, tau:2.5 } };   // Wärmeabgabe in W/K, Zeitkonstante in s
+  const T_AIR = 20, HEAT_RATE = 3, UMAX = 12, KQ = 600, SP = 26;           // Punkte im Kabel: Geschwindigkeit KQ·I, Abstand SP
+  const S = { mode:"ntc", env:"water", dia:"rt", view:"3d", fs:1, Tw:20, heat:0, U:6,
+              T:{ ntc:20, ptc:20 }, pts:[], seq:null, t:0, ph:{}, part:{}, bub:[], k:1 };
+  const keys = () => S.mode === "both" ? ["ntc", "ptc"] : [S.mode];
+  const amb = () => S.env === "water" ? S.Tw : T_AIR;
+  const R = k => M[k].R(S.T[k]);
+  const I = k => S.U / R(k);
+  const cur = c => c === 0 ? 0 : c === "sum" ? keys().reduce((s, k) => s + I(k), 0) : I(c);
+  // stationäre Bauteiltemperatur (für die Kennlinie in Luft): kleinste Lösung von T = T_L + U²/(R(T)·δ)
+  function steadyT(k, U, Ta, env) {
+    const d = ENV[env].delta, f = T => Ta + U * U / (M[k].R(T) * d) - T;
+    let a = Ta, b = Ta;
+    for (let i = 0; i < 2000 && f(b) > 0; i++) b += 0.1;
+    a = b - 0.1;
+    for (let i = 0; i < 30; i++) { const m = (a + b) / 2; if (f(m) > 0) a = m; else b = m; }
+    return (a + b) / 2;
+  }
+
+  // ---------- Formatierung ----------
+  const dez = (x, d) => x.toFixed(d).replace(".", ",");
+  function fR(r) {
+    if (r < 100) return dez(r, 1) + " Ω";
+    if (r < 1000) return dez(r, 0) + " Ω";
+    if (r < 1e6) return dez(r / 1000, r < 1e4 ? 2 : r < 1e5 ? 1 : 0) + " kΩ";
+    return dez(r / 1e6, 2) + " MΩ";
+  }
+  function fI(i) {
+    if (i < 5e-7) return "0,0 mA";
+    if (i < 0.001) return dez(i * 1e6, i < 1e-5 ? 2 : 1) + " µA";
+    return dez(i * 1000, i < 0.1 ? 1 : 0) + " mA";
+  }
+  const fT = t => dez(t, 1) + " °C";
+  function potColor(v, l) { v = Math.max(0, Math.min(UMAX, v)); return "hsl(" + (125 * (1 - Math.pow(v / UMAX, 0.75))).toFixed(1) + ",78%," + (l || 46) + "%)"; }
+
+  // ---------- Pfade ----------
+  function bz(p0, c1, c2, p3, n) {
+    const out = []; n = n || 28;
+    for (let i = 0; i <= n; i++) {
+      const t = i / n, u = 1 - t;
+      out.push([u * u * u * p0[0] + 3 * u * u * t * c1[0] + 3 * u * t * t * c2[0] + t * t * t * p3[0],
+                u * u * u * p0[1] + 3 * u * u * t * c1[1] + 3 * u * t * t * c2[1] + t * t * t * p3[1]]);
+    }
+    return out;
+  }
+  function mk(pts) {
+    const cum = [0];
+    for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+    return { pts, cum, len:cum[cum.length - 1] };
+  }
+  function at(p, s) {
+    let i = 1; while (i < p.cum.length - 1 && p.cum[i] < s) i++;
+    const a = p.pts[i - 1], b = p.pts[i], L = p.cum[i] - p.cum[i - 1] || 1, t = (s - p.cum[i - 1]) / L;
+    return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+  }
+  const cat = (...parts) => parts.reduce((a, b) => a.concat(a.length ? b.slice(1) : b), []);
+
+  // Aufbau: Wege in Stromrichtung (technisch). pot: "U" oder 0, cur: Bauteil, "sum" oder 0 (Spannungsmesser)
+  function geo3d(mode) {
+    const g = { wires:[], comps:[], meters:[], posts:[], plugs:[] };
+    const W = (id, pts, pot, c, plugs) => { g.wires.push({ id, p:mk(pts), pot, cur:c }); (plugs || []).forEach(q => g.plugs.push({ x:q[0], y:q[1], pot })); };
+    if (mode !== "both") {
+      const k = mode;
+      g.meters.push({ x:300, y:40, w:150, h:185, kind:"A", key:k, sock:[[340, 205, "mA", "#c62828"], [410, 205, "COM", "#222"]] });
+      g.meters.push({ x:840, y:40, w:150, h:185, kind:"V", sock:[[880, 205, "V", "#c62828"], [950, 205, "COM", "#222"]] });
+      g.posts = [[610, 165, "#c62828"], [760, 165, "#222"]];
+      g.thermoX = 800;
+      W("a1", bz([205, 548], [215, 470], [335, 330], [340, 205]), "U", k, [[205, 548], [340, 205]]);
+      W("a2", bz([410, 205], [415, 320], [600, 290], [610, 165]), "U", k, [[410, 205]]);
+      W("l1", bz([610, 165], [615, 260], [668, 360], [672, 455]), "U", k);
+      g.comps.push({ key:k, a:[672, 455], b:[698, 455] });
+      W("l2", bz([698, 455], [702, 360], [755, 260], [760, 165]), 0, k);
+      W("r", cat(bz([760, 165], [840, 180], [870, 400], [868, 600]), [[868, 600], [125, 606]], bz([125, 606], [100, 606], [95, 590], [95, 548])), 0, k, [[95, 548]]);
+      W("v1", bz([880, 205], [870, 330], [640, 300], [610, 165]), "U", 0, [[880, 205]]);
+      W("v2", bz([950, 205], [950, 310], [780, 270], [760, 165]), 0, 0, [[950, 205]]);
+    } else {
+      g.meters.push({ x:285, y:40, w:140, h:185, kind:"A", key:"ntc", sock:[[322, 205, "mA", "#c62828"], [388, 205, "COM", "#222"]] });
+      g.meters.push({ x:445, y:40, w:140, h:185, kind:"A", key:"ptc", sock:[[482, 205, "mA", "#c62828"], [548, 205, "COM", "#222"]] });
+      g.posts = [[600, 165, "#c62828"], [690, 165, "#222"], [780, 165, "#c62828"]];
+      g.thermoX = 805;
+      W("a1", bz([199, 548], [205, 470], [318, 330], [322, 205]), "U", "ntc", [[199, 548], [322, 205]]);
+      W("b1", bz([211, 548], [222, 480], [478, 340], [482, 205]), "U", "ptc", [[211, 548], [482, 205]]);
+      W("a2", bz([388, 205], [393, 320], [590, 290], [600, 165]), "U", "ntc", [[388, 205]]);
+      W("b2", bz([548, 205], [560, 90], [760, 60], [780, 165]), "U", "ptc", [[548, 205]]);
+      W("la", bz([600, 165], [604, 260], [628, 360], [632, 455]), "U", "ntc");
+      g.comps.push({ key:"ntc", a:[632, 455], b:[658, 455] });
+      W("lb", bz([658, 455], [662, 360], [686, 260], [690, 165]), 0, "ntc");
+      W("lc", bz([780, 165], [776, 260], [752, 360], [748, 455]), "U", "ptc");
+      g.comps.push({ key:"ptc", a:[748, 455], b:[722, 455] });
+      W("ld", bz([722, 455], [718, 360], [694, 260], [690, 165]), 0, "ptc");
+      W("r", cat(bz([690, 165], [700, 105], [880, 130], [878, 600]), [[878, 600], [125, 606]], bz([125, 606], [100, 606], [95, 590], [95, 548])), 0, "sum", [[95, 548]]);
+    }
+    return g;
+  }
+  function geoSym(mode) {
+    const g = { wires:[], comps:[], meters:[], nodes:[] };
+    const W = (id, pts, pot, c) => g.wires.push({ id, p:mk(pts), pot, cur:c });
+    if (mode !== "both") {
+      const k = mode;
+      g.src = { x:150, y1:300, y2:320 };
+      W("a1", [[150, 300], [150, 120], [374, 120]], "U", k);
+      g.meters.push({ x:400, y:120, kind:"A", key:k, lab:"right" });
+      W("a2", [[426, 120], [650, 120], [650, 270]], "U", k);
+      g.comps.push({ key:k, x:650, y1:270, y2:350 });
+      W("r", [[650, 350], [650, 500], [150, 500], [150, 320]], 0, k);
+      W("v1", [[650, 170], [850, 170], [850, 284]], "U", 0);
+      g.meters.push({ x:850, y:310, kind:"V", lab:"right" });
+      W("v2", [[850, 336], [850, 450], [650, 450]], 0, 0);
+      g.nodes = [[650, 170], [650, 450]];
+      g.bath = [565, 230, 170, 160];
+      g.gnd = [300, 500];
+    } else {
+      g.src = { x:120, y1:300, y2:320 };
+      W("m1", [[120, 300], [120, 100], [480, 100]], "U", "sum");
+      W("b1a", [[480, 100], [480, 164]], "U", "ntc");
+      g.meters.push({ x:480, y:190, kind:"A", key:"ntc", lab:"left" });
+      W("b1b", [[480, 216], [480, 300]], "U", "ntc");
+      g.comps.push({ key:"ntc", x:480, y1:300, y2:380 });
+      W("b1c", [[480, 380], [480, 520]], 0, "ntc");
+      W("b2a", [[480, 100], [760, 100], [760, 164]], "U", "ptc");
+      g.meters.push({ x:760, y:190, kind:"A", key:"ptc", lab:"right" });
+      W("b2b", [[760, 216], [760, 300]], "U", "ptc");
+      g.comps.push({ key:"ptc", x:760, y1:300, y2:380 });
+      W("b2c", [[760, 380], [760, 520], [480, 520]], 0, "ptc");
+      W("m2", [[480, 520], [120, 520], [120, 320]], 0, "sum");
+      g.nodes = [[480, 100], [480, 520]];
+      g.bath = [395, 262, 450, 156];
+      g.gnd = [300, 520];
+    }
+    return g;
+  }
+
+  // ---------- Zeichenhilfen ----------
+  function rr(c, x, y, w, h, r) {
+    c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
+  }
+  const FONT = "-apple-system, 'Segoe UI', Roboto, Arial, sans-serif";
+  function text(c, s, x, y, size, col, align, weight, base) {
+    c.font = (weight || "400") + " " + size + "px " + FONT; c.fillStyle = col;
+    c.textAlign = align || "left"; c.textBaseline = base || "middle"; c.fillText(s, x, y);
+  }
+  // Text mit echten Indizes: "R_25"
+  function textSub(c, s, x, y, size, col, align, weight) {
+    const parts = []; s.split(/(_[0-9A-Za-zä]+)/).forEach(q => { if (q) parts.push(q[0] === "_" ? [q.slice(1), true] : [q, false]); });
+    const font = q => (weight || "400") + " " + (q[1] ? Math.round(size * 0.72) : size) + "px " + FONT;
+    let w = 0; for (const q of parts) { c.font = font(q); w += c.measureText(q[0]).width; }
+    let cx = align === "center" ? x - w / 2 : align === "right" ? x - w : x;
+    c.fillStyle = col; c.textAlign = "left"; c.textBaseline = "middle";
+    for (const q of parts) { c.font = font(q); c.fillText(q[0], cx, q[1] ? y + size * 0.28 : y); cx += c.measureText(q[0]).width; }
+    return w;
+  }
+  function polyline(c, pts) { c.beginPath(); pts.forEach((q, i) => i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); }
+  function potOf(w) { return w.pot === "U" ? S.U : 0; }
+  function box3d(c, x, y, w, h, d, front, top, side, r) {
+    c.fillStyle = top; c.beginPath(); c.moveTo(x + 4, y); c.lineTo(x + d + 4, y - d); c.lineTo(x + w + d - 2, y - d); c.lineTo(x + w - 2, y); c.closePath(); c.fill();
+    c.fillStyle = side; c.beginPath(); c.moveTo(x + w, y + 3); c.lineTo(x + w + d, y - d + 2); c.lineTo(x + w + d, y + h - d - 2); c.lineTo(x + w, y + h - 3); c.closePath(); c.fill();
+    c.save(); c.shadowColor = "rgba(0,0,0,.35)"; c.shadowBlur = 14; c.shadowOffsetY = 6;
+    rr(c, x, y, w, h, r || 8); c.fillStyle = front; c.fill(); c.restore();
+  }
+  function socket(c, x, y, col) {
+    let g = c.createRadialGradient(x - 3, y - 3, 1, x, y, 11);
+    g.addColorStop(0, "#fff"); g.addColorStop(0.25, col); g.addColorStop(1, "#000");
+    c.fillStyle = g; c.beginPath(); c.arc(x, y, 11, 0, 7); c.fill();
+    c.fillStyle = "#111"; c.beginPath(); c.arc(x, y, 4.5, 0, 7); c.fill();
+  }
+  function plug(c, x, y, pot) {
+    const g = c.createRadialGradient(x - 3, y - 4, 1, x, y, 10);
+    g.addColorStop(0, "#fff"); g.addColorStop(0.35, potColor(pot, 50)); g.addColorStop(1, potColor(pot, 22));
+    c.fillStyle = g; c.beginPath(); c.arc(x, y, 9.5, 0, 7); c.fill();
+    c.strokeStyle = "rgba(0,0,0,.4)"; c.lineWidth = 1; c.stroke();
+  }
+
+  // ---------- 3D-Geräte ----------
+  function drawPSU(c) {
+    const x = 30, y = 390, w = 240, h = 190;
+    box3d(c, x, y, w, h, 16, "#c9ced6", "#e7eaee", "#9aa2ad", 10);
+    let g = c.createLinearGradient(0, y + 10, 0, y + h - 10); g.addColorStop(0, "#34495e"); g.addColorStop(1, "#22303d");
+    rr(c, x + 10, y + 10, w - 20, h - 20, 7); c.fillStyle = g; c.fill();
+    text(c, "Netzgerät", x + 22, y + 26, 14, "#dfe6ee", "left", "600");
+    rr(c, x + 22, y + 42, 128, 48, 5); c.fillStyle = "#0b0b0b"; c.fill();
+    c.strokeStyle = "#566573"; c.lineWidth = 2; c.stroke();
+    text(c, dez(S.U, 1) + " V", x + 142, y + 67, 30, "#ff5040", "right", "700");
+    // Drehknopf
+    const kx = x + 192, ky = y + 72, a = (-135 + 270 * S.U / UMAX) * Math.PI / 180;
+    for (let i = 0; i <= 12; i += 2) { const b = (-135 + 270 * i / 12) * Math.PI / 180;
+      c.strokeStyle = "#cfd8e3"; c.lineWidth = 1.5; c.beginPath(); c.moveTo(kx + Math.sin(b) * 31, ky - Math.cos(b) * 31); c.lineTo(kx + Math.sin(b) * 36, ky - Math.cos(b) * 36); c.stroke(); }
+    c.save(); c.shadowColor = "rgba(0,0,0,.6)"; c.shadowBlur = 8; c.shadowOffsetY = 3;
+    g = c.createRadialGradient(kx - 8, ky - 9, 2, kx, ky, 27); g.addColorStop(0, "#777"); g.addColorStop(0.6, "#2a2a2a"); g.addColorStop(1, "#0d0d0d");
+    c.fillStyle = g; c.beginPath(); c.arc(kx, ky, 26, 0, 7); c.fill(); c.restore();
+    c.strokeStyle = "#fff"; c.lineWidth = 3.5; c.lineCap = "round"; c.beginPath(); c.moveTo(kx + Math.sin(a) * 8, ky - Math.cos(a) * 8); c.lineTo(kx + Math.sin(a) * 22, ky - Math.cos(a) * 22); c.stroke();
+    text(c, "U", kx, ky + 42, 12, "#cfd8e3", "center", "600");
+    // Buchsen
+    socket(c, 95, 548, "#333"); socket(c, 205, 548, "#d32f2f");
+    text(c, "−", 95, 520, 20, "#fff", "center", "700"); text(c, "+", 205, 520, 20, "#ff8a80", "center", "700");
+    text(c, "0 V (Erde)", 122, 548, 11, "#7ee08a", "left", "600");
+  }
+  function drawMeter(c, m) {
+    const { x, y, w, h } = m;
+    box3d(c, x, y, w, h, 12, "#f2c230", "#f7d867", "#c99a14", 16);
+    rr(c, x + 9, y + 9, w - 18, h - 18, 10); c.fillStyle = "#353b44"; c.fill();
+    const val = m.kind === "A" ? fI(I(m.key)) : dez(S.U, 2) + " V";
+    let g = c.createLinearGradient(0, y + 18, 0, y + 66); g.addColorStop(0, "#d3dfbd"); g.addColorStop(1, "#aebb95");
+    rr(c, x + 17, y + 18, w - 34, 46, 4); c.fillStyle = g; c.fill();
+    text(c, val, x + w - 24, y + 42, val.length > 8 ? 21 : 24, "#1b2412", "right", "700");
+    const t = m.kind === "A" ? (S.mode === "both" ? "Strom " + M[m.key].sym : "Strommesser") : "Spannungsmesser";
+    text(c, t, x + w / 2, y + 78, 14, "#e8edf2", "center", "600");
+    const cx = x + w / 2, cy = y + 122;
+    g = c.createRadialGradient(cx - 6, cy - 7, 2, cx, cy, 26); g.addColorStop(0, "#9aa3ad"); g.addColorStop(1, "#4a525c");
+    c.fillStyle = g; c.beginPath(); c.arc(cx, cy, 24, 0, 7); c.fill();
+    const a = m.kind === "A" ? 0.6 : -0.6;
+    c.strokeStyle = "#fff"; c.lineWidth = 3; c.beginPath(); c.moveTo(cx, cy); c.lineTo(cx + Math.sin(a) * 20, cy - Math.cos(a) * 20); c.stroke();
+    text(c, m.kind === "A" ? "A" : "V", cx + Math.sin(a) * 34, cy - Math.cos(a) * 34, 13, "#ffe082", "center", "700");
+    m.sock.forEach(s => { socket(c, s[0], s[1], s[3]); text(c, s[2], s[0], s[1] - 19, 12, "#e8edf2", "center", "600"); });
+  }
+  function drawHolder(c, g) {
+    let gr = c.createLinearGradient(514, 0, 528, 0); gr.addColorStop(0, "#8d949c"); gr.addColorStop(0.4, "#eef1f4"); gr.addColorStop(1, "#6b727a");
+    c.fillStyle = gr; c.fillRect(515, 150, 12, 445);
+    rr(c, 470, 588, 102, 16, 4); c.fillStyle = "#3d434a"; c.fill();
+    const x2 = g.posts[g.posts.length - 1][0] + 30;
+    gr = c.createLinearGradient(0, 157, 0, 173); gr.addColorStop(0, "#eef1f4"); gr.addColorStop(1, "#7d848c");
+    c.fillStyle = gr; c.fillRect(515, 158, x2 - 515, 14);
+    rr(c, 508, 150, 26, 30, 4); c.fillStyle = "#4b525a"; c.fill();
+    g.posts.forEach(p => { rr(c, p[0] - 16, 152, 32, 26, 5); c.fillStyle = "#f4f4f0"; c.fill(); c.strokeStyle = "#aaa"; c.lineWidth = 1; c.stroke(); socket(c, p[0], p[1], p[2]); });
+  }
+  const BK = { x0:560, x1:820, top:255, bot:545, wt:300 };
+  function waterCol(a) { return "rgba(110,170,230," + a + ")"; }
+  function drawBeakerBack(c) {
+    const { x0, x1, top, bot } = BK;
+    c.fillStyle = "rgba(210,228,240,.35)"; rr(c, x0, top, x1 - x0, bot - top, 14); c.fill();
+  }
+  function drawWater(c) {
+    const { x0, x1, bot, wt } = BK;
+    const g = c.createLinearGradient(0, wt, 0, bot); g.addColorStop(0, waterCol(.42)); g.addColorStop(1, waterCol(.6));
+    c.fillStyle = g; c.beginPath(); c.moveTo(x0 + 4, wt); c.lineTo(x1 - 4, wt); c.lineTo(x1 - 4, bot - 14); c.quadraticCurveTo(x1 - 4, bot - 3, x1 - 18, bot - 3);
+    c.lineTo(x0 + 18, bot - 3); c.quadraticCurveTo(x0 + 4, bot - 3, x0 + 4, bot - 14); c.closePath(); c.fill();
+    c.fillStyle = waterCol(.55); c.beginPath(); c.ellipse((x0 + x1) / 2, wt, (x1 - x0) / 2 - 4, 7, 0, 0, 7); c.fill();
+    // Blasen beim Erwärmen
+    S.bub.forEach(b => { c.strokeStyle = "rgba(255,255,255,.85)"; c.lineWidth = 1.3; c.beginPath(); c.arc(b.x, b.y, b.r, 0, 7); c.stroke(); });
+    if (S.heat < 0 || S.Tw < 3) {          // Eiswürfel
+      [[600, -6], [650, 4], [745, -2]].forEach(([x, r]) => {
+        c.save(); c.translate(x, wt + 2); c.rotate(r * Math.PI / 180);
+        rr(c, -16, -14, 32, 26, 5); c.fillStyle = "rgba(235,248,255,.85)"; c.fill(); c.strokeStyle = "rgba(150,190,220,.9)"; c.lineWidth = 1.5; c.stroke();
+        c.strokeStyle = "rgba(255,255,255,.95)"; c.beginPath(); c.moveTo(-10, -8); c.lineTo(4, -8); c.stroke(); c.restore();
+      });
+    }
+  }
+  function drawBeakerFront(c) {
+    const { x0, x1, top, bot } = BK;
+    rr(c, x0, top, x1 - x0, bot - top, 14); c.strokeStyle = "rgba(90,120,140,.55)"; c.lineWidth = 2; c.stroke();
+    c.strokeStyle = "rgba(255,255,255,.75)"; c.lineWidth = 3; c.beginPath(); c.moveTo(x0 + 14, top + 20); c.lineTo(x0 + 14, bot - 30); c.stroke();
+    c.strokeStyle = "rgba(255,255,255,.35)"; c.lineWidth = 8; c.beginPath(); c.moveTo(x0 + 28, top + 30); c.lineTo(x0 + 28, bot - 50); c.stroke();
+    c.strokeStyle = "rgba(90,120,140,.6)"; c.lineWidth = 2; c.beginPath(); c.ellipse((x0 + x1) / 2, top, (x1 - x0) / 2, 7, 0, 0, 7); c.stroke();
+    for (let i = 1; i <= 4; i++) { const yy = bot - i * 50; c.strokeStyle = "rgba(255,255,255,.7)"; c.lineWidth = 1.5; c.beginPath(); c.moveTo(x1 - 40, yy); c.lineTo(x1 - 22, yy); c.stroke(); }
+  }
+  function drawHeater(c) {
+    const x = 535, y = 547, w = 310, h = 44;
+    box3d(c, x, y, w, h, 10, "#eceff2", "#ffffff", "#b8bec6", 6);
+    let g = c.createLinearGradient(0, y - 6, 0, y + 4);
+    const glow = S.heat > 0 ? 1 : 0;
+    g.addColorStop(0, glow ? "#ff5a1f" : "#3a3a3a"); g.addColorStop(1, glow ? "#8b1a00" : "#151515");
+    c.fillStyle = g; c.fillRect(x + 12, y - 5, w - 30, 9);
+    text(c, "Heizplatte", x + 16, y + 26, 13, "#5b6675", "left", "600");
+    c.fillStyle = S.heat > 0 ? "#ff3b1f" : "#7a8088"; c.beginPath(); c.arc(x + w - 70, y + 24, 5, 0, 7); c.fill();
+    g = c.createRadialGradient(x + w - 36, y + 20, 2, x + w - 34, y + 24, 13); g.addColorStop(0, "#888"); g.addColorStop(1, "#222");
+    c.fillStyle = g; c.beginPath(); c.arc(x + w - 34, y + 24, 12, 0, 7); c.fill();
+  }
+  function drawThermo(c, x) {
+    const yb = 520, y0 = 500, y100 = 232, top = 196;
+    rr(c, x - 7, top, 14, yb - top, 7); c.fillStyle = "rgba(255,255,255,.7)"; c.fill(); c.strokeStyle = "rgba(90,110,130,.6)"; c.lineWidth = 1.2; c.stroke();
+    for (let t = 0; t <= 100; t += 10) { const yy = y0 + (y100 - y0) * t / 100; c.strokeStyle = "#555"; c.lineWidth = 1; c.beginPath(); c.moveTo(x - 6, yy); c.lineTo(x - (t % 50 ? 1 : -1), yy); c.stroke(); }
+    const yy = y0 + (y100 - y0) * Math.max(-2, S.Tw) / 100;
+    c.fillStyle = "#d62828"; c.fillRect(x - 2.5, yy, 5, yb - yy);
+    c.beginPath(); c.arc(x, yb, 9, 0, 7); c.fill();
+    c.fillStyle = "rgba(255,255,255,.6)"; c.beginPath(); c.arc(x - 3, yb - 3, 3, 0, 7); c.fill();
+  }
+  function thermoLabel(c, x) {
+    const ly = 330;
+    rr(c, x + 12, ly - 14, 76, 28, 6); c.fillStyle = "rgba(255,255,255,.95)"; c.fill(); c.strokeStyle = "#c62828"; c.lineWidth = 1.5; c.stroke();
+    text(c, dez(S.Tw, 0) + " °C", x + 50, ly, 16, "#b71c1c", "center", "700");
+  }
+  function drawComp(c, cp) {
+    const k = cp.key, cx = (cp.a[0] + cp.b[0]) / 2, cy = cp.a[1] + 24, T = S.T[k];
+    // Beinchen
+    c.strokeStyle = "#c8cdd2"; c.lineWidth = 2.5;
+    [cp.a, cp.b].forEach(p => { c.beginPath(); c.moveTo(p[0], p[1]); c.lineTo(cx + (p[0] - cx) * 0.4, cy); c.stroke(); });
+    if (S.env === "air" && T > 25) {          // warmes Bauteil leuchtet schwach (nur Andeutung)
+      const g = c.createRadialGradient(cx, cy, 4, cx, cy, 45); g.addColorStop(0, "rgba(255,90,40," + Math.min(0.55, (T - 25) / 70) + ")"); g.addColorStop(1, "rgba(255,90,40,0)");
+      c.fillStyle = g; c.beginPath(); c.arc(cx, cy, 45, 0, 7); c.fill();
+    }
+    const r = k === "ntc" ? 15 : 19;
+    c.save(); c.shadowColor = "rgba(0,0,0,.45)"; c.shadowBlur = 6; c.shadowOffsetY = 3;
+    const g = c.createRadialGradient(cx - r * 0.4, cy - r * 0.5, 2, cx, cy, r * 1.2);
+    if (k === "ntc") { g.addColorStop(0, "#7d8a5a"); g.addColorStop(0.5, "#3d4a26"); g.addColorStop(1, "#1a2010"); }
+    else { g.addColorStop(0, "#c7d3e0"); g.addColorStop(0.5, "#5f7a96"); g.addColorStop(1, "#2a3a4c"); }
+    c.fillStyle = g; c.beginPath(); c.ellipse(cx, cy, r, r * 1.08, 0, 0, 7); c.fill(); c.restore();
+    c.fillStyle = "rgba(255,255,255,.35)"; c.beginPath(); c.ellipse(cx - r * 0.35, cy - r * 0.45, r * 0.35, r * 0.2, -0.5, 0, 7); c.fill();
+    text(c, M[k].sym, cx, cy + 2, k === "ntc" ? 9 : 11, "#fff", "center", "700");
+  }
+  function compTag(c, cp) {
+    const k = cp.key, cx = (cp.a[0] + cp.b[0]) / 2, cy = cp.a[1] + 24, T = S.T[k];
+    const tag = M[k].name + (S.env === "air" ? ": " + dez(T, 0) + " °C" : "");
+    const tw = (c.font = "700 16px " + FONT, c.measureText(tag).width + 14), tx = S.mode === "both" ? (k === "ntc" ? cx - 4 - tw : cx + 4) : cx - tw / 2, ty = cy + 40;
+    rr(c, tx, ty - 13, tw, 26, 6); c.fillStyle = "rgba(255,255,255,.94)"; c.fill(); c.strokeStyle = M[k].col; c.lineWidth = 1.5; c.stroke();
+    text(c, tag, tx + 7, ty, 16, M[k].col, "left", "700");
+  }
+  function cable(c, w) {
+    const pts = w.p.pts, col = potColor(potOf(w));
+    c.lineCap = "round"; c.lineJoin = "round";
+    polyline(c, pts); c.strokeStyle = "rgba(0,0,0,.35)"; c.lineWidth = 10; c.stroke();
+    polyline(c, pts); c.strokeStyle = col; c.lineWidth = 7.5; c.stroke();
+    c.save(); c.translate(-1.2, -1.6); polyline(c, pts); c.strokeStyle = "rgba(255,255,255,.4)"; c.lineWidth = 2; c.stroke(); c.restore();
+  }
+  function charges(c, wires, r) {
+    const el = $("cbEl").checked;
+    wires.forEach(w => {
+      const ph = S.ph[w.id] || 0, L = w.p.len, o = ((ph % SP) + SP) % SP;
+      for (let s = o; s < L; s += SP) {
+        const q = at(w.p, s);
+        c.fillStyle = el ? "#cfe7ff" : "#fff"; c.strokeStyle = el ? "#0d3a66" : "#7a1010"; c.lineWidth = 1.2;
+        c.beginPath(); c.arc(q[0], q[1], r, 0, 7); c.fill(); c.stroke();
+        c.beginPath(); c.moveTo(q[0] - r * 0.55, q[1]); c.lineTo(q[0] + r * 0.55, q[1]);
+        if (!el) { c.moveTo(q[0], q[1] - r * 0.55); c.lineTo(q[0], q[1] + r * 0.55); }
+        c.stroke();
+      }
+    });
+  }
+
+  function drawSetup3d(c, vx0, vx1) {
+    const g = geo3d(S.mode);
+    // Wand und Tisch
+    let gr = c.createLinearGradient(0, 0, 0, 600); gr.addColorStop(0, "#eef2f6"); gr.addColorStop(1, "#d9e0e8");
+    c.fillStyle = gr; c.fillRect(vx0, -400, vx1 - vx0, 1000);
+    gr = c.createLinearGradient(0, 592, 0, 640); gr.addColorStop(0, "#b98a5b"); gr.addColorStop(1, "#8a6037");
+    c.fillStyle = gr; c.fillRect(vx0, 592, vx1 - vx0, 600);
+    c.fillStyle = "rgba(255,255,255,.25)"; c.fillRect(vx0, 592, vx1 - vx0, 2);
+    drawHolder(c, g);
+    const water = S.env === "water";
+    if (water) { drawHeater(c); drawBeakerBack(c); }
+    else {
+      text(c, "Luft: " + T_AIR + " °C", 690, 560, 15, "#5b6675", "center", "600");
+    }
+    const leads = g.wires.filter(w => w.id[0] === "l");
+    leads.forEach(w => cable(c, w));
+    g.comps.forEach(cp => drawComp(c, cp));
+    if (water) { drawWater(c); drawThermo(c, g.thermoX); drawBeakerFront(c); }
+    g.comps.forEach(cp => compTag(c, cp));
+    drawPSU(c);
+    g.meters.forEach(m => drawMeter(c, m));
+    g.wires.filter(w => w.id[0] !== "l").forEach(w => cable(c, w));
+    g.plugs.forEach(p => plug(c, p.x, p.y, p.pot === "U" ? S.U : 0));
+    g.posts.forEach(p => { c.fillStyle = "rgba(0,0,0,.25)"; c.beginPath(); c.arc(p[0], p[1], 6, 0, 7); c.fill(); });
+    if (water) thermoLabel(c, g.thermoX);
+    charges(c, g.wires, 3.8);
+    potLegend(c, 30, 32);
+  }
+  function potLegend(c, x, y) {
+    const w = 220;
+    for (let i = 0; i < w; i++) { c.fillStyle = potColor(UMAX * i / w); c.fillRect(x + i, y, 1.5, 14); }
+    c.strokeStyle = "rgba(0,0,0,.3)"; c.lineWidth = 1; c.strokeRect(x, y, w, 14);
+    text(c, "0 V", x, y + 28, 16, "#334", "left", "600"); text(c, "6 V", x + w / 2, y + 28, 16, "#334", "center", "600"); text(c, "12 V", x + w, y + 28, 16, "#334", "right", "600");
+    text(c, "Potenzial", x, y - 12, 16, "#5b6675", "left", "600");
+  }
+
+  // ---------- Symbolansicht ----------
+  function thermistorSym(c, cp) {
+    const x = cp.x, y1 = cp.y1, y2 = cp.y2, w = 26, k = cp.key, pa = S.U, pb = 0;
+    const g = c.createLinearGradient(0, y1, 0, y2); for (let i = 0; i <= 6; i++) g.addColorStop(i / 6, potColor(pa + (pb - pa) * i / 6));
+    c.fillStyle = "#fff"; c.fillRect(x - w / 2, y1, w, y2 - y1);
+    c.strokeStyle = g; c.lineWidth = 4; c.strokeRect(x - w / 2, y1, w, y2 - y1);
+    // Schräger Strich mit Fuß (nichtlinearer Widerstand)
+    c.strokeStyle = "#1d2733"; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(x - 30, y2 + 6); c.lineTo(x - 18, y2 + 6); c.lineTo(x + 26, y1 - 8); c.stroke();
+    text(c, (k === "ntc" ? "−ϑ" : "+ϑ"), x - 34, y2 + 22, 17, "#1d2733", "left", "700");
+    text(c, M[k].name, x + 24, (y1 + y2) / 2 - 13, 21, M[k].col, "left", "700");
+    text(c, "R = " + fR(R(k)), x + 24, (y1 + y2) / 2 + 13, 19, "#1d2733", "left", "600");
+  }
+  function drawSetupSym(c, vx0, vx1) {
+    const g = geoSym(S.mode);
+    c.fillStyle = "#fbfcfd"; c.fillRect(vx0, -400, vx1 - vx0, 1100);
+    c.strokeStyle = "#eef1f5"; c.lineWidth = 1;
+    for (let x = Math.floor(vx0 / 20) * 20; x < vx1; x += 20) { c.beginPath(); c.moveTo(x, -400); c.lineTo(x, 700); c.stroke(); }
+    for (let y = -400; y < 700; y += 20) { c.beginPath(); c.moveTo(vx0, y); c.lineTo(vx1, y); c.stroke(); }
+    // Wasserbad bzw. Luft
+    const b = g.bath;
+    c.setLineDash([8, 6]); rr(c, b[0], b[1], b[2], b[3], 14);
+    c.fillStyle = S.env === "water" ? "rgba(120,180,235,.18)" : "rgba(240,240,240,.5)"; c.fill();
+    c.strokeStyle = S.env === "water" ? "#4a90d9" : "#9aa3ad"; c.lineWidth = 2; c.stroke(); c.setLineDash([]);
+    text(c, S.env === "water" ? "Wasserbad: " + dez(S.Tw, 0) + " °C" : "Luft: " + T_AIR + " °C", S.mode === "both" ? b[0] + b[2] / 2 : b[0] - 10, b[1] + 18, 19, S.env === "water" ? "#2b6cb0" : "#5b6675", S.mode === "both" ? "center" : "right", "700");
+    g.wires.forEach(w => { polyline(c, w.p.pts); c.strokeStyle = potColor(potOf(w)); c.lineWidth = 5; c.lineCap = "round"; c.lineJoin = "round"; c.stroke(); });
+    g.nodes.forEach(n => { c.fillStyle = potColor(n[1] < 300 ? S.U : 0); c.beginPath(); c.arc(n[0], n[1], 7, 0, 7); c.fill(); });
+    // Spannungsquelle
+    const s = g.src;
+    c.fillStyle = "#fbfcfd"; c.fillRect(s.x - 40, s.y1 + 2, 80, s.y2 - s.y1 - 4);
+    c.strokeStyle = potColor(S.U); c.lineWidth = 3; c.beginPath(); c.moveTo(s.x - 32, s.y1); c.lineTo(s.x + 32, s.y1); c.stroke();
+    c.strokeStyle = potColor(0); c.lineWidth = 8; c.beginPath(); c.moveTo(s.x - 14, s.y2); c.lineTo(s.x + 14, s.y2); c.stroke();
+    text(c, "+", s.x - 44, s.y1 - 8, 18, "#b91c1c", "center", "700"); text(c, "−", s.x - 44, s.y2 + 10, 20, "#1d2733", "center", "700");
+    text(c, "U = " + dez(S.U, 1) + " V", s.x + 40, (s.y1 + s.y2) / 2, 21, "#1d2733", "left", "700");
+    // Erdung
+    const [gx, gy] = g.gnd;
+    c.strokeStyle = potColor(0); c.lineWidth = 4; c.beginPath(); c.moveTo(gx, gy); c.lineTo(gx, gy + 26); c.stroke();
+    [[18, 30], [12, 36], [6, 42]].forEach(([hw, yy]) => { c.beginPath(); c.moveTo(gx - hw, gy + yy); c.lineTo(gx + hw, gy + yy); c.stroke(); });
+    text(c, "0 V", gx + 24, gy + 34, 18, "#2E7D32", "left", "700");
+    g.comps.forEach(cp => thermistorSym(c, cp));
+    g.meters.forEach(m => {
+      c.fillStyle = "#fff"; c.beginPath(); c.arc(m.x, m.y, 26, 0, 7); c.fill();
+      c.strokeStyle = "#1d2733"; c.lineWidth = 2.5; c.stroke();
+      text(c, m.kind, m.x, m.y + 1, 22, "#1d2733", "center", "700");
+      const v = m.kind === "A" ? "I = " + fI(I(m.key)) : "U = " + dez(S.U, 2) + " V";
+      const lx = m.lab === "left" ? m.x - 34 : m.x + 34, ly = m.kind === "A" && S.mode !== "both" ? m.y - 40 : m.y;
+      text(c, v, m.kind === "A" && S.mode !== "both" ? m.x : lx, ly, 20, "#1d2733", m.kind === "A" && S.mode !== "both" ? "center" : (m.lab === "left" ? "right" : "left"), "700");
+    });
+    charges(c, g.wires, 4);
+    potLegend(c, 30, 32);
+  }
+
+  // ---------- Diagramm ----------
+  function diaAxes() {
+    if (S.dia === "rt") return { x0:0, x1:100, xs:20, xl:"ϑ in °C", y0:0, y1:4000, ys:1000, yl:"R in Ω" };
+    return S.env === "water" ? { x0:0, x1:12, xs:2, xl:"U in V", y0:0, y1:200, ys:50, yl:"I in mA" }
+                             : { x0:0, x1:12, xs:2, xl:"U in V", y0:0, y1:80, ys:20, yl:"I in mA" };
+  }
+  function drawDia(c, r) {
+    const f = S.fs, A = diaAxes();
+    rr(c, r.x, r.y, r.w, r.h, 10); c.fillStyle = "#fff"; c.fill(); c.strokeStyle = "#d5dbe3"; c.lineWidth = 1; c.stroke();
+    const title = S.dia === "rt" ? "R-ϑ-Diagramm" : "U-I-Diagramm" + (S.env === "water" ? " (Wasserbad: " + dez(S.Tw, 0) + " °C)" : " (in Luft, mit Eigenerwärmung)");
+    text(c, title, r.x + 12, r.y + 14 * f, 14 * f, "#1F4E79", "left", "700");
+    const L = r.x + 50 * f, Rr = r.x + r.w - 14, T = r.y + 44 * f, B = r.y + r.h - 34 * f;
+    if (B - T < 30 || Rr - L < 60) return;
+    const X = v => L + (v - A.x0) / (A.x1 - A.x0) * (Rr - L), Y = v => B - (v - A.y0) / (A.y1 - A.y0) * (B - T);
+    c.strokeStyle = "#e8ecf1"; c.lineWidth = 1;
+    for (let v = A.x0; v <= A.x1 + 1e-9; v += A.xs) { c.beginPath(); c.moveTo(X(v), T); c.lineTo(X(v), B); c.stroke(); text(c, String(v), X(v), B + 10 * f, 11 * f, "#5b6675", "center"); }
+    for (let v = A.y0; v <= A.y1 + 1e-9; v += A.ys) { c.beginPath(); c.moveTo(L, Y(v)); c.lineTo(Rr, Y(v)); c.stroke(); text(c, String(v), L - 5, Y(v), 11 * f, "#5b6675", "right"); }
+    c.strokeStyle = "#1d2733"; c.lineWidth = 1.5; c.beginPath(); c.moveTo(L, T - 6); c.lineTo(L, B); c.lineTo(Rr + 4, B); c.stroke();
+    text(c, A.xl, Rr, B + 24 * f, 12 * f, "#1d2733", "right", "600");
+    text(c, A.yl, L + 6, T - 14 * f, 12 * f, "#1d2733", "left", "600");
+    c.save(); c.beginPath(); c.rect(L, T - 2, Rr - L + 2, B - T + 2); c.clip();
+    const ks = keys();
+    // Kennlinien
+    if ($("cbKl").checked) ks.forEach(k => {
+      c.strokeStyle = M[k].col; c.lineWidth = 2; c.setLineDash([7, 5]); c.beginPath();
+      if (S.dia === "rt") for (let t = 0; t <= 100; t += 0.5) { const y = Y(M[k].R(t)); t ? c.lineTo(X(t), y) : c.moveTo(X(t), y); }
+      else if (S.env === "water") { c.moveTo(X(0), Y(0)); c.lineTo(X(12), Y(1000 * 12 / M[k].R(S.Tw))); }
+      else for (let u = 0; u <= 12; u += 0.25) { const Ts = steadyT(k, u, T_AIR, "air"), y = Y(1000 * u / M[k].R(Ts)); u ? c.lineTo(X(u), y) : c.moveTo(X(u), y); }
+      c.stroke(); c.setLineDash([]);
+    });
+    // Messpunkte
+    const pts = S.pts.filter(p => S.dia === "rt" || p.env === S.env);
+    pts.forEach(p => {
+      const x = S.dia === "rt" ? p.T : p.U, v = S.dia === "rt" ? p.R : p.I * 1000;
+      const px = X(x), py = Y(v);
+      c.fillStyle = M[p.k].col;
+      if (py < T) { c.beginPath(); c.moveTo(px, T + 2); c.lineTo(px - 5, T + 10); c.lineTo(px + 5, T + 10); c.fill(); }
+      else { c.beginPath(); c.arc(px, py, 4.5, 0, 7); c.fill(); c.strokeStyle = "#fff"; c.lineWidth = 1; c.stroke(); }
+    });
+    c.restore();
+    // aktueller Zustand
+    ks.forEach((k, i) => {
+      const x = S.dia === "rt" ? S.T[k] : S.U, v = S.dia === "rt" ? R(k) : I(k) * 1000;
+      const px = X(x); let py = Y(v), over = py < T;
+      if (over) py = T;
+      c.strokeStyle = M[k].col; c.lineWidth = 3; c.beginPath(); c.arc(px, py, 8, 0, 7); c.stroke();
+      if (over) { c.fillStyle = M[k].col; c.beginPath(); c.moveTo(px, py - 14); c.lineTo(px - 6, py - 6); c.lineTo(px + 6, py - 6); c.fill();
+        text(c, "R = " + fR(R(k)) + " (über dem Rand)", px - 12, py + 18 + 14 * f * i, 12 * f, M[k].col, "right", "700"); }
+    });
+    // Legende
+    let lx = Rr - 4;
+    ks.slice().reverse().forEach(k => { const w = (c.font = "700 " + 12 * f + "px " + FONT, c.measureText(M[k].name).width);
+      text(c, M[k].name, lx, T - 14 * f, 12 * f, M[k].col, "right", "700"); lx -= w + 22; c.fillStyle = M[k].col; c.beginPath(); c.arc(lx + 12, T - 14 * f, 5, 0, 7); c.fill(); lx -= 6; });
+  }
+
+  // ---------- Blick ins Innere ----------
+  function partInit(k) {
+    const P = { el:[], fl:[], atoms:[] };
+    if (k === "ntc") { for (let i = 0; i < 10; i++) for (let j = 0; j < 5; j++) P.atoms.push([(i + 0.5) / 10, (j + 0.5) / 5]); }
+    else { for (let i = 0; i < 28; i++) P.el.push({ u:Math.random(), v:0.08 + 0.84 * Math.random(), vu:0, vv:0 }); }
+    S.part[k] = P; return P;
+  }
+  const NTC_N = k => Math.max(1, Math.min(40, Math.round(36 * M.ntc.R(100) / R("ntc"))));
+  const pPass = () => 100 / R("ptc");
+  const GB = [0.25, 0.5, 0.75];
+  function partStep(k, dt) {
+    const P = S.part[k] || partInit(k), T = S.T[k];
+    const vth = 0.22 * Math.sqrt((T + T0) / 293), vd = 0.03 * S.U;
+    if (k === "ntc") {
+      const n = NTC_N();
+      if (P.el.length < n && Math.random() < 0.25) { const a = P.atoms[Math.floor(Math.random() * P.atoms.length)]; P.el.push({ u:a[0], v:a[1], vu:0, vv:0 }); P.fl.push({ u:a[0], v:a[1], t:0.5 }); }
+      if (P.el.length > n && Math.random() < 0.25) { const e = P.el.shift(); P.fl.push({ u:e.u, v:e.v, t:0.5 }); }
+    }
+    const pp = pPass();
+    P.el.forEach(e => {
+      e.vu += (Math.random() - 0.5) * vth * 8 * dt; e.vv += (Math.random() - 0.5) * vth * 8 * dt;
+      const sp = Math.hypot(e.vu, e.vv); if (sp > vth) { e.vu *= vth / sp; e.vv *= vth / sp; }
+      const u0 = e.u;
+      e.u += (e.vu + vd) * dt; e.v += e.vv * dt * 1.6;
+      if (e.v < 0.05) { e.v = 0.05; e.vv = Math.abs(e.vv); } if (e.v > 0.95) { e.v = 0.95; e.vv = -Math.abs(e.vv); }
+      if (k === "ptc") GB.forEach(b => {
+        if ((u0 - b) * (e.u - b) < 0 && Math.random() > pp) { e.u = u0 < b ? b - 0.004 : b + 0.004; e.vu = -e.vu * 0.5; }
+      });
+      if (e.u > 1) e.u -= 1; if (e.u < 0) e.u += 1;
+    });
+    P.fl.forEach(f => f.t -= dt); P.fl = P.fl.filter(f => f.t > 0);
+  }
+  function drawInner(c, r) {
+    const f = S.fs, ks = keys();
+    rr(c, r.x, r.y, r.w, r.h, 10); c.fillStyle = "#fff"; c.fill(); c.strokeStyle = "#d5dbe3"; c.lineWidth = 1; c.stroke();
+    text(c, "Blick ins Innere (Modell)", r.x + 12, r.y + 14 * f, 14 * f, "#1F4E79", "left", "700");
+    const top = r.y + 30 * f, H = r.h - 30 * f - 8, n = ks.length, gap = 10;
+    const vert = n === 2 && r.w < 1.4 * H;
+    ks.forEach((k, i) => {
+      const b = vert ? { x:r.x + 10, y:top + i * (H / 2), w:r.w - 20, h:H / 2 - 4 }
+                     : { x:r.x + 10 + i * ((r.w - 20 + gap) / n), y:top, w:(r.w - 20 - (n - 1) * gap) / n, h:H };
+      drawBox(c, k, b);
+    });
+  }
+  function drawBox(c, k, b) {
+    const f = S.fs, P = S.part[k] || partInit(k), T = S.T[k];
+    const capH = 34 * f, bx = b.x, by = b.y + 16 * f, bw = b.w, bh = b.h - 16 * f - capH;
+    text(c, M[k].name + (k === "ntc" ? " (Halbleiter)" : " (Keramik)"), bx, b.y + 6 * f, 12.5 * f, M[k].col, "left", "700");
+    if (bh < 20) return;
+    c.save(); rr(c, bx, by, bw, bh, 8); c.clip();
+    const g = c.createLinearGradient(0, by, 0, by + bh);
+    if (k === "ntc") { g.addColorStop(0, "#eef0e6"); g.addColorStop(1, "#dfe3d2"); } else { g.addColorStop(0, "#e9eef4"); g.addColorStop(1, "#d6dee8"); }
+    c.fillStyle = g; c.fillRect(bx, by, bw, bh);
+    const U = u => bx + u * bw, V = v => by + v * bh, amp = (0.5 + 3.2 * Math.max(0, T) / 100) * Math.min(1, bw / 300);
+    const rA = Math.min(bw / 10, bh / 5) * 0.26;
+    if (k === "ntc") {
+      P.atoms.forEach((a, i) => {
+        const x = U(a[0]) + Math.sin(S.t * 23 + i * 1.7) * amp, y = V(a[1]) + Math.cos(S.t * 19 + i * 2.3) * amp;
+        const gg = c.createRadialGradient(x - rA * 0.35, y - rA * 0.4, 1, x, y, rA);
+        gg.addColorStop(0, "#c9ccd2"); gg.addColorStop(1, "#6b717a"); c.fillStyle = gg; c.beginPath(); c.arc(x, y, rA, 0, 7); c.fill();
+      });
+    } else {
+      // Körner mit Korngrenzen
+      const bar = Math.max(0, Math.min(1, Math.log10(R("ptc") / 100) / 3));
+      for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) {
+        const x = U((i + 0.5) / 4 + (j % 2 ? 0.06 : -0.06) * 0), y = V((j + 0.5) / 4);
+        c.fillStyle = "rgba(90,110,140,.25)";
+        for (let q = 0; q < 5; q++) { const xx = x + ((q * 37) % 50 - 25) / 50 * bw / 5 + Math.sin(S.t * 21 + q + i * 3 + j) * amp * 0.6, yy = y + ((q * 23) % 30 - 15) / 30 * bh / 5; c.beginPath(); c.arc(xx, yy, Math.max(1.5, rA * 0.35), 0, 7); c.fill(); }
+      }
+      GB.forEach((u, i) => {
+        c.beginPath();
+        for (let s = 0; s <= 1.0001; s += 0.05) { const x = U(u) + Math.sin(s * 9 + i * 2) * bw * 0.012, y = V(s); s ? c.lineTo(x, y) : c.moveTo(x, y); }
+        c.strokeStyle = "rgba(60,70,90,.55)"; c.lineWidth = 1.5; c.stroke();
+        if (bar > 0.02) { c.strokeStyle = "rgba(220,40,30," + (0.15 + 0.6 * bar) + ")"; c.lineWidth = 3 + 12 * bar; c.stroke(); }
+      });
+    }
+    P.fl.forEach(fl => { c.strokeStyle = "rgba(30,120,255," + fl.t * 1.6 + ")"; c.lineWidth = 2; c.beginPath(); c.arc(U(fl.u), V(fl.v), 6 + (0.5 - fl.t) * 24, 0, 7); c.stroke(); });
+    const re = Math.max(2.6, rA * 0.42);
+    P.el.forEach(e => {
+      const x = U(e.u), y = V(e.v);
+      c.fillStyle = "rgba(40,130,255,.25)"; c.beginPath(); c.arc(x, y, re * 2, 0, 7); c.fill();
+      c.fillStyle = "#1565c0"; c.beginPath(); c.arc(x, y, re, 0, 7); c.fill();
+    });
+    c.restore();
+    rr(c, bx, by, bw, bh, 8); c.strokeStyle = "#9aa3ad"; c.lineWidth = 1.2; c.stroke();
+    // Pole
+    text(c, "−", bx + 8, by + bh / 2, 16 * f, "#1d2733", "left", "700"); text(c, "+", bx + bw - 8, by + bh / 2, 16 * f, "#b91c1c", "right", "700");
+    // Beschriftung
+    let s1, s2;
+    if (k === "ntc") { s1 = "Freie Elektronen: " + P.el.length + " (bei " + dez(T, 0) + " °C)"; s2 = "Wärmer → mehr freie Elektronen → R kleiner"; }
+    else { const p = pPass(); s1 = T < 55 ? "Elektronen kommen leicht über die Korngrenzen." : "Korngrenzen sperren (rot): nur " + (p > 0.1 ? Math.round(p * 100) + " %" : p > 0.001 ? dez(p * 100, 1) + " %" : "fast keine") + " kommen durch."; s2 = "Ab ca. 60 °C: Sperren wachsen → R steigt stark"; }
+    text(c, s1, bx, by + bh + 11 * f, 12 * f, "#1d2733", "left", "600");
+    text(c, s2, bx, by + bh + 26 * f, 12 * f, "#5b6675", "left", "400");
+    if (bw > 180 && S.U > 0.05) text(c, "Elektronen → zum Pluspol", bx + bw - 22, by + 10 * f, 11 * f, "#1565c0", "right", "600");
+  }
+
+  // ---------- Aufteilung der Zeichenfläche ----------
+  function layout(W, H) {
+    const d = $("cbDia").checked, n = $("cbIn").checked, ex = [d && "dia", n && "inner"].filter(Boolean);
+    const out = { setup:null, dia:null, inner:null };
+    if (W < 560) {                       // Handy: untereinander
+      let y = 50; out.setup = { x:0, y, w:W, h:W * 0.66 }; y += W * 0.66 + 6;
+      ex.forEach(e => { const h = e === "dia" ? W * 0.68 : (S.mode === "both" ? W * 0.95 : W * 0.6); out[e] = { x:6, y, w:W - 12, h }; y += h + 8; });
+      out.total = y; return out;
+    }
+    if (!ex.length) { out.setup = { x:0, y:50, w:W, h:H - 50 }; return out; }
+    if (W > H * 1.25) {                  // breit: Aufbau links, Zusatzansichten rechts
+      const sw = W * 0.56; out.setup = { x:0, y:50, w:sw, h:H - 50 };
+      const hh = (H - 58 - (ex.length - 1) * 8) / ex.length;
+      ex.forEach((e, i) => out[e] = { x:sw + 4, y:54 + i * (hh + 8), w:W - sw - 12, h:hh });
+      return out;
+    }
+    const sh = H * (ex.length === 2 ? 0.57 : 0.62);
+    out.setup = { x:0, y:50, w:W, h:sh - 50 };
+    const ww = (W - 16 - (ex.length - 1) * 8) / ex.length;
+    ex.forEach((e, i) => out[e] = { x:8 + i * (ww + 8), y:sh + 4, w:ww, h:H - sh - 12 });
+    return out;
+  }
+
+  // ---------- Zeichnen ----------
+  let CW = 0, CH = 0;
+  function resize() {
+    const phone = window.innerWidth <= 640 && !document.body.classList.contains("nopanel");
+    if (phone) { const L = layout(stage.clientWidth || window.innerWidth, 1000); stage.style.height = Math.ceil(L.total + 8) + "px"; }
+    else stage.style.height = "";
+    const dpr = window.devicePixelRatio || 1, r = cv.getBoundingClientRect();
+    CW = r.width; CH = r.height;
+    cv.width = Math.max(1, Math.round(CW * dpr)); cv.height = Math.max(1, Math.round(CH * dpr));
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    draw();
+  }
+  function draw() {
+    const W = CW, H = CH; if (!W || !H) return;
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = "#e9edf2"; ctx.fillRect(0, 0, W, H);
+    const Lo = layout(W, H), s = Lo.setup;
+    const VX = 15, VY = 14, VW = 985, VH = 604, k = Math.min(s.w / VW, s.h / VH), ox = s.x + (s.w - VW * k) / 2 - VX * k, oy = s.y + (s.h - VH * k) / 2 - VY * k;
+    ctx.save(); ctx.beginPath(); ctx.rect(s.x, 0, s.w, s.y + s.h); ctx.clip();
+    ctx.translate(ox, oy); ctx.scale(k, k);
+    const vx0 = (s.x - ox) / k, vx1 = (s.x + s.w - ox) / k;
+    if (S.view === "3d") drawSetup3d(ctx, vx0, vx1); else drawSetupSym(ctx, vx0, vx1);
+    ctx.restore();
+    if (Lo.dia) drawDia(ctx, Lo.dia);
+    if (Lo.inner) drawInner(ctx, Lo.inner);
+  }
+
+  // ---------- Ablauf ----------
+  function physics(dt) {
+    if (S.heat) {
+      S.Tw = Math.max(0, Math.min(100, S.Tw + S.heat * HEAT_RATE * dt));
+      if (S.Tw >= 100 || S.Tw <= 0) setHeat(0);
+      $("tw").value = Math.round(S.Tw); $("two").textContent = dez(S.Tw, 0) + " °C";
+    }
+    const e = ENV[S.env], Ta = amb();
+    ["ntc", "ptc"].forEach(k => {
+      const n = Math.max(1, Math.ceil(dt / 0.02)), h = dt / n;
+      for (let i = 0; i < n; i++) {
+        const T = S.T[k], P = S.U * S.U / M[k].R(T);
+        S.T[k] = Math.min(250, T + h * (P - e.delta * (T - Ta)) / (e.delta * e.tau));
+      }
+    });
+    // Blasen
+    if (S.env === "water" && S.Tw > 60 && Math.random() < (S.Tw - 60) / 40 * 0.6) S.bub.push({ x:BK.x0 + 25 + Math.random() * (BK.x1 - BK.x0 - 50), y:BK.bot - 10, r:1.5 + Math.random() * (S.Tw > 97 ? 5 : 2.5) });
+    S.bub.forEach(b => { b.y -= dt * (40 + b.r * 15); b.x += Math.sin(b.y * 0.1) * 0.3; });
+    S.bub = S.bub.filter(b => b.y > BK.wt + 4);
+    // Ladungen
+    const el = $("cbEl").checked ? -1 : 1, all = (S.view === "3d" ? geo3d(S.mode) : geoSym(S.mode)).wires;
+    all.forEach(w => { S.ph[w.id] = (S.ph[w.id] || 0) + el * KQ * cur(w.cur) * dt; });
+    keys().forEach(k => partStep(k, dt));
+  }
+  function seqStep(dt) {
+    const q = S.seq; if (!q) return;
+    const tgt = q.list[q.i];
+    q.t += dt;
+    if (q.kind === "T") {
+      const d = tgt - S.Tw; S.Tw += Math.sign(d) * Math.min(Math.abs(d), HEAT_RATE * 2 * dt); $("tw").value = Math.round(S.Tw);
+      if (Math.abs(d) < 1e-6 && keys().every(k => Math.abs(S.T[k] - S.Tw) < 0.15)) next();
+    } else {
+      const d = tgt - S.U; S.U = Math.round((S.U + Math.sign(d) * Math.min(Math.abs(d), 8 * dt)) * 1000) / 1000; $("u").value = S.U;
+      if (Math.abs(d) < 1e-6) {
+        const Ta = amb(), ok = keys().every(k => Math.abs(steadyT(k, S.U, Ta, S.env) - S.T[k]) < (S.env === "air" ? 0.08 : 0.15));
+        if (ok && q.t > 0.3) next();
+      } else q.t = 0;
+    }
+    outs();
+    function next() { record(); q.i++; q.t = 0; if (q.i >= q.list.length) { S.seq = null; $("auto").classList.remove("on"); $("auto").textContent = "Messreihe automatisch"; outs(); } }
+  }
+  let last = 0;
+  function loop(ts) {
+    const dt = Math.min(0.05, last ? (ts - last) / 1000 : 0.016); last = ts;
+    const steps = S.seq ? (S.env === "air" ? 6 : 3) : 1;           // Messreihe im Zeitraffer
+    for (let i = 0; i < steps; i++) { seqStep(dt); physics(dt); }
+    S.t += dt;
+    if (!S.seq) updVals();
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- Messwerte ----------
+  function record() {
+    keys().forEach(k => S.pts.push({ k, env:S.env, T:S.T[k], U:S.U, I:I(k), R:R(k) }));
+    renderMw();
+  }
+  function renderMw() {
+    let h = "<tr><th>Bauteil</th><th>ϑ</th><th>U</th><th>I</th><th>R</th></tr>";
+    if (!S.pts.length) h += "<tr><td colspan=5 style='text-align:left;color:#5b6675;white-space:normal'>Noch keine Messwerte. Tippe „Messpunkt speichern“ oder „Messreihe automatisch“.</td></tr>";
+    S.pts.slice().reverse().forEach(p => {
+      h += "<tr><td class='" + (p.k === "ntc" ? "n" : "p") + "'>" + M[p.k].sym + (p.env === "air" ? " (Luft)" : "") + "</td><td>" + dez(p.T, 1) + " °C</td><td>" + dez(p.U, 1) + " V</td><td>" + fI(p.I) + "</td><td>" + fR(p.R) + "</td></tr>";
+    });
+    $("mw").innerHTML = h;
+  }
+  let lastVals = "";
+  function updVals() {
+    let h = "<tr><th></th><th>ϑ Bauteil</th><th>I</th><th>R</th></tr>";
+    keys().forEach(k => { h += "<tr><td class='" + (k === "ntc" ? "n" : "p") + "'>" + M[k].name + "</td><td>" + fT(S.T[k]) + "</td><td>" + fI(I(k)) + "</td><td>" + fR(R(k)) + "</td></tr>"; });
+    if (h !== lastVals) { $("vals").innerHTML = h; lastVals = h; }
+  }
+  function expl() {
+    const air = S.env === "air", ui = S.dia === "ui";
+    let t = "";
+    const ntc = "<b>Heißleiter (NTC):</b> Je <b>wärmer</b> er ist, desto <b>kleiner</b> ist sein Widerstand. Heiß leitet er also besser.";
+    const ptc = "<b>Kaltleiter (PTC):</b> Kalt leitet er gut. Bis etwa 60 °C ändert sich sein Widerstand kaum, darüber wird er sehr schnell <b>sehr groß</b>.";
+    if (S.mode === "ntc") t = ntc; else if (S.mode === "ptc") t = ptc;
+    else t = "Beide stecken im selben Wasser und hängen an derselben Spannung. Beim Erwärmen wird der Widerstand des <b class='n'>Heißleiters</b> kleiner, der des <b class='p'>Kaltleiters</b> größer.";
+    if (ui && !air) t += " <br>Im Wasserbad bleibt die Temperatur fest. Dann gilt I ~ U: Die U-I-Kennlinie ist eine <b>Gerade</b>. Je nach Wassertemperatur ist sie steiler oder flacher.";
+    if (air) {
+      if (S.mode !== "ptc") t += " <br>In Luft erwärmt der Strom den Heißleiter. Bei größerer Spannung wird er wärmer, sein Widerstand sinkt: Die U-I-Kennlinie biegt sich <b>nach oben</b>.";
+      if (S.mode !== "ntc") t += " <br>In Luft erwärmt der Strom den Kaltleiter. Ab etwa 60 °C steigt sein Widerstand so stark, dass die Stromstärke trotz größerer Spannung <b>wieder sinkt</b>. So begrenzt er den Strom selbst.";
+    }
+    if (S.mode === "ntc") t += " <br><i>Verwendung:</i> Temperaturfühler (z. B. im Fieberthermometer), Schutz gegen hohen Einschaltstrom.";
+    if (S.mode === "ptc") t += " <br><i>Verwendung:</i> Überlastschutz („Sicherung“, die sich selbst zurückstellt), Heizungen, die sich selbst regeln. Auch Metalle sind Kaltleiter, ihr Widerstand steigt aber nur langsam.";
+    if (S.seq) t = "<b>Messreihe läuft</b> (Zeitraffer): " + (S.seq.kind === "T" ? "Das Wasser wird in 10-°C-Schritten erwärmt." : "Die Spannung steigt in 1-V-Schritten, gemessen wird erst, wenn sich die Temperatur des Bauteils nicht mehr ändert.") + " Messpunkt " + Math.min(S.seq.i + 1, S.seq.list.length) + " von " + S.seq.list.length + ".";
+    $("expl").innerHTML = t;
+  }
+
+  // ---------- Bedienung ----------
+  function outs() {
+    $("two").textContent = dez(S.Tw, 0) + " °C";
+    $("uo").textContent = dez(S.U, 1) + " V";
+    document.querySelectorAll(".water").forEach(e => e.classList.toggle("hidden", S.env !== "water"));
+    document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.m === S.mode));
+    document.querySelectorAll("#envs button").forEach(b => b.classList.toggle("on", b.dataset.e === S.env));
+    document.querySelectorAll("#dias button").forEach(b => b.classList.toggle("on", b.dataset.d === S.dia));
+    ["mark", "clear", "reset", "uMinus", "uPlus"].forEach(i => $(i).disabled = !!S.seq);
+    $("u").disabled = $("tw").disabled = !!S.seq;
+    expl(); updVals();
+  }
+  function setHeat(h) { S.heat = h; $("heat").classList.toggle("on", h > 0); $("cool").classList.toggle("on", h < 0); }
+  function stopSeq() { if (S.seq) { S.seq = null; $("auto").classList.remove("on"); $("auto").textContent = "Messreihe automatisch"; } }
+  const LINKS = { ntc:"heissleiter", ptc:"kaltleiter", both:"vergleich" };
+  function linkGet() { let h = ""; try { h = decodeURIComponent(location.hash.slice(1)).toLowerCase(); } catch (e) {} return Object.keys(LINKS).find(k => LINKS[k] === h); }
+  function linkSet(k) { try { if (location.hash !== "#" + LINKS[k]) history.replaceState(null, "", "#" + LINKS[k]); } catch (e) {} }
+  window.addEventListener("hashchange", () => { const k = linkGet(); if (k && k !== S.mode) setMode(k); });
+  function setMode(m) { stopSeq(); S.mode = m; linkSet(m); outs(); resize(); }
+  function setEnv(e) {
+    stopSeq(); S.env = e; setHeat(0);
+    outs(); draw();
+  }
+  function setU(u) { S.U = Math.max(0, Math.min(UMAX, Math.round(u * 10) / 10)); $("u").value = S.U; outs(); }
+  function setFs(v) {
+    S.fs = Math.max(0.8, Math.min(1.6, Math.round(v * 10) / 10));
+    document.documentElement.style.fontSize = (14 * S.fs) + "px";
+    store.set("hk_fs", S.fs); resize();
+  }
+  function setView(v) {
+    S.view = v; $("view").textContent = v === "3d" ? "Symbol" : "3D";
+    $("view").title = v === "3d" ? "Zur Symbolansicht wechseln" : "Zur 3D-Ansicht wechseln";
+    store.set("hk_view", v); draw();
+  }
+  document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => setMode(b.dataset.m));
+  document.querySelectorAll("#envs button").forEach(b => b.onclick = () => setEnv(b.dataset.e));
+  document.querySelectorAll("#dias button").forEach(b => b.onclick = () => { S.dia = b.dataset.d; outs(); });
+  $("tw").addEventListener("input", () => { setHeat(0); S.Tw = +$("tw").value; outs(); });
+  $("u").addEventListener("input", () => setU(+$("u").value));
+  $("uMinus").onclick = () => setU(S.U - 0.1);
+  $("uPlus").onclick = () => setU(S.U + 0.1);
+  window.addEventListener("keydown", e => {
+    if (e.target.tagName === "INPUT" && e.target.type !== "range" && e.target.type !== "checkbox") return;
+    if (S.seq) return;
+    if (e.key === "ArrowLeft" || e.key === "ArrowRight") { e.preventDefault(); setU(S.U + (e.key === "ArrowRight" ? 0.1 : -0.1)); }
+  });
+  $("heat").onclick = () => { stopSeq(); setHeat(S.heat > 0 ? 0 : 1); outs(); };
+  $("cool").onclick = () => { stopSeq(); setHeat(S.heat < 0 ? 0 : -1); outs(); };
+  $("stop").onclick = () => { setHeat(0); outs(); };
+  ["cbDia", "cbIn"].forEach(i => $(i).addEventListener("change", resize));
+  ["cbKl", "cbEl"].forEach(i => $(i).addEventListener("change", draw));
+  $("mark").onclick = record;
+  $("clear").onclick = () => { S.pts = []; renderMw(); };
+  $("auto").onclick = () => {
+    if (S.seq) { stopSeq(); outs(); return; }
+    setHeat(0);
+    if (S.env === "water" && S.dia === "rt") {
+      S.Tw = 0; keys().forEach(k => S.T[k] = 0); $("tw").value = 0;
+      S.seq = { kind:"T", list:[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100], i:0, t:0 };
+    } else {
+      S.seq = { kind:"U", list:[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], i:0, t:0 };
+    }
+    $("cbDia").checked = true;
+    $("auto").classList.add("on"); $("auto").textContent = "■ Messreihe stoppen";
+    outs(); resize();
+  };
+  $("reset").onclick = () => {
+    stopSeq(); setHeat(0); S.Tw = 20; S.U = 6; S.T = { ntc:20, ptc:20 }; S.pts = []; S.env = "water"; S.dia = "rt"; S.part = {};
+    $("tw").value = 20; $("u").value = 6; $("cbDia").checked = true; $("cbIn").checked = true; $("cbKl").checked = false; $("cbEl").checked = false;
+    renderMw(); outs(); resize();
+  };
+  $("fsMinus").onclick = () => setFs(S.fs - 0.1);
+  $("fsPlus").onclick = () => setFs(S.fs + 0.1);
+  $("view").onclick = () => setView(S.view === "3d" ? "sym" : "3d");
+  $("panelBtn").onclick = () => { document.body.classList.toggle("nopanel"); resize(); };
+  const de = document.documentElement, reqFS = de.requestFullscreen || de.webkitRequestFullscreen;
+  if (!reqFS) $("full").classList.add("hidden");
+  $("full").onclick = () => {
+    const c = document.fullscreenElement || document.webkitFullscreenElement;
+    if (c) (document.exitFullscreen || document.webkitExitFullscreen).call(document); else reqFS.call(de);
+  };
+  $("rotGo").onclick = () => { document.body.classList.add("quer"); resize(); };
+
+  window.addEventListener("resize", resize);
+  if (window.ResizeObserver) new ResizeObserver(() => { const r = cv.getBoundingClientRect(); if (Math.abs(r.width - CW) > 0.5 || Math.abs(r.height - CH) > 0.5) resize(); }).observe(cv);
+  setView(store.get("hk_view") === "sym" ? "sym" : "3d");
+  renderMw();
+  setFs(+store.get("hk_fs") || 1);
+  setMode(linkGet() || "ntc");
+  requestAnimationFrame(loop);
+})();
+
+</script>
+<!-- KI-Hinweis: einheitlich in allen Simulationen, immer sichtbar unten rechts -->
+<style>
+#ki-hinweis{position:fixed;right:0;bottom:0;z-index:2147483000;pointer-events:none;
+  font:10px/16px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  color:#5b6270;background:rgba(243,244,246,.92);border-top:1px solid rgba(0,0,0,.08);border-left:1px solid rgba(0,0,0,.08);
+  border-top-left-radius:6px;padding:0 max(7px,env(safe-area-inset-right)) env(safe-area-inset-bottom) 8px;white-space:nowrap}
+.ki-platz::after{content:"";display:block;height:20px;flex:none}
+@media print{#ki-hinweis{position:static;text-align:right;border:0;background:none}}
+</style>
+<div id="ki-hinweis" role="note">Mit KI erstellt · Physik nicht geprüft · Ergebnisse kritisch prüfen</div>
+<script>
+/* Scrollbereiche, die bis unter den Hinweis reichen, bekommen unten 20 px Luft,
+   damit ihr letzter Inhalt nicht dauerhaft vom Hinweis verdeckt wird. */
+(function(){
+  var hin=document.getElementById('ki-hinweis');
+  function platz(){
+    var alt=document.querySelectorAll('.ki-platz');
+    for(var i=0;i<alt.length;i++)alt[i].classList.remove('ki-platz');
+    var vw=innerWidth,vh=innerHeight,hb=hin.getBoundingClientRect();
+    var els=document.body.querySelectorAll('*');
+    function passt(el){
+      var cs=getComputedStyle(el);
+      if(cs.display==='block'||cs.display==='flow-root')return true;
+      return cs.display==='flex'&&/column/.test(cs.flexDirection);
+    }
+    for(var j=0;j<els.length;j++){
+      var el=els[j];if(el===hin||el.closest('svg'))continue;
+      var oy=getComputedStyle(el).overflowY;
+      if(oy!=='auto'&&oy!=='scroll')continue;
+      var r=el.getBoundingClientRect();
+      if(r.height<40||r.bottom<vh-hb.height-4||r.right<hb.left+20||r.left>vw)continue;
+      if(passt(el))el.classList.add('ki-platz');
+    }
+    var se=document.scrollingElement||document.documentElement;
+    if(se.scrollHeight>vh+2&&passt(document.body))document.body.classList.add('ki-platz');
+  }
+  var t;function spaeter(){clearTimeout(t);t=setTimeout(platz,150);}
+  addEventListener('resize',spaeter);addEventListener('load',spaeter);
+  document.addEventListener('click',spaeter,true);
+  platz();
+})();
+</script>
+</body>
+</html>
