@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Gravitationsfeld: Feld, Energie, Fluchtgeschwindigkeit, Satelliten</title>
+<style>
+  :root { --bg:#f4f6f9; --panel:#ffffff; --ink:#1d2733; --muted:#5b6675; --line:#d5dbe3;
+          --blue:#1F4E79; --red:#C0392B; --green:#2E7D32; }
+  * { box-sizing:border-box; }
+  html { font-size:14px; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--ink);
+               font-family:-apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow:hidden;
+               -webkit-text-size-adjust:100%; }
+  #app { display:flex; height:100vh; height:100dvh; width:100vw; }
+  #stage { flex:1 1 auto; position:relative; min-width:0; min-height:0; background:#05070d; }
+  #cv { position:absolute; inset:0; display:block; width:100%; height:100%; touch-action:none; }
+  #panel { flex:0 0 24rem; max-width:50vw; background:var(--panel); border-left:1px solid var(--line);
+           padding:.6rem .85rem; display:flex; flex-direction:column; gap:.45rem; overflow-y:auto; }
+  body.nopanel #panel { display:none; }
+  #ctrl, #info { display:flex; flex-direction:column; gap:.45rem; min-width:0; }
+  h1 { font-size:1.2rem; margin:0; color:var(--blue); }
+  .tabs { display:flex; gap:5px; }
+  .tabs button { flex:1 1 auto; padding-left:.25rem; padding-right:.25rem; }
+  button { font:inherit; font-size:1rem; padding:.5rem .6rem; border-radius:8px; border:1px solid var(--line);
+           background:#eef2f7; color:var(--ink); cursor:pointer; touch-action:manipulation; min-height:2.6rem; }
+  button.on { background:var(--blue); color:#fff; border-color:var(--blue); }
+  button.go { background:var(--green); color:#fff; border-color:var(--green); font-weight:600; }
+  .par { display:flex; flex-direction:column; gap:.15rem; }
+  .par .head { display:flex; justify-content:space-between; align-items:baseline; font-size:1rem; gap:.5rem; }
+  .par .head output { font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .par .line { display:flex; align-items:center; gap:6px; }
+  .par .line button { flex:0 0 2.7rem; padding:0; font-size:1.3rem; font-weight:600; }
+  .par input[type=range] { flex:1; min-width:0; height:2rem; }
+  .row { display:flex; align-items:center; gap:8px; font-size:1rem; }
+  .row label { flex:0 0 auto; }
+  select { font:inherit; font-size:1rem; padding:.3rem; flex:1; min-width:0; }
+  .checks { display:flex; flex-wrap:wrap; gap:.3rem .9rem; font-size:1rem; }
+  .checks label { display:flex; align-items:center; gap:5px; min-height:1.9rem; }
+  .checks input { width:1.3rem; height:1.3rem; }
+  .btns { display:flex; gap:6px; flex-wrap:wrap; }
+  .btns button { flex:1 1 0; white-space:nowrap; padding-left:.3rem; padding-right:.3rem; }
+  .seg { display:flex; gap:0; }
+  .seg button { flex:1; border-radius:0; }
+  .seg button:first-child { border-radius:8px 0 0 8px; }
+  .seg button:last-child { border-radius:0 8px 8px 0; }
+  #out table { border-collapse:collapse; width:100%; font-size:.98rem; font-variant-numeric:tabular-nums; }
+  #out td { padding:.12rem .25rem; border-bottom:1px solid #eef1f5; vertical-align:baseline; }
+  #out td:last-child { text-align:right; font-weight:600; white-space:nowrap; }
+  #out tr.hl td { color:var(--blue); }
+  #out tr.res td { font-weight:600; color:var(--green); text-align:left; white-space:normal; }
+  #out tr.warn td { font-weight:600; color:#b35900; text-align:left; white-space:normal; }
+  #expl { font-size:.95rem; background:#f1f6fc; border:1px solid #d3e2f3; border-radius:8px; padding:.4rem .55rem; line-height:1.35; }
+  .formel { font-size:.98rem; background:#fbf8ee; border:1px solid #eadfb8; border-radius:8px; padding:.3rem .55rem; line-height:1.55; }
+  .formel summary { cursor:pointer; font-weight:600; min-height:1.8rem; display:flex; align-items:center; }
+  .formel .k { white-space:nowrap; }
+  .frac { display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; font-size:.92em; margin:0 .1em; }
+  .frac > span:first-child { border-bottom:1px solid currentColor; padding:0 .15em; }
+  .frac > span:last-child { padding:0 .15em; }
+  #notes table { border-collapse:collapse; width:100%; font-size:.95rem; font-variant-numeric:tabular-nums; }
+  #notes td, #notes th { border-bottom:1px solid var(--line); padding:.2rem .3rem; text-align:right; white-space:nowrap; }
+  #notes th { color:var(--muted); font-weight:600; font-size:.85rem; vertical-align:bottom; white-space:normal; }
+  #notes td:first-child, #notes th:first-child { text-align:left; color:var(--muted); }
+  #notes .empty { font-size:.9rem; color:var(--muted); }
+  details.small summary { cursor:pointer; min-height:1.9rem; display:flex; align-items:center; }
+  .small { font-size:.86rem; color:var(--muted); line-height:1.35; }
+  .hidden { display:none !important; }
+
+  /* Werkzeugleiste auf der Simulation */
+  #tools { position:absolute; top:8px; right:8px; display:flex; gap:6px; z-index:5; }
+  #tools button { min-width:44px; height:44px; min-height:44px; padding:0 10px; font-size:16px; font-weight:600;
+                  background:rgba(255,255,255,.88); border:1px solid #c3ccd8; border-radius:10px;
+                  box-shadow:0 2px 6px rgba(0,0,0,.25); display:flex; align-items:center; justify-content:center; }
+  #tools button svg { width:22px; height:22px; stroke:var(--ink); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  #tools button:active { background:#dde5ef; }
+
+  @media (max-height: 800px) {
+    h1 { display:none; }
+    button { padding:.35rem .6rem; min-height:2.4rem; }
+    .par input[type=range] { height:1.7rem; }
+    .checks label { min-height:1.6rem; }
+  }
+  @media (max-width: 900px) and (orientation: landscape) { #panel { flex-basis:21rem; } }
+
+  /* iPad hochkant: Simulation oben, Bedienfeld zweispaltig darunter */
+  @media (min-width: 641px) and (max-width: 900px) and (orientation: portrait) {
+    #app { flex-direction:column; }
+    #panel { flex:0 0 auto; max-width:none; max-height:44vh; width:100%; border-left:0; border-top:1px solid var(--line);
+             display:grid; grid-template-columns:1fr 1fr; gap:.4rem 1.1rem; align-items:start; }
+    h1 { display:none; }
+  }
+
+  /* Handy hochkant: Simulation oben, Bedienfeld darunter, Seite darf scrollen */
+  @media (max-width: 640px) {
+    html, body { height:auto; overflow:auto; }
+    #app { flex-direction:column; height:auto; min-height:100vh; }
+    #stage { flex:none; height:min(118vw, 64vh); }
+    body.nopanel #stage { height:100vh; height:100dvh; }
+    #panel { flex:none; width:100%; max-width:none; border-left:0; border-top:1px solid var(--line); overflow:visible; }
+    h1 { display:block; }
+    #tools button { min-width:40px; height:40px; min-height:40px; padding:0 8px; }
+  }
+
+  /* Drehhinweis, wenn das Handy quer gehalten wird */
+  #rotate { display:none; position:fixed; inset:0; z-index:50; background:rgba(29,39,51,.94); color:#fff;
+            align-items:center; justify-content:center; text-align:center; padding:20px; }
+  #rotate .box { max-width:420px; display:flex; flex-direction:column; align-items:center; gap:14px; font-size:18px; }
+  #rotate svg { width:80px; height:80px; stroke:#fff; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+  #rotate button { font-size:17px; background:#fff; color:var(--ink); padding:10px 18px; }
+  @media (orientation: landscape) and (max-height: 500px) {
+    body:not(.quer) #rotate { display:flex; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <canvas id="cv"></canvas>
+    <div id="tools">
+      <button id="fsMinus" title="Schrift kleiner">A−</button>
+      <button id="fsPlus" title="Schrift größer">A+</button>
+      <button id="view" title="Darstellung umschalten">Symbol</button>
+      <button id="full" title="Vollbild"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      <button id="panelBtn" title="Bedienfeld aus-/einblenden"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg></button>
+    </div>
+  </div>
+  <div id="panel">
+    <div id="ctrl">
+      <h1>Gravitationsfeld</h1>
+      <div class="tabs">
+        <button data-tab="feld">Feld</button>
+        <button data-tab="energie">Energie</button>
+        <button data-tab="flucht">Flucht&shy;geschw.</button>
+        <button data-tab="sat">Satelliten</button>
+      </div>
+      <div class="row"><label for="body">Himmels&shy;körper</label><select id="body"></select></div>
+      <div class="row"><label for="stageSel">Ansicht</label><select id="stageSel"></select></div>
+
+      <!-- Feld -->
+      <div class="par" data-k="s" data-sc="feld">
+        <div class="head"><span>Lupe: Ausschnitt s</span><output></output></div>
+        <div class="line"><button class="minus">−</button><input type="range"><button class="plus">+</button></div>
+      </div>
+      <div class="row" data-sc="feld"><label for="gSel">Maßstab für g</label><select id="gSel"></select></div>
+      <div class="checks" data-sc="feld">
+        <label><input id="cbLines" type="checkbox" checked>Feldlinien</label>
+        <label><input id="cbVec" type="checkbox">Feldstärkepfeile</label>
+        <label><input id="cbEqui" type="checkbox">Äquipotentiallinien</label>
+        <label><input id="cbLupe" type="checkbox" checked>Lupe</label>
+        <label><input id="cbGraph" type="checkbox" checked>g(r)-Diagramm</label>
+      </div>
+
+      <!-- Energie -->
+      <div class="par" data-k="m" data-sc="energie">
+        <div class="head"><span>Masse m des Körpers</span><output></output></div>
+        <div class="line"><button class="minus">−</button><input type="range"><button class="plus">+</button></div>
+      </div>
+      <div class="par" data-k="h1" data-sc="energie">
+        <div class="head"><span>Start: Höhe h<sub>1</sub></span><output></output></div>
+        <div class="line"><button class="minus">−</button><input type="range"><button class="plus">+</button></div>
+      </div>
+      <div class="par" data-k="h2" data-sc="energie">
+        <div class="head"><span>Ziel: Höhe h<sub>2</sub></span><output></output></div>
+        <div class="line"><button class="minus">−</button><input type="range"><button class="plus">+</button></div>
+      </div>
+      <div class="row" data-sc="energie"><label>Nullniveau</label>
+        <div class="seg" style="flex:1"><button id="zInf" class="on">im Unendlichen</button><button id="zSur">Oberfläche</button></div></div>
+      <div class="row" data-sc="energie"><label for="axSel">Achsen</label><select id="axSel"></select></div>
+      <div class="checks" data-sc="energie">
+        <label><input id="cbMgh" type="checkbox" checked>Näherung m·g·h (homogenes Feld) zeigen</label>
+      </div>
+
+      <!-- Fluchtgeschwindigkeit -->
+      <div class="par" data-k="v0" data-sc="flucht">
+        <div class="head"><span>Abschuss&shy;geschwindigkeit v<sub>0</sub></span><output></output></div>
+        <div class="line"><button class="minus">−</button><input type="range"><button class="plus">+</button></div>
+      </div>
+      <div class="par" data-k="al" data-sc="flucht">
+        <div class="head"><span>Winkel über der Waagerechten</span><output></output></div>
+        <div class="line"><button class="minus">−</button><input type="range"><button class="plus">+</button></div>
+      </div>
+      <div class="par" data-k="h0" data-sc="flucht">
+        <div class="head"><span>Abschusshöhe h<sub>0</sub> (Berg)</span><output></output></div>
+        <div class="line"><button class="minus">−</button><input type="range"><button class="plus">+</button></div>
+      </div>
+      <div class="btns" data-sc="flucht">
+        <button id="shoot" class="go">Abschießen</button>
+        <button id="setV1" title="Kreisbahngeschwindigkeit in Abschusshöhe einstellen">v<sub>1</sub></button>
+        <button id="setV2" title="Fluchtgeschwindigkeit in Abschusshöhe einstellen">v<sub>F</sub></button>
+        <button id="clearTr">Bahnen löschen</button>
+      </div>
+      <div class="checks" data-sc="flucht">
+        <label><input id="cbBars" type="checkbox" checked>Energiebalken</label>
+      </div>
+
+      <!-- Satelliten -->
+      <div class="par" data-k="hs" data-sc="sat">
+        <div class="head"><span>Bahnhöhe h über dem Boden</span><output></output></div>
+        <div class="line"><button class="minus">−</button><input type="range"><button class="plus">+</button></div>
+      </div>
+      <div class="btns" data-sc="sat" id="presets">
+        <button data-pre="iss">ISS</button><button data-pre="gps">GPS</button><button data-pre="geo">geostationär</button><button data-pre="mond">Mond</button>
+      </div>
+      <div class="par" data-k="dv" data-sc="sat">
+        <div class="head"><span>Schub Δv (in Flugrichtung)</span><output></output></div>
+        <div class="line"><button class="minus">−</button><input type="range"><button class="plus">+</button></div>
+      </div>
+      <div class="btns" data-sc="sat">
+        <button id="boost" class="go">Schub geben</button>
+        <button id="circHere" title="Geschwindigkeit so ändern, dass hier eine Kreisbahn entsteht">Kreisbahn hier</button>
+        <button id="satPlay">Pause</button>
+      </div>
+      <div class="checks" data-sc="sat">
+        <label><input id="cbArrows" type="checkbox" checked>Pfeile v und F</label>
+        <label><input id="cbRot" type="checkbox" checked>Planet dreht sich</label>
+      </div>
+
+      <div class="row" data-sc="flucht sat"><label for="speed">Zeitraffer</label><select id="speed"></select></div>
+    </div>
+    <div id="info">
+      <div id="out"></div>
+      <div id="expl"></div>
+      <details class="formel" id="formelBox" open><summary>Formeln</summary><div id="formel"></div></details>
+      <div class="btns" data-sc="sat"><button id="noteBtn" class="go">Bahn notieren</button></div>
+      <div id="notes" data-sc="sat"></div>
+      <div class="btns hidden" id="noteMore">
+        <button id="noteUndo">Letzten löschen</button>
+        <button id="noteClear">Alle löschen</button>
+        <button id="noteCsv" title="Messwerte als Tabelle (CSV) speichern, öffnet sich in Excel oder Numbers">Tabelle speichern</button>
+      </div>
+      <div class="btns"><button id="reset">Zurücksetzen</button></div>
+      <details class="small"><summary>Hinweise und Vereinfachungen</summary><div id="simpl"></div></details>
+    </div>
+  </div>
+</div>
+<div id="rotate">
+  <div class="box">
+    <svg viewBox="0 0 64 64"><rect x="20" y="6" width="24" height="42" rx="4"/><path d="M29 42h6"/><path d="M50 30a20 20 0 0 1-12 22M38 52l1-6M38 52l-6-1"/></svg>
+    <div>Bitte das Handy hochkant halten.</div>
+    <button id="rotGo">Trotzdem quer weiter</button>
+  </div>
+</div>
+<script>
+(function () {
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const cv = $("cv"), ctx = cv.getContext("2d");
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  };
+  const G = 6.674e-11;                       // Gravitationskonstante in N·m²/kg²
+  const FONT = "-apple-system, 'Segoe UI', Roboto, Arial, sans-serif";
+  const SUP = { "-":"⁻", "0":"⁰", "1":"¹", "2":"²", "3":"³", "4":"⁴", "5":"⁵", "6":"⁶", "7":"⁷", "8":"⁸", "9":"⁹" };
+  const sup = n => String(n).split("").map(c => SUP[c]).join("");
+  const de = (x, d) => (x < 0 ? "−" : "") + Math.abs(x).toFixed(d).replace(".", ",");
+  const thou = n => (n < 0 ? "−" : "") + String(Math.round(Math.abs(n))).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  // Zahl mit sinnvollen Stellen (3 gültige Ziffern), große Zahlen mit Tausenderlücke
+  function num(x, sig) {
+    sig = sig || 3; if (!isFinite(x)) return "–"; if (x === 0) return "0";
+    const a = Math.abs(x), e = Math.floor(Math.log10(a));
+    if (e >= sig - 1) return thou(x);
+    return de(x, Math.max(0, sig - 1 - e));
+  }
+  // wissenschaftliche Schreibweise mit Mal-Punkt: 1,23 · 10⁻³
+  function sci(x, sig) {
+    sig = sig || 3; if (x === 0) return "0";
+    const a = Math.abs(x); if (a >= 0.01 && a < 1e5) return num(x, sig);
+    const e = Math.floor(Math.log10(a)), m = x / Math.pow(10, e);
+    return de(m, sig - 1) + " · 10" + sup(e);
+  }
+  function niceStep(x) { const e = Math.pow(10, Math.floor(Math.log10(x))), f = x / e; return (f < 1.5 ? 1 : f < 3.5 ? 2 : f < 7.5 ? 5 : 10) * e; }
+
+  // ---------- Himmelskörper (Masse, mittlerer Radius, Drehdauer in s) ----------
+  const BODIES = {
+    erde:    { n:"Erde",    M:5.972e24, R:6.371e6,  rot:86164,   eS:100  },
+    mond:    { n:"Mond",    M:7.346e22, R:1.737e6,  rot:2360592, eS:5    },
+    mars:    { n:"Mars",    M:6.417e23, R:3.390e6,  rot:88643,   eS:20   },
+    jupiter: { n:"Jupiter", M:1.898e27, R:6.9911e7, rot:35730,   eS:2500 }
+  };
+  const B = () => BODIES[S.body];
+  const GM = () => G * B().M;
+
+  // ---------- Feste Ansichten (keine automatische Anpassung) ----------
+  const STG = [10000, 25000, 60000, 150000, 450000];          // Radius des sichtbaren Bereichs in km
+  const EST = [20000, 50000, 150000, 500000];                  // Energie: r-Achse bis … km
+  const GSEL = [3, 12, 30];                                    // g-Achse bis … N/kg
+  const AXS = [ { F:2000, E:10e9, t:"klein: F bis 2 kN, E bis 10 GJ" },
+                { F:15000, E:100e9, t:"mittel: F bis 15 kN, E bis 100 GJ" },
+                { F:40000, E:2000e9, t:"groß: F bis 40 kN, E bis 2000 GJ" } ];
+  const SPEEDS = [100, 300, 1000, 3000, 10000, 100000];
+
+  // ---------- Regler: Werte aus festen Listen ----------
+  const rng = (a, b, st) => { const r = []; for (let i = 0; a + i * st <= b + 1e-9; i++) r.push(Math.round((a + i * st) * 100) / 100); return r; };
+  const HL = [0, 1, 2, 5, 10, 20, 50, 100, 200, 300, 500, 700, 1000, 1500, 2000, 3000, 5000, 7000, 10000, 15000, 20000, 30000, 40000, 50000, 70000, 100000, 150000, 200000, 300000, 400000];
+  const km = v => thou(v) + " km";
+  const PARS = {
+    s:  { list:[1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000], def:10, txt:km },
+    m:  { list:[10, 20, 50, 100, 200, 500, 1000, 2000], def:1000, txt:v => thou(v) + " kg" },
+    h1: { list:HL, def:0, txt:km },
+    h2: { list:HL, def:1000, txt:km },
+    v0: { list:rng(0, 20, 0.1).concat(rng(21, 70, 1)), def:6.5, txt:v => de(v, v < 20 ? 1 : 0) + " km/s" },
+    al: { list:rng(0, 90, 5), def:0, txt:v => v === 0 ? "0° (waagerecht)" : v === 90 ? "90° (senkrecht)" : v + "°" },
+    h0: { list:[0, 10, 50, 100, 200, 500, 1000, 2000, 5000], def:500, txt:km },
+    hs: { list:[200, 300, 400, 500, 700, 1000, 1500, 2000, 3000, 5000, 7000, 10000, 15000, 20000, 25000, 30000, 35000, 40000, 50000, 70000, 100000, 150000, 200000, 300000, 400000], def:400, txt:km },
+    dv: { list:rng(-2, 3, 0.1), def:0.5, txt:v => (v > 0 ? "+" : "") + de(v, 1) + " km/s" }
+  };
+  const PRE = { iss:{ h:420, n:"ISS" }, gps:{ h:20200, n:"GPS" }, geo:{ h:35786, n:"geostationär" }, mond:{ h:378029, n:"Mond" } };
+
+  const S = { scene:"feld", view:"3d", fs:1, body:"erde", val:{},
+              stage:{ feld:1, flucht:0, sat:0 }, est:1, gsel:1, ax:1, zero:"inf",
+              speed:{ flucht:1, sat:2 },
+              probe:{ r:1.6e7, a:-0.75 }, drag:null,
+              shot:null, traces:[], sat:null, satRun:true, rotA:0, satName:"" };
+  for (const k in PARS) S.val[k] = PARS[k].def;
+
+  // ---------- Zeichenhilfen ----------
+  function resize() {
+    const dpr = window.devicePixelRatio || 1, r = cv.getBoundingClientRect();
+    cv.width = Math.max(1, Math.round(r.width * dpr)); cv.height = Math.max(1, Math.round(r.height * dpr));
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    draw();
+  }
+  function txt(s, x, y, size, col, align, bold, base) {   // Text mit echten Indizes: "v_1", "E_{pot}"
+    const parts = [];
+    s.split(/(_\{[^}]*\}|_[0-9A-Za-z])/).forEach(q => { if (q) parts.push(q[0] === "_" ? [q.replace(/^_\{?|\}$/g, ""), true] : [q, false]); });
+    const font = q => (bold ? "600 " : "") + Math.round(q[1] ? size * 0.7 : size) + "px " + FONT;
+    let w = 0; for (const q of parts) { ctx.font = font(q); w += ctx.measureText(q[0]).width; }
+    let cx = align === "center" ? x - w / 2 : align === "right" ? x - w : x;
+    ctx.fillStyle = col; ctx.textAlign = "left"; ctx.textBaseline = base || "middle";
+    for (const q of parts) { ctx.font = font(q); ctx.fillText(q[0], cx, q[1] ? y + size * 0.28 : y); cx += ctx.measureText(q[0]).width; }
+    return w;
+  }
+  function tw(s, size, bold) { ctx.font = (bold ? "600 " : "") + Math.round(size) + "px " + FONT; return ctx.measureText(s.replace(/_\{?|\}/g, "")).width; }
+  function label(s, x, y, size, col, align, d3) {   // Text mit halbtransparentem Hintergrund
+    const w = tw(s, size, true), x0 = align === "center" ? x - w / 2 : align === "right" ? x - w : x;
+    ctx.fillStyle = d3 ? "rgba(5,7,13,.62)" : "rgba(255,255,255,.82)";
+    rrect(x0 - 4, y - size * 0.72, w + 8, size * 1.44, 4); ctx.fill();
+    txt(s, x, y, size, col, align, true);
+  }
+  function rrect(x, y, w, h, r) {
+    ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+  function arrow(x1, y1, x2, y2, col, lw, outline) {
+    const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy); if (len < 0.8) return;
+    const ux = dx / len, uy = dy / len, head = Math.min(len * 0.6, lw * 3.4 + 3);
+    const one = (c, w) => {
+      ctx.strokeStyle = c; ctx.fillStyle = c; ctx.lineWidth = w; ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2 - ux * head * 0.8, y2 - uy * head * 0.8); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x2, y2); ctx.lineTo(x2 - ux * head - uy * head * 0.55, y2 - uy * head + ux * head * 0.55);
+      ctx.lineTo(x2 - ux * head + uy * head * 0.55, y2 - uy * head - ux * head * 0.55); ctx.closePath(); ctx.fill();
+      if (w > lw) ctx.stroke();
+    };
+    if (outline) one(outline, lw + 3);
+    one(col, lw);
+  }
+  function ball(x, y, R, base, light, dark) {
+    const g = ctx.createRadialGradient(x - R * 0.38, y - R * 0.42, R * 0.08, x, y, R);
+    g.addColorStop(0, light); g.addColorStop(0.45, base); g.addColorStop(1, dark);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, R, 0, 7); ctx.fill();
+  }
+  const STARS = []; { let s = 11; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+    for (let i = 0; i < 260; i++) STARS.push([rnd(), rnd(), rnd()]); }
+  function background(W, H, d3) {
+    if (d3) {
+      ctx.fillStyle = "#05070d"; ctx.fillRect(0, 0, W, H);
+      for (const [a, b, s] of STARS) { ctx.fillStyle = "rgba(255,255,255," + (0.2 + s * 0.55) + ")"; const z = s > 0.88 ? 2 : 1.1; ctx.fillRect(a * W, b * H, z, z); }
+    } else { ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, W, H); }
+  }
+  // Farben je Ansicht
+  function pal(d3) {
+    return d3 ? { ink:"#f2f5f8", sub:"rgba(242,245,248,.72)", field:"rgba(130,185,255,.55)", fieldS:"#82b9ff", g:"#ff5a47", v:"#5fe07a",
+                  equi:"rgba(255,190,80,.85)", lupe:"#ffd166", grid:"rgba(255,255,255,.13)", axis:"rgba(242,245,248,.8)", W:"rgba(95,224,122,.35)", mgh:"#ffb347" }
+              : { ink:"#1d2733", sub:"#5b6675", field:"rgba(31,78,121,.42)", fieldS:"#1F4E79", g:"#C0392B", v:"#2E7D32",
+                  equi:"rgba(200,110,0,.9)", lupe:"#b8860b", grid:"rgba(0,0,0,.08)", axis:"#1d2733", W:"rgba(46,125,50,.25)", mgh:"#d35400" };
+  }
+
+  // ---------- Planet zeichnen (plastisch oder als Symbol) ----------
+  const BLOBS = []; { let s = 5; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+    for (let i = 0; i < 40; i++) BLOBS.push([rnd(), rnd(), rnd(), rnd()]); }
+  function planet(cx, cy, R, d3, rot) {
+    const b = S.body; rot = rot || 0;
+    if (R < 0.6) return;
+    if (!d3) {
+      ctx.fillStyle = "#e7ebf0"; ctx.strokeStyle = "#1d2733"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.fill(); ctx.stroke();
+      if (S.scene === "sat" && $("cbRot").checked) {   // Ort auf dem Planeten, dreht mit
+        const x = cx + Math.cos(-rot) * R, y = cy + Math.sin(-rot) * R;
+        ctx.strokeStyle = "#1d2733"; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x, y); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = "#C0392B"; ctx.beginPath(); ctx.arc(x, y, 5, 0, 7); ctx.fill();
+      }
+      return;
+    }
+    // Atmosphäre / Schein
+    if (b === "erde" || b === "jupiter") {
+      const ga = ctx.createRadialGradient(cx, cy, R * 0.98, cx, cy, R * 1.06 + 3);
+      ga.addColorStop(0, b === "erde" ? "rgba(120,180,255,.55)" : "rgba(255,220,170,.35)"); ga.addColorStop(1, "rgba(120,180,255,0)");
+      ctx.fillStyle = ga; ctx.beginPath(); ctx.arc(cx, cy, R * 1.06 + 3, 0, 7); ctx.fill();
+    }
+    const base = { erde:["#2f74c0", "#7fb8f0", "#0c2a55"], mond:["#9a9a9a", "#d6d6d6", "#3d3d3d"],
+                   mars:["#c2562d", "#f0a070", "#4d1a0a"], jupiter:["#c9a77c", "#f2dfc2", "#5a4128"] }[b];
+    ball(cx, cy, R, base[0], base[1], base[2]);
+    ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.clip();
+    if (b === "erde") {
+      for (let i = 0; i < 14; i++) {
+        const q = BLOBS[i], a = q[0] * 6.283 + rot, rr = Math.sqrt(q[1]) * 0.85 * R;
+        ctx.fillStyle = i % 4 === 0 ? "rgba(170,140,80,.75)" : "rgba(70,140,60,.8)";
+        ctx.beginPath(); ctx.ellipse(cx + Math.cos(a) * rr, cy - Math.sin(a) * rr, R * (0.08 + q[2] * 0.16), R * (0.06 + q[3] * 0.1), a, 0, 7); ctx.fill();
+      }
+      ctx.fillStyle = "rgba(255,255,255,.85)";
+      ctx.beginPath(); ctx.ellipse(cx, cy - R * 0.985, R * 0.22, R * 0.05, 0, 0, 7); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(cx, cy + R * 0.98, R * 0.3, R * 0.06, 0, 0, 7); ctx.fill();
+      ctx.globalAlpha = 0.35;
+      for (let i = 14; i < 22; i++) { const q = BLOBS[i], a = q[0] * 6.283 + rot * 1.1, rr = (0.3 + q[1] * 0.6) * R;
+        ctx.beginPath(); ctx.ellipse(cx + Math.cos(a) * rr, cy - Math.sin(a) * rr, R * 0.2, R * 0.035, a + 1.4, 0, 7); ctx.fill(); }
+      ctx.globalAlpha = 1;
+    } else if (b === "mond") {
+      for (let i = 0; i < 18; i++) { const q = BLOBS[i], a = q[0] * 6.283 + rot, rr = Math.sqrt(q[1]) * 0.92 * R, cr = R * (0.04 + q[2] * 0.1);
+        const x = cx + Math.cos(a) * rr, y = cy - Math.sin(a) * rr;
+        ctx.fillStyle = i < 6 ? "rgba(70,70,70,.35)" : "rgba(60,60,60,.3)"; ctx.beginPath(); ctx.arc(x, y, cr * (i < 6 ? 2.2 : 1), 0, 7); ctx.fill();
+        ctx.strokeStyle = "rgba(240,240,240,.25)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(x - cr * 0.15, y - cr * 0.15, cr, 0, 7); ctx.stroke(); }
+    } else if (b === "mars") {
+      for (let i = 0; i < 10; i++) { const q = BLOBS[i], a = q[0] * 6.283 + rot, rr = Math.sqrt(q[1]) * 0.8 * R;
+        ctx.fillStyle = "rgba(90,30,10,.35)"; ctx.beginPath(); ctx.ellipse(cx + Math.cos(a) * rr, cy - Math.sin(a) * rr, R * (0.1 + q[2] * 0.15), R * (0.05 + q[3] * 0.08), a, 0, 7); ctx.fill(); }
+      ctx.fillStyle = "rgba(255,255,255,.85)"; ctx.beginPath(); ctx.ellipse(cx, cy - R * 0.97, R * 0.28, R * 0.09, 0, 0, 7); ctx.fill();
+    } else {
+      const bands = ["#e8d5b5", "#b98d5f", "#efe2c8", "#a8784d", "#e3cba3", "#c49a6c", "#efe2c8", "#9d6d43", "#e3cba3"];
+      for (let i = 0; i < bands.length; i++) { ctx.fillStyle = bands[i]; ctx.globalAlpha = 0.55;
+        ctx.fillRect(cx - R, cy - R + i * 2 * R / bands.length, 2 * R, 2 * R / bands.length + 1); }
+      ctx.globalAlpha = 1;
+      const sx = cx + Math.cos(rot) * R * 0.45;
+      ctx.fillStyle = "rgba(180,70,40,.75)"; ctx.beginPath(); ctx.ellipse(sx, cy + R * 0.38, R * 0.14, R * 0.08, 0, 0, 7); ctx.fill();
+    }
+    // Licht und Schatten
+    const gs = ctx.createRadialGradient(cx - R * 0.45, cy - R * 0.45, R * 0.1, cx, cy, R * 1.05);
+    gs.addColorStop(0, "rgba(255,255,255,.28)"); gs.addColorStop(0.5, "rgba(255,255,255,0)"); gs.addColorStop(1, "rgba(0,0,0,.55)");
+    ctx.fillStyle = gs; ctx.fillRect(cx - R, cy - R, 2 * R, 2 * R);
+    ctx.restore();
+  }
+  function scaleBar(x, y, k, maxPx, col, fz) {   // k in px pro m
+    const L = niceStep(maxPx / k / 1000 * 0.8) ; const px = L * 1000 * k;
+    ctx.strokeStyle = col; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x, y - 6); ctx.lineTo(x, y); ctx.lineTo(x + px, y); ctx.lineTo(x + px, y - 6); ctx.stroke();
+    txt(thou(L) + " km", x + px / 2, y - fz * 0.75, fz * 0.9, col, "center", true);
+  }
+  function tick(v, st) { const d = Math.max(0, -Math.floor(Math.log10(st) + 1e-9)); return Math.abs(v) >= 1000 ? thou(v) : de(Math.abs(v) < st / 1e6 ? 0 : v, d); }
+  // Achsen eines Diagramms
+  function axes(a, o) {   // a: {x,y,w,h}; o: {x0,x1,y0,y1,xl,yl,xf,yf,pal,fz}
+    const p = o.pal, fz = o.fz;
+    ctx.strokeStyle = p.grid; ctx.lineWidth = 1;
+    const xs = niceStep((o.x1 - o.x0) / 6), ys = niceStep((o.y1 - o.y0) / 4);
+    ctx.font = Math.round(fz * 0.8) + "px " + FONT;
+    for (let v = Math.ceil(o.x0 / xs) * xs; v <= o.x1 + 1e-9; v += xs) {
+      const X = a.x + (v - o.x0) / (o.x1 - o.x0) * a.w;
+      ctx.beginPath(); ctx.moveTo(X, a.y); ctx.lineTo(X, a.y + a.h); ctx.stroke();
+      txt(tick(v, xs), X, a.y + a.h + fz * 0.7, fz * 0.78, p.sub, "center");
+    }
+    for (let v = Math.ceil(o.y0 / ys) * ys; v <= o.y1 + 1e-9; v += ys) {
+      const Y = a.y + a.h - (v - o.y0) / (o.y1 - o.y0) * a.h;
+      ctx.beginPath(); ctx.moveTo(a.x, Y); ctx.lineTo(a.x + a.w, Y); ctx.stroke();
+      txt(tick(v, ys), a.x - 5, Y, fz * 0.78, p.sub, "right");
+    }
+    ctx.strokeStyle = p.axis; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(a.x, a.y + a.h); ctx.lineTo(a.x + a.w, a.y + a.h); ctx.stroke();
+    if (o.zeroY !== undefined) { const Y = a.y + a.h - (0 - o.y0) / (o.y1 - o.y0) * a.h; ctx.beginPath(); ctx.moveTo(a.x, Y); ctx.lineTo(a.x + a.w, Y); ctx.stroke(); }
+    txt(o.xl, a.x + a.w, a.y + a.h + fz * 1.65, fz * 0.85, p.ink, "right", true);
+    txt(o.yl, a.x + 6, a.y + fz * 0.55, fz * 0.85, p.ink, "left", true);
+  }
+
+  // ======================================================================
+  // Reiter 1: Feld
+  // ======================================================================
+  function feldLayout(W, H) {
+    const gOn = $("cbGraph").checked, gh = gOn ? Math.round(Math.max(150, H * 0.3)) : 0, mh = H - gh;
+    const lupe = $("cbLupe").checked;
+    const cx = lupe && W > mh * 1.1 ? W * 0.6 : W / 2, cy = mh / 2 + (lupe && W <= mh * 1.1 ? mh * 0.08 : 0);
+    const k = Math.min(W, mh) / 2 * 0.94 / (STG[S.stage.feld] * 1000);
+    return { gh, mh, cx, cy, k, lupe };
+  }
+  function drawFeld(W, H, d3, fz) {
+    const p = pal(d3), b = B(), gm = GM(), L = feldLayout(W, H), { cx, cy, k, mh } = L;
+    const R = b.R, Rp = R * k, g0 = gm / (R * R), gmax = GSEL[S.gsel];
+    const kA = fz * 4.2 / gmax;            // Pfeillänge in px pro N/kg (fester Maßstab)
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, mh); ctx.clip();
+    const diag = Math.hypot(W, mh) + 50;
+    // Äquipotentiallinien: gleiche Abstände ΔΦ der potentiellen Energie pro kg
+    const phi0 = gm / R, dphi = niceStep(phi0 / 6);
+    if ($("cbEqui").checked) {
+      ctx.strokeStyle = p.equi; ctx.lineWidth = 1.6; ctx.setLineDash([7, 5]);
+      for (let L1 = Math.floor(phi0 / dphi) * dphi; L1 > 0; L1 -= dphi) {
+        const r = gm / L1; if (r * k > diag) break; if (r <= R * 1.0001) continue;
+        ctx.beginPath(); ctx.arc(cx, cy, r * k, 0, 7); ctx.stroke();
+      }
+      ctx.setLineDash([]);
+    }
+    // Feldlinien: radial, zeigen zum Mittelpunkt
+    if ($("cbLines").checked) {
+      const N = 24;
+      ctx.strokeStyle = p.field; ctx.lineWidth = 1.6;
+      for (let i = 0; i < N; i++) {
+        const a = i / N * 2 * Math.PI + Math.PI / N, ca = Math.cos(a), sa = Math.sin(a);
+        ctx.beginPath(); ctx.moveTo(cx + ca * Rp, cy + sa * Rp); ctx.lineTo(cx + ca * diag, cy + sa * diag); ctx.stroke();
+        for (let d = Rp + 34; d < diag; d += 150) {   // Pfeilspitzen zur Mitte
+          const x = cx + ca * d, y = cy + sa * d;
+          if (x < -10 || y < -10 || x > W + 10 || y > mh + 10) continue;
+          ctx.fillStyle = p.field; ctx.beginPath(); ctx.moveTo(x - ca * 7, y - sa * 7);
+          ctx.lineTo(x + ca * 4 - sa * 5, y + sa * 4 + ca * 5); ctx.lineTo(x + ca * 4 + sa * 5, y + sa * 4 - ca * 5); ctx.closePath(); ctx.fill();
+        }
+      }
+    }
+    planet(cx, cy, Rp, d3, 0);
+    // Feldstärkepfeile im Raster
+    if ($("cbVec").checked) {
+      const sp = Math.max(56, fz * 4.6);
+      for (let y = sp / 2; y < mh; y += sp) for (let x = sp / 2; x < W; x += sp) {
+        const dx = (x - cx) / k, dy = (y - cy) / k, r = Math.hypot(dx, dy); if (r < R * 1.05 + 6 / k) continue;
+        const g = gm / (r * r), l = g * kA;
+        arrow(x, y, x - dx / r * l, y - dy / r * l, p.g, 1.8);
+      }
+    }
+    // Lupe: Markierung des Ausschnitts auf der Oberfläche (oben)
+    const s = S.val.s * 1000;
+    if (L.lupe) {
+      const wpx = s * k, x0 = cx - wpx / 2, y0 = cy - (R + s) * k;
+      ctx.strokeStyle = p.lupe; ctx.lineWidth = 2;
+      if (wpx >= 10) { ctx.strokeRect(x0, y0, wpx, (s * 1.12) * k); }
+      else { ctx.beginPath(); ctx.arc(cx, cy - Rp, 9, 0, 7); ctx.stroke(); }
+    }
+    // Probekörper mit Feldstärkepfeil
+    const pr = S.probe, px = cx + Math.cos(pr.a) * pr.r * k, py = cy + Math.sin(pr.a) * pr.r * k;
+    const gp = gm / (pr.r * pr.r), lp = gp * kA;
+    arrow(px, py, px - Math.cos(pr.a) * lp, py - Math.sin(pr.a) * lp, p.g, 3.2, d3 ? "rgba(0,0,0,.5)" : "#fff");
+    if (d3) ball(px, py, 8, "#d9dee5", "#ffffff", "#596270"); else { ctx.fillStyle = "#1d2733"; ctx.beginPath(); ctx.arc(px, py, 6, 0, 7); ctx.fill(); }
+    const right = px < W * 0.62, lx = px + (right ? 14 : -14);
+    label("g = " + num(gp) + " N/kg", lx, py - fz * 0.9, fz, p.g, right ? "left" : "right", d3);
+    label("h = " + thou((pr.r - R) / 1000) + " km", lx, py + fz * 0.75, fz * 0.9, p.ink, right ? "left" : "right", d3);
+    // Planetenname, Maßstab, Legende
+    if (Rp > fz * 3) txt(b.n, cx, cy + Math.min(Rp * 0.5, mh * 0.3), fz * 1.1, d3 ? "rgba(255,255,255,.85)" : "#1d2733", "center", true);
+    scaleBar(12, mh - 14, k, Math.min(W, mh) * 0.35, p.ink, fz);
+    let ly = mh - 14 - fz * 2.1;
+    const lx2 = W - 12;
+    txt("Pfeil " + (fz * 4.2 | 0) + " px ≙ " + gmax + " N/kg", lx2, mh - 14, fz * 0.8, p.sub, "right");
+    if ($("cbEqui").checked) { txt("Äquipotentiallinien: Abstand ΔE_{pot}/m = " + num(dphi / 1e6) + " MJ/kg", lx2, mh - 14 - fz * 1.2, fz * 0.8, p.equi, "right"); }
+    if (Rp > Math.min(W, mh) * 0.47) label(b.n + " ist größer als die Ansicht: größere Ansicht wählen", W / 2, fz * 4.6, fz, p.lupe, "center", d3);
+    ctx.restore();
+    if (L.lupe) drawLupe(W, H, d3, fz, L);
+    if (L.gh) drawGraphG(W, H, d3, fz, L);
+  }
+  function lupeStats() {
+    const R = B().R, s = S.val.s * 1000;
+    return { dg: (1 - Math.pow(R / (R + s), 2)) * 100, ang: 2 * Math.atan(s / 2 / R) * 180 / Math.PI };
+  }
+  function drawLupe(W, H, d3, fz, L) {
+    const p = pal(d3), b = B(), gm = GM(), R = b.R, s = S.val.s * 1000;
+    const Lw = Math.round(Math.min(Math.min(W, L.mh) * 0.42, 290)), Lh = Math.round(Lw * 1.12), ix = 10, iy = 10;
+    const X = x => ix + (x / s + 0.5) * Lw, Y = y => iy + Lh - (y - (R - 0.12 * s)) / s * Lw;
+    // Verbindungslinien zur Markierung
+    const mx = L.cx, my = L.cy - (R + s * 0.4) * L.k;
+    ctx.strokeStyle = p.lupe; ctx.lineWidth = 1; ctx.setLineDash([3, 4]);
+    ctx.beginPath(); ctx.moveTo(ix + Lw, iy + Lh * 0.3); ctx.lineTo(mx, my); ctx.moveTo(ix + Lw, iy + Lh * 0.85); ctx.lineTo(mx, my); ctx.stroke(); ctx.setLineDash([]);
+    ctx.save();
+    ctx.fillStyle = d3 ? "#0b1020" : "#ffffff"; ctx.strokeStyle = p.lupe; ctx.lineWidth = 3;
+    rrect(ix, iy, Lw, Lh, 8); ctx.fill(); ctx.stroke(); ctx.clip();
+    // Boden (Kreisbogen der Oberfläche)
+    ctx.beginPath(); ctx.moveTo(X(-0.6 * s), iy + Lh + 5);
+    for (let i = 0; i <= 80; i++) { const x = (-0.6 + 1.2 * i / 80) * s; const y = Math.abs(x) < R ? Math.sqrt(R * R - x * x) : -1e30; ctx.lineTo(X(x), Math.min(Y(y), iy + Lh + 5)); }
+    ctx.lineTo(X(0.6 * s), iy + Lh + 5); ctx.closePath();
+    if (d3) { const gr = ctx.createLinearGradient(0, Y(R), 0, iy + Lh); const c = { erde:"#3c7a3a", mond:"#8e8e8e", mars:"#b0532b", jupiter:"#c49a6c" }[S.body];
+      gr.addColorStop(0, c); gr.addColorStop(1, "#1b1b1b"); ctx.fillStyle = gr; } else ctx.fillStyle = "#e7ebf0";
+    ctx.fill(); ctx.strokeStyle = d3 ? "rgba(255,255,255,.6)" : "#1d2733"; ctx.lineWidth = 2; ctx.stroke();
+    // Feldlinien: alle zeigen zum Mittelpunkt des Planeten
+    const NL = 7;
+    ctx.strokeStyle = p.fieldS; ctx.lineWidth = 1.6;
+    for (let i = 0; i < NL; i++) {
+      const xs = (-0.5 + (i + 0.5) / NL) * s, l = Math.hypot(xs, R), ux = xs / l, uy = R / l;
+      ctx.beginPath(); ctx.moveTo(X(ux * R), Y(uy * R)); ctx.lineTo(X(ux * (R + 3 * s)), Y(uy * (R + 3 * s))); ctx.stroke();
+    }
+    // Feldstärkepfeile
+    const kA = Lw * 0.2 / GSEL[S.gsel];
+    for (let c = 0; c < 4; c++) for (let r = 0; r < 3; r++) {
+      const x = (-0.5 + (c + 0.5) / 4) * s, y = R + (0.18 + r * 0.32) * s, rr = Math.hypot(x, y);
+      if (rr < R + 0.05 * s) continue;
+      const g = gm / (rr * rr), l = g * kA;
+      arrow(X(x), Y(y), X(x) - x / rr * l / Lw * s * (Lw / s), Y(y) + y / rr * l, p.g, 2.4);
+    }
+    ctx.restore();
+    // Beschriftung
+    const st = lupeStats(), hom = st.dg < 1 && st.ang < 1;
+    label("Lupe: Ausschnitt " + thou(s / 1000) + " km breit", ix + Lw / 2, iy + fz * 1.0, fz * 0.9, p.ink, "center", d3);
+    label(hom ? "fast homogen" : "deutlich inhomogen", ix + Lw / 2, iy + Lh + fz * 1.0, fz, hom ? (d3 ? "#5fe07a" : "#2E7D32") : (d3 ? "#ffb347" : "#b35900"), "center", d3);
+  }
+  function drawGraphG(W, H, d3, fz, L) {
+    const p = pal(d3), b = B(), gm = GM(), R = b.R, gmax = GSEL[S.gsel];
+    const y0 = L.mh;
+    ctx.fillStyle = d3 ? "#0e131c" : "#f7f9fb"; ctx.fillRect(0, y0, W, L.gh);
+    ctx.strokeStyle = d3 ? "rgba(255,255,255,.25)" : "#d5dbe3"; ctx.beginPath(); ctx.moveTo(0, y0 + 0.5); ctx.lineTo(W, y0 + 0.5); ctx.stroke();
+    const rmax = STG[S.stage.feld] * 1.6 / 1000;    // in 1000 km
+    const a = { x: fz * 3.2, y: y0 + fz * 1.3, w: W - fz * 3.2 - 16, h: L.gh - fz * 3.4 };
+    const X = r => a.x + r / 1e6 / rmax * a.w, Yg = g => a.y + a.h - Math.min(g, gmax * 1.04) / gmax * a.h;
+    // Planet-Bereich
+    ctx.fillStyle = d3 ? "rgba(255,255,255,.07)" : "rgba(0,0,0,.05)"; ctx.fillRect(a.x, a.y, Math.min(X(R) - a.x, a.w), a.h);
+    if (X(R) - a.x > fz * 3) txt(b.n, (a.x + Math.min(X(R), a.x + a.w)) / 2, a.y + a.h * 0.55, fz * 0.85, p.sub, "center");
+    axes(a, { x0:0, x1:rmax, y0:0, y1:gmax, pal:p, fz, xl:"r in 1000 km", yl:"g in N/kg", xf:v => num(v), yf:v => num(v) });
+    ctx.save(); ctx.beginPath(); ctx.rect(a.x, a.y - 4, a.w, a.h + 4); ctx.clip();
+    // Lupenbereich
+    if (L.lupe) { ctx.fillStyle = d3 ? "rgba(255,209,102,.25)" : "rgba(184,134,11,.2)"; const xa = X(R), xb = Math.max(X(R + S.val.s * 1000), xa + 2); ctx.fillRect(xa, a.y, xb - xa, a.h); }
+    // homogene Näherung
+    if (R / 1e6 < rmax) {
+      ctx.strokeStyle = p.mgh; ctx.lineWidth = 2; ctx.setLineDash([8, 6]);
+      ctx.beginPath(); ctx.moveTo(X(R), Yg(gm / R / R)); ctx.lineTo(a.x + a.w, Yg(gm / R / R)); ctx.stroke(); ctx.setLineDash([]);
+      // g(r)
+      ctx.strokeStyle = p.g; ctx.lineWidth = 3; ctx.beginPath();
+      for (let i = 0; i <= 200; i++) { const r = R + (rmax * 1e6 - R) * i / 200; const y = Yg(gm / r / r); i ? ctx.lineTo(X(r), y) : ctx.moveTo(X(r), y); }
+      ctx.stroke();
+    }
+    // Probe
+    const pr = S.probe.r, gp = gm / pr / pr;
+    if (pr / 1e6 < rmax) {
+      ctx.strokeStyle = p.sub; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(X(pr), a.y + a.h); ctx.lineTo(X(pr), Yg(gp)); ctx.lineTo(a.x, Yg(gp)); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = p.g; ctx.beginPath(); ctx.arc(X(pr), Yg(gp), 5.5, 0, 7); ctx.fill();
+    }
+    ctx.restore();
+    const g0 = gm / R / R;
+    if (R / 1e6 < rmax) {
+      txt("homogene Näherung: g = g_0 = " + num(g0) + " N/kg", a.x + a.w - 4, Math.max(Yg(g0) - fz * 0.75, a.y + fz * 0.4), fz * 0.82, p.mgh, "right", true);
+      txt("g(r) = G·M/r²", Math.min(X(R) + fz * 0.6, a.x + a.w - fz * 7), Math.min(Yg(g0) + fz * 1.6, a.y + a.h - fz * 0.8), fz * 0.82, p.g, "left", true);
+    }
+  }
+
+  // ======================================================================
+  // Reiter 2: Energie
+  // ======================================================================
+  function energieLayout(W, H, fz) {
+    const ph = Math.round(H * 0.22), left = fz * 4.0, right = 16;
+    const gA = { x:left, y:ph + fz * 1.4, w:W - left - right, h:(H - ph) * 0.42 - fz * 3.0 };
+    const eA = { x:left, y:gA.y + gA.h + fz * 3.2, w:gA.w, h:H - (gA.y + gA.h + fz * 3.2) - fz * 2.6 };
+    return { ph, gA, eA, rmax: EST[S.est] * 1000 };
+  }
+  function drawEnergie(W, H, d3, fz) {
+    const p = pal(d3), b = B(), gm = GM(), R = b.R, m = S.val.m, ax = AXS[S.ax];
+    const Lo = energieLayout(W, H, fz), { ph, gA, eA, rmax } = Lo;
+    const X = r => gA.x + r / rmax * gA.w;
+    const r1 = R + S.val.h1 * 1000, r2 = R + S.val.h2 * 1000, g0 = gm / R / R;
+    // Bildstreifen: Planet und Körper auf der r-Achse
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, ph); ctx.clip();
+    const yc = ph * 0.58;
+    if (!d3) { ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, ph); }
+    planet(X(0), yc, R / rmax * gA.w, d3, 0);
+    ctx.strokeStyle = p.sub; ctx.lineWidth = 1; ctx.setLineDash([4, 5]);
+    ctx.beginPath(); ctx.moveTo(X(R), yc); ctx.lineTo(W, yc); ctx.stroke(); ctx.setLineDash([]);
+    const box = (x, ghost) => {
+      const s = Math.max(10, fz * 0.9);
+      ctx.globalAlpha = ghost ? 0.45 : 1;
+      if (d3) { const gr = ctx.createLinearGradient(x - s, yc - s, x + s, yc + s); gr.addColorStop(0, "#f4d48a"); gr.addColorStop(1, "#8a6a1e");
+        ctx.fillStyle = gr; rrect(x - s, yc - s, 2 * s, 2 * s, 3); ctx.fill(); ctx.strokeStyle = "#4a3a12"; ctx.lineWidth = 1; ctx.stroke(); }
+      else { ctx.fillStyle = "#fff"; ctx.strokeStyle = "#1d2733"; ctx.lineWidth = 2; rrect(x - s, yc - s, 2 * s, 2 * s, 3); ctx.fill(); ctx.stroke(); }
+      txt("m", x, yc + 1, fz * 0.85, d3 ? "#3a2a05" : "#1d2733", "center", true);
+      ctx.globalAlpha = 1;
+    };
+    box(X(r1), true); box(X(r2), false);
+    if (Math.abs(X(r2) - X(r1)) > 30) arrow(X(r1), yc - fz * 1.9, X(r2), yc - fz * 1.9, p.ink, 2);
+    const near = Math.abs(X(r2) - X(r1)) < fz * 2.6, lo = r2 >= r1;
+    label("h_1", X(r1) + (near ? (lo ? -3 : 3) : 0), yc + fz * 1.9, fz * 0.9, p.sub, near ? (lo ? "right" : "left") : "center", d3);
+    label("h_2", X(r2) + (near ? (lo ? 3 : -3) : 0), yc + fz * 1.9, fz * 0.9, p.ink, near ? (lo ? "left" : "right") : "center", d3);
+    const Rq = R / rmax * gA.w;
+    if (Rq > fz * 3) txt(b.n, X(0), yc + Math.min(Rq * 0.5, ph * 0.3), fz, d3 ? "rgba(255,255,255,.85)" : "#1d2733", "center", true);
+    if (R >= rmax * 0.9) label(b.n + " ist zu groß für diese Ansicht: größere Ansicht wählen", W / 2, ph * 0.25, fz, p.lupe, "center", d3);
+    ctx.restore();
+    ctx.fillStyle = d3 ? "#0e131c" : "#f7f9fb"; ctx.fillRect(0, ph, W, H - ph);
+    // ----- F(r)-Diagramm -----
+    const Fm = ax.F, YF = F => gA.y + gA.h - F / Fm * gA.h;
+    axes(gA, { x0:0, x1:rmax / 1e6, y0:0, y1:Fm / 1000, pal:p, fz, xl:"r in 1000 km", yl:"F in kN", xf:v => num(v), yf:v => num(v) });
+    ctx.save(); ctx.beginPath(); ctx.rect(gA.x, gA.y - 2, gA.w, gA.h + 2); ctx.clip();
+    ctx.fillStyle = d3 ? "rgba(255,255,255,.07)" : "rgba(0,0,0,.05)"; ctx.fillRect(gA.x, gA.y, X(R) - gA.x, gA.h);
+    const ra = Math.min(r1, r2), rb = Math.max(r1, r2);
+    // Fläche = Hubarbeit
+    ctx.fillStyle = p.W; ctx.beginPath(); ctx.moveTo(X(ra), YF(0));
+    for (let i = 0; i <= 80; i++) { const r = ra + (rb - ra) * i / 80; ctx.lineTo(X(r), YF(gm * m / r / r)); }
+    ctx.lineTo(X(rb), YF(0)); ctx.closePath(); ctx.fill();
+    if ($("cbMgh").checked) {
+      ctx.strokeStyle = p.mgh; ctx.lineWidth = 2; ctx.setLineDash([8, 6]);
+      ctx.beginPath(); ctx.moveTo(X(R), YF(m * g0)); ctx.lineTo(gA.x + gA.w, YF(m * g0)); ctx.stroke();
+      ctx.setLineDash([4, 3]); ctx.strokeRect(X(ra), YF(m * g0), X(rb) - X(ra), YF(0) - YF(m * g0)); ctx.setLineDash([]);
+    }
+    ctx.strokeStyle = p.g; ctx.lineWidth = 3; ctx.beginPath();
+    for (let i = 0; i <= 240; i++) { const r = R + (rmax - R) * i / 240; const y = YF(gm * m / r / r); i ? ctx.lineTo(X(r), y) : ctx.moveTo(X(r), y); }
+    ctx.stroke();
+    ctx.restore();
+    txt("F(r) = G·M·m/r²", gA.x + gA.w - 4, gA.y + fz * 0.6, fz * 0.85, p.g, "right", true);
+    if ($("cbMgh").checked) txt("homogen: F = m·g_0", gA.x + gA.w - 4, Math.max(YF(m * g0) - fz * 0.7, gA.y + fz * 1.8), fz * 0.82, p.mgh, "right", true);
+    if (X(rb) - X(ra) > fz * 2.5) txt("W", (X(ra) + X(rb)) / 2, YF(0) - fz * 0.9, fz, d3 ? "#5fe07a" : "#2E7D32", "center", true);
+    // ----- E_pot(r)-Diagramm -----
+    const inf = S.zero === "inf", Em = ax.E;
+    const E = r => inf ? -gm * m / r : gm * m * (1 / R - 1 / r);
+    const y0 = inf ? -Em : 0, y1 = inf ? 0 : Em;
+    const YE = e => eA.y + eA.h - (e - y0) / (y1 - y0) * eA.h;
+    axes(eA, { x0:0, x1:rmax / 1e6, y0:y0 / 1e9, y1:y1 / 1e9, pal:p, fz, xl:"r in 1000 km", yl:"E_{pot} in GJ", xf:v => num(v), yf:v => num(v) });
+    if (inf) txt("E_{pot} = 0 im Unendlichen", gA.x + gA.w - 4, eA.y - fz * 0.5, fz * 0.8, p.sub, "right");
+    else txt("E_{pot} = 0 an der Oberfläche", gA.x + gA.w - 4, eA.y - fz * 0.5, fz * 0.8, p.sub, "right");
+    ctx.save(); ctx.beginPath(); ctx.rect(eA.x, eA.y - 2, eA.w, eA.h + 4); ctx.clip();
+    ctx.fillStyle = d3 ? "rgba(255,255,255,.07)" : "rgba(0,0,0,.05)"; ctx.fillRect(eA.x, eA.y, X(R) - eA.x, eA.h);
+    if (!inf) { ctx.strokeStyle = p.sub; ctx.lineWidth = 1.2; ctx.setLineDash([2, 4]);
+      ctx.beginPath(); ctx.moveTo(X(R), YE(gm * m / R)); ctx.lineTo(eA.x + eA.w, YE(gm * m / R)); ctx.stroke(); ctx.setLineDash([]); }
+    if ($("cbMgh").checked) {
+      ctx.strokeStyle = p.mgh; ctx.lineWidth = 2; ctx.setLineDash([8, 6]);
+      ctx.beginPath(); ctx.moveTo(X(R), YE(E(R))); ctx.lineTo(X(rmax), YE(E(R) + m * g0 * (rmax - R))); ctx.stroke(); ctx.setLineDash([]);
+    }
+    ctx.strokeStyle = p.fieldS; ctx.lineWidth = 3; ctx.beginPath();
+    for (let i = 0; i <= 240; i++) { const r = R + (rmax - R) * i / 240; const y = YE(E(r)); i ? ctx.lineTo(X(r), y) : ctx.moveTo(X(r), y); }
+    ctx.stroke();
+    // Punkte und ΔE
+    const e1 = E(r1), e2 = E(r2);
+    ctx.strokeStyle = p.sub; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(X(r1), YE(e1)); ctx.lineTo(X(Math.max(r1, r2)) + 18, YE(e1)); ctx.moveTo(X(r1), YE(e1)); ctx.lineTo(X(r1), eA.y + eA.h);
+    ctx.moveTo(X(r2), YE(e2)); ctx.lineTo(X(r2), eA.y + eA.h); ctx.stroke(); ctx.setLineDash([]);
+    if (Math.abs(YE(e2) - YE(e1)) > 8) arrow(X(Math.max(r1, r2)) + 14, YE(e1), X(Math.max(r1, r2)) + 14, YE(e2), d3 ? "#5fe07a" : "#2E7D32", 2.4);
+    for (const [r, e] of [[r1, e1], [r2, e2]]) { ctx.fillStyle = p.fieldS; ctx.beginPath(); ctx.arc(X(r), YE(e), 5.5, 0, 7); ctx.fill(); }
+    ctx.restore();
+    if (Math.abs(YE(e2) - YE(e1)) > fz * 1.2) txt("ΔE_{pot} = W", X(Math.max(r1, r2)) + 22, (YE(e1) + YE(e2)) / 2, fz * 0.85, d3 ? "#5fe07a" : "#2E7D32", "left", true);
+    txt(inf ? "E_{pot}(r) = −G·M·m/r" : "E_{pot}(r) = G·M·m·(1/R − 1/r)", gA.x + gA.w - 4, inf ? eA.y + eA.h - fz * 0.8 : eA.y + eA.h - fz * 0.8, fz * 0.85, p.fieldS, "right", true);
+    if ($("cbMgh").checked) txt("homogen: E_{pot} = m·g_0·h" + (inf ? " + E_{pot}(R)" : ""), gA.x + gA.w - 4, inf ? eA.y + eA.h - fz * 2.1 : eA.y + eA.h - fz * 2.1, fz * 0.82, p.mgh, "right", true);
+    if (gm * m / R > Em * 1.02) label("Kurve reicht über die Achse hinaus: Achsen „groß“ oder kleinere Masse wählen", W / 2, eA.y + eA.h / 2, fz * 0.9, p.lupe, "center", d3);
+  }
+
+  // ======================================================================
+  // Bahnen berechnen (Fluchtgeschwindigkeit und Satelliten)
+  // ======================================================================
+  function acc(x, y) { const r2 = x * x + y * y, r = Math.sqrt(r2), f = -GM() / (r2 * r); return [f * x, f * y]; }
+  function rk4(o, h) {
+    const a1 = acc(o.x, o.y);
+    const x2 = o.x + o.vx * h / 2, y2 = o.y + o.vy * h / 2, v2x = o.vx + a1[0] * h / 2, v2y = o.vy + a1[1] * h / 2, a2 = acc(x2, y2);
+    const x3 = o.x + v2x * h / 2, y3 = o.y + v2y * h / 2, v3x = o.vx + a2[0] * h / 2, v3y = o.vy + a2[1] * h / 2, a3 = acc(x3, y3);
+    const x4 = o.x + v3x * h, y4 = o.y + v3y * h, v4x = o.vx + a3[0] * h, v4y = o.vy + a3[1] * h, a4 = acc(x4, y4);
+    o.x += h / 6 * (o.vx + 2 * v2x + 2 * v3x + v4x); o.y += h / 6 * (o.vy + 2 * v2y + 2 * v3y + v4y);
+    o.vx += h / 6 * (a1[0] + 2 * a2[0] + 2 * a3[0] + a4[0]); o.vy += h / 6 * (a1[1] + 2 * a2[1] + 2 * a3[1] + a4[1]);
+  }
+  // Bahn fortschreiben; gibt "hit" (aufgeschlagen) oder "away" (entkommen) zurück
+  function advance(o, dt, rAway) {
+    const gm = GM(), R = B().R; let left = dt, n = 0;
+    while (left > 0 && n < 4000) {
+      const r = Math.hypot(o.x, o.y), v = Math.hypot(o.vx, o.vy);
+      let h = 0.004 * 2 * Math.PI * Math.sqrt(r * r * r / gm);
+      h = Math.min(h, 0.01 * r / Math.max(v, 1), left);
+      rk4(o, h); o.t += h; left -= h; n++;
+      const rn = Math.hypot(o.x, o.y);
+      if (rn < R) { const f = R / rn; o.x *= f; o.y *= f; o.vx = 0; o.vy = 0; return "hit"; }
+      if (rn > rAway) return "away";
+    }
+    return null;
+  }
+  // Bahnelemente aus Ort und Geschwindigkeit
+  function elements(x, y, vx, vy) {
+    const gm = GM(), r = Math.hypot(x, y), v2 = vx * vx + vy * vy, E = v2 / 2 - gm / r, Lz = x * vy - y * vx;
+    const ex = ((v2 - gm / r) * x - (x * vx + y * vy) * vx) / gm, ey = ((v2 - gm / r) * y - (x * vx + y * vy) * vy) / gm;
+    const e = Math.hypot(ex, ey), pp = Lz * Lz / gm;
+    const a = E < 0 ? -gm / (2 * E) : Infinity;
+    return { E, Lz, e, ex, ey, p:pp, a, rp:pp / (1 + e), ra:e < 1 ? pp / (1 - e) : Infinity, T:E < 0 ? 2 * Math.PI * Math.sqrt(a * a * a / gm) : Infinity };
+  }
+  function classify(el, vertical) {
+    const R = B().R, gm = GM();
+    const tolE = 0.004 * gm / R;
+    if (vertical || Math.abs(el.Lz) < 1) return el.E < -tolE ? { t:"steigt senkrecht hoch und fällt zurück", c:"warn" } : el.E <= tolE ? { t:"Grenzfall: entkommt gerade so (E_ges = 0)", c:"res" } : { t:"entkommt dem Feld", c:"res" };
+    if (Math.abs(el.E) <= tolE) return { t:"Parabelbahn: entkommt gerade so (E_ges ≈ 0)", c:"res" };
+    if (el.E > 0) return { t:"Hyperbelbahn: entkommt dem Feld", c:"res" };
+    if (el.rp < R) return { t:"fällt auf den " + (S.body === "erde" ? "Erdboden" : "Boden") + " zurück", c:"warn" };
+    if (el.e < 0.01) return { t:"Kreisbahn um " + { erde:"die Erde", mond:"den Mond", mars:"den Mars", jupiter:"den Jupiter" }[S.body], c:"res" };
+    return { t:"Ellipsenbahn (gebunden, E_ges < 0)", c:"res" };
+  }
+
+  // ======================================================================
+  // Reiter 3: Fluchtgeschwindigkeit (Newtons Kanone)
+  // ======================================================================
+  function orbitView(W, H, scene) {
+    const k = Math.min(W, H) / 2 * 0.94 / (STG[S.stage[scene]] * 1000);
+    return { cx:W / 2, cy:H / 2 + (scene === "flucht" ? Math.min(W, H) * 0.04 : 0), k };
+  }
+  const TRC = ["#ffd166", "#5fe07a", "#82b9ff", "#ff8fab", "#c39bff", "#7ef0e0", "#ffb347", "#ffffff"];
+  const TRCs = ["#b8860b", "#2E7D32", "#1F4E79", "#c2185b", "#6a1b9a", "#00796b", "#d35400", "#455a64"];
+  function launch() {
+    if (S.shot && S.shot.trail.length > 1) { S.traces.push(S.shot); if (S.traces.length > 7) S.traces.shift(); }
+    const R = B().R, r0 = R + S.val.h0 * 1000, v = S.val.v0 * 1000, al = S.val.al * Math.PI / 180;
+    const o = { x:0, y:r0, vx:v * Math.cos(al), vy:v * Math.sin(al), t:0, trail:[[0, r0]], state:"fly", col:(S.traces.length + (S.shot ? S.shot.col + 1 : 0)) % 8 };
+    o.col = S.shotCount = ((S.shotCount || 0) + 1) % 8;
+    o.el = elements(o.x, o.y, o.vx, o.vy); o.cls = classify(o.el, S.val.al === 90);
+    o.v0 = S.val.v0; o.al = S.val.al; o.h0 = S.val.h0;
+    S.shot = o; startLoop(); draw(); showOut();
+  }
+  function drawFlucht(W, H, d3, fz) {
+    const p = pal(d3), b = B(), R = b.R, V = orbitView(W, H, "flucht"), { cx, cy, k } = V;
+    const P = (x, y) => [cx + x * k, cy - y * k];
+    // Bahnen
+    const tr = (o, i, cur) => {
+      if (!o || o.trail.length < 2) return;
+      ctx.strokeStyle = (d3 ? TRC : TRCs)[o.col]; ctx.lineWidth = cur ? 2.6 : 1.8; ctx.globalAlpha = cur ? 1 : 0.75;
+      ctx.beginPath(); o.trail.forEach((q, j) => { const [X, Y] = P(q[0], q[1]); j ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); });
+      if (cur) { const [X, Y] = P(o.x, o.y); ctx.lineTo(X, Y); }
+      ctx.stroke(); ctx.globalAlpha = 1;
+      const q = o.trail[o.trail.length - 1], [X, Y] = cur ? P(o.x, o.y) : P(q[0], q[1]);
+      if (!cur && X > 0 && Y > 0 && X < W && Y < H) label(de(o.v0, 1) + " km/s", X + 6, Y - 10, fz * 0.75, (d3 ? TRC : TRCs)[o.col], "left", d3);
+    };
+    S.traces.forEach((o, i) => tr(o, i, false));
+    planet(cx, cy, R * k, d3, 0);
+    // Berg (maßstabsgetreu) mit Kanone
+    const h0 = S.val.h0 * 1000, [tx, ty] = P(0, R + h0), hb = Math.max(h0 * k, 0);
+    const half = Math.max(hb * 1.3, 6);
+    if (hb > 0.5) {
+      const gr = ctx.createLinearGradient(cx - half, 0, cx + half, 0);
+      if (d3) { gr.addColorStop(0, "#9b8a74"); gr.addColorStop(0.5, "#6d5d49"); gr.addColorStop(1, "#3c3328"); } else { gr.addColorStop(0, "#c8cdd4"); gr.addColorStop(1, "#c8cdd4"); }
+      ctx.fillStyle = gr; ctx.beginPath(); ctx.moveTo(cx - half, cy - R * k + 2); ctx.lineTo(tx, ty); ctx.lineTo(cx + half, cy - R * k + 2); ctx.closePath(); ctx.fill();
+      if (!d3) { ctx.strokeStyle = "#1d2733"; ctx.lineWidth = 1.5; ctx.stroke(); }
+      if (d3 && hb > 12) { ctx.fillStyle = "rgba(255,255,255,.85)"; ctx.beginPath(); ctx.moveTo(tx - hb * 0.33, ty + hb * 0.25); ctx.lineTo(tx, ty); ctx.lineTo(tx + hb * 0.33, ty + hb * 0.25); ctx.closePath(); ctx.fill(); }
+    }
+    // Kanone
+    const al = S.val.al * Math.PI / 180, cl = Math.max(16, fz * 1.4);
+    ctx.save(); ctx.translate(tx, ty - 4); ctx.rotate(-al);
+    const gc = ctx.createLinearGradient(0, -4, 0, 4); gc.addColorStop(0, d3 ? "#c9ced6" : "#1d2733"); gc.addColorStop(1, d3 ? "#3d434c" : "#1d2733");
+    ctx.fillStyle = gc; rrect(-3, -4, cl, 8, 3); ctx.fill(); ctx.restore();
+    ctx.fillStyle = d3 ? "#6b4a2b" : "#1d2733"; ctx.beginPath(); ctx.arc(tx, ty - 3, 5, 0, 7); ctx.fill();
+    // aktueller Schuss
+    if (S.shot) { tr(S.shot, 0, true); const [X, Y] = P(S.shot.x, S.shot.y);
+      if (d3) ball(X, Y, 6, "#555b63", "#c6ccd4", "#15181c"); else { ctx.fillStyle = "#1d2733"; ctx.beginPath(); ctx.arc(X, Y, 5, 0, 7); ctx.fill(); }
+      if (X < 0 || Y < 0 || X > W || Y > H) label("Kugel außerhalb der Ansicht: größere Ansicht wählen", W / 2, H - fz * 2.6, fz * 0.9, p.lupe, "center", d3);
+    }
+    if (R * k > fz * 3) txt(b.n, cx, cy + R * k * 0.45, fz * 1.1, d3 ? "rgba(255,255,255,.85)" : "#1d2733", "center", true);
+    scaleBar(12, H - 14, k, Math.min(W, H) * 0.3, p.ink, fz);
+    txt("Berg maßstabsgetreu, Kanone und Kugel nicht", W - 12, H - 14, fz * 0.75, p.sub, "right");
+    if (S.shot) txt("t = " + dur(S.shot.t), 12, fz * 1.2, fz, p.ink, "left", true);
+    if ($("cbBars").checked) drawBars(W, H, d3, fz);
+  }
+  function drawBars(W, H, d3, fz) {
+    const p = pal(d3), gm = GM(), R = B().R, eS = B().eS;
+    let x, y, vv;
+    if (S.shot) { x = S.shot.x; y = S.shot.y; vv = Math.hypot(S.shot.vx, S.shot.vy); if (S.shot.state === "hit") vv = 0; }
+    else { x = 0; y = R + S.val.h0 * 1000; vv = S.val.v0 * 1000; }
+    const r = Math.hypot(x, y), ek = vv * vv / 2 / 1e6, ep = -gm / r / 1e6, eg = ek + ep;
+    const bw = Math.min(W * 0.46, 300), bh = fz * 6.4, bx = W - bw - 10, by = 62;
+    ctx.fillStyle = d3 ? "rgba(10,14,24,.82)" : "rgba(255,255,255,.92)"; ctx.strokeStyle = d3 ? "rgba(255,255,255,.25)" : "#d5dbe3"; ctx.lineWidth = 1;
+    rrect(bx, by, bw, bh, 8); ctx.fill(); ctx.stroke();
+    txt("Energie für 1 kg (in MJ)", bx + 8, by + fz * 0.8, fz * 0.8, p.sub, "left", true);
+    const x0 = bx + bw * 0.5, sc = (bw * 0.5 - 12) / eS, rows = [["E_{kin}", ek, d3 ? "#5fe07a" : "#2E7D32"], ["E_{pot}", ep, d3 ? "#82b9ff" : "#1F4E79"], ["E_{ges}", eg, eg < 0 ? (d3 ? "#ffb347" : "#d35400") : (d3 ? "#ffd166" : "#b8860b")]];
+    rows.forEach(([n, e, c], i) => {
+      const yy = by + fz * (2.1 + i * 1.45), len = Math.max(-bw * 0.5 + 10, Math.min(bw * 0.5 - 10, e * sc));
+      ctx.fillStyle = c; ctx.fillRect(Math.min(x0, x0 + len), yy - fz * 0.45, Math.abs(len), fz * 0.9);
+      txt(n, bx + 6, yy, fz * 0.8, p.ink, "left", true);
+      const s = (e >= 0 ? "+" : "") + num(e);
+      txt(s, len >= 0 ? x0 - 4 : x0 + 4, yy, fz * 0.8, p.ink, len >= 0 ? "right" : "left", true);
+    });
+    ctx.strokeStyle = p.ink; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x0, by + fz * 1.5); ctx.lineTo(x0, by + bh - 6); ctx.stroke();
+  }
+  function dur(t) {
+    if (t < 3600) return Math.floor(t / 60) + " min " + String(Math.floor(t % 60)).padStart(2, "0") + " s";
+    if (t < 86400 * 3) return Math.floor(t / 3600) + " h " + String(Math.floor(t % 3600 / 60)).padStart(2, "0") + " min";
+    return de(t / 86400, 1) + " d";
+  }
+
+  // ======================================================================
+  // Reiter 4: Satelliten
+  // ======================================================================
+  function satReset(keepNotes) {
+    const R = B().R, r = R + S.val.hs * 1000, v = Math.sqrt(GM() / r);
+    S.sat = { x:r, y:0, vx:0, vy:v, t:0, trail:[], state:"fly", circ:true, el:elements(r, 0, 0, v), boosts:0 };
+    S.rotA = 0;
+  }
+  function drawSat(W, H, d3, fz) {
+    const p = pal(d3), b = B(), R = b.R, gm = GM(), V = orbitView(W, H, "sat"), { cx, cy, k } = V;
+    const P = (x, y) => [cx + x * k, cy - y * k];
+    if (!S.sat) satReset();
+    const o = S.sat;
+    // notierte Vergleichsbahnen (Kreise) mit eigenem Satelliten
+    NOTES.forEach((n, i) => {
+      if (!n.circ || n.body !== S.body) return;
+      ctx.strokeStyle = d3 ? "rgba(255,255,255,.22)" : "rgba(0,0,0,.18)"; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.arc(cx, cy, n.r * k, 0, 7); ctx.stroke();
+      const a = n.a0 + Math.sqrt(gm / Math.pow(n.r, 3)) * (o.t - n.t0), [X, Y] = P(n.r * Math.cos(a), n.r * Math.sin(a));
+      ctx.fillStyle = d3 ? "rgba(255,255,255,.6)" : "rgba(0,0,0,.45)"; ctx.beginPath(); ctx.arc(X, Y, 4, 0, 7); ctx.fill();
+      txt(String(i + 1), X + 7, Y - 7, fz * 0.75, d3 ? "rgba(255,255,255,.7)" : "#5b6675", "left", true);
+    });
+    // vorausberechnete Bahn (Kegelschnitt)
+    const el = elements(o.x, o.y, o.vx, o.vy);
+    if (o.state === "fly") {
+      ctx.strokeStyle = d3 ? "rgba(255,209,102,.7)" : "rgba(184,134,11,.8)"; ctx.lineWidth = 1.6; ctx.setLineDash([6, 6]);
+      const w = Math.atan2(el.ey, el.ex), sgn = Math.sign(el.Lz) || 1;
+      ctx.beginPath(); let st = false;
+      const lim = el.e < 1 ? Math.PI : Math.acos(-1 / el.e) - 0.02;
+      for (let i = 0; i <= 360; i++) {
+        const nu = -lim + 2 * lim * i / 360, r = el.p / (1 + el.e * Math.cos(nu));
+        if (r <= 0 || r * k > 4 * Math.max(W, H)) { st = false; continue; }
+        const th = w + sgn * nu, [X, Y] = P(r * Math.cos(th), r * Math.sin(th));
+        st ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); st = true;
+      }
+      ctx.stroke(); ctx.setLineDash([]);
+    }
+    // Spur
+    if (o.trail.length > 1) {
+      ctx.strokeStyle = d3 ? "rgba(95,224,122,.85)" : "rgba(46,125,50,.85)"; ctx.lineWidth = 2;
+      ctx.beginPath(); o.trail.forEach((q, j) => { const [X, Y] = P(q[0], q[1]); j ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); });
+      const [X, Y] = P(o.x, o.y); ctx.lineTo(X, Y); ctx.stroke();
+    }
+    planet(cx, cy, R * k, d3, $("cbRot").checked ? S.rotA : 0);
+    // Satellit
+    const [sx, sy] = P(o.x, o.y), r = Math.hypot(o.x, o.y);
+    const isMoon = S.satName === "Mond" && S.body === "erde" && o.circ;
+    if (isMoon) { const mr = Math.max(4, 1.737e6 * k); if (d3) ball(sx, sy, mr, "#9a9a9a", "#d6d6d6", "#3d3d3d"); else { ctx.fillStyle = "#e7ebf0"; ctx.strokeStyle = "#1d2733"; ctx.beginPath(); ctx.arc(sx, sy, mr, 0, 7); ctx.fill(); ctx.stroke(); } }
+    else if (d3) {
+      const ang = Math.atan2(-(o.vy), o.vx);
+      ctx.save(); ctx.translate(sx, sy); ctx.rotate(ang + Math.PI / 2);
+      ctx.fillStyle = "#2b4c8c"; ctx.strokeStyle = "#9fb7e0"; ctx.lineWidth = 0.8;
+      ctx.fillRect(-17, -3.5, 10, 7); ctx.strokeRect(-17, -3.5, 10, 7); ctx.fillRect(7, -3.5, 10, 7); ctx.strokeRect(7, -3.5, 10, 7);
+      const gg = ctx.createLinearGradient(-5, -5, 5, 5); gg.addColorStop(0, "#ffe9a8"); gg.addColorStop(1, "#a4781c");
+      ctx.fillStyle = gg; ctx.fillRect(-6, -5, 12, 10); ctx.restore();
+    } else { ctx.fillStyle = "#1d2733"; ctx.fillRect(sx - 5, sy - 5, 10, 10); ctx.fillRect(sx - 14, sy - 1.5, 28, 3); }
+    // Pfeile
+    if ($("cbArrows").checked && o.state === "fly") {
+      const v = Math.hypot(o.vx, o.vy), kv = fz * 5 / 8000;   // 8 km/s ≙ 5 fz
+      arrow(sx, sy, sx + o.vx * kv, sy - o.vy * kv, p.v, 2.6, d3 ? "rgba(0,0,0,.5)" : "#fff");
+      const g = gm / r / r, kg = fz * 5 / 10;                 // 10 N/kg ≙ 5 fz
+      arrow(sx, sy, sx - o.x / r * g * kg, sy + o.y / r * g * kg, p.g, 2.6, d3 ? "rgba(0,0,0,.5)" : "#fff");
+      txt("v", sx + o.vx * kv + 6, sy - o.vy * kv - 6, fz * 0.9, p.v, "left", true);
+      if (g * kg > 12) txt("F/m", sx - o.x / r * g * kg + 6, sy + o.y / r * g * kg + 8, fz * 0.85, p.g, "left", true);
+    }
+    if (S.satName && o.circ) label(S.satName, sx, sy - fz * 1.6, fz * 0.85, p.ink, "center", d3);
+    if (sx < 0 || sy < 0 || sx > W || sy > H) label("Satellit außerhalb der Ansicht: größere Ansicht wählen", W / 2, H - fz * 2.6, fz * 0.9, p.lupe, "center", d3);
+    if (o.state === "hit") label("Abgestürzt! Zurücksetzen oder neue Bahnhöhe wählen", W / 2, fz * 4, fz, p.g, "center", d3);
+    if (o.state === "away") label("Der Satellit hat das Feld verlassen.", W / 2, fz * 4, fz, p.lupe, "center", d3);
+    if (R * k > fz * 3) txt(b.n, cx, cy + R * k * 0.45, fz * 1.1, d3 ? "rgba(255,255,255,.85)" : "#1d2733", "center", true);
+    scaleBar(12, H - 14, k, Math.min(W, H) * 0.3, p.ink, fz);
+    txt("Satellit nicht maßstäblich · Pfeile: 8 km/s bzw. 10 N/kg ≙ " + (fz * 5 | 0) + " px", W - 12, H - 14, fz * 0.75, p.sub, "right");
+    txt("t = " + dur(o.t), 12, fz * 1.2, fz, p.ink, "left", true);
+  }
+
+  // ======================================================================
+  // Messwerte (Satelliten)
+  // ======================================================================
+  const NOTES = [];
+  function showNotes() {
+    const n = NOTES;
+    $("notes").innerHTML = n.length
+      ? "<table><tr><th>Nr.</th><th>Bahn</th><th>r bzw. a in 1000 km</th><th>v in km/s</th><th>T in h</th></tr>" +
+        n.map((q, i) => "<tr><td>" + (i + 1) + "</td><td>" + q.row.join("</td><td>") + "</td></tr>").join("") + "</table>"
+      : "<div class='empty'>Noch keine Bahn notiert. Bei Kreisbahnen bleibt ein Vergleichssatellit sichtbar.</div>";
+    $("noteMore").classList.toggle("hidden", !n.length || S.scene !== "sat");
+  }
+  $("noteBtn").onclick = () => {
+    const o = S.sat; if (!o || o.state !== "fly") return;
+    const el = elements(o.x, o.y, o.vx, o.vy), r = Math.hypot(o.x, o.y), circ = el.e < 0.01;
+    if (el.E >= 0) return;
+    const nm = (S.body !== "erde" ? B().n + ": " : "") + (circ ? "Kreis" : "Ellipse");
+    NOTES.push({ circ, body:S.body, r, a0:Math.atan2(o.y, o.x), t0:o.t,
+                 row:[nm, num(circ ? r / 1e6 : el.a / 1e6), circ ? num(Math.hypot(o.vx, o.vy) / 1000) : "–", num(el.T / 3600)] });
+    showNotes(); draw();
+  };
+  $("noteUndo").onclick = () => { NOTES.pop(); showNotes(); draw(); };
+  $("noteClear").onclick = () => { if (confirm("Alle notierten Bahnen löschen?")) { NOTES.length = 0; showNotes(); draw(); } };
+  $("noteCsv").onclick = () => {
+    if (!NOTES.length) return;
+    const rows = [["Nr", "Bahn", "r bzw. a in 1000 km", "v in km/s", "T in h"]].concat(NOTES.map((q, i) => [i + 1].concat(q.row.map(x => String(x).replace("−", "-").replace(/ /g, "")))));
+    const qt = v => '"' + String(v).replace(/"/g, '""') + '"';
+    const t = "﻿" + rows.map(r => r.map(v => typeof v === "number" || /^-?\d+(,\d+)?$/.test(v) ? v : qt(v)).join(";")).join("\r\n");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([t], { type:"text/csv;charset=utf-8" }));
+    a.download = "Satellitenbahnen_Gravitationsfeld.csv"; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  };
+
+  // ======================================================================
+  // Ausgabe im Bedienfeld
+  // ======================================================================
+  const sb = s => s.replace(/_\{([^}]*)\}/g, "<sub>$1</sub>").replace(/_([0-9A-Za-z])/g, "<sub>$1</sub>");
+  function rows(list) { return "<table>" + list.map(r => r.length === 1 ? "<tr class='" + (r[0].c || "res") + "'><td colspan='2'>" + sb(r[0].t) + "</td></tr>" : "<tr" + (r[2] ? " class='hl'" : "") + "><td>" + sb(r[0]) + "</td><td>" + r[1] + "</td></tr>").join("") + "</table>"; }
+  function showOut() {
+    const b = B(), gm = GM(), R = b.R, g0 = gm / R / R;
+    let h = "";
+    if (S.scene === "feld") {
+      const pr = S.probe.r, st = lupeStats();
+      h = rows([["Probekörper: Abstand r vom Mittelpunkt", thou(pr / 1000) + " km"], ["Höhe h über dem Boden", thou((pr - R) / 1000) + " km"],
+                ["Feldstärke g am Probekörper", num(gm / pr / pr) + " N/kg", 1], ["g_0 an der Oberfläche", num(g0) + " N/kg"],
+                ["Lupe: g oben ist kleiner um", num(st.dg, 2) + " %"], ["Lupe: Feldlinien am Rand gegeneinander geneigt um", num(st.ang, 2) + "°"]]);
+    } else if (S.scene === "energie") {
+      const m = S.val.m, r1 = R + S.val.h1 * 1000, r2 = R + S.val.h2 * 1000, W = gm * m * (1 / r1 - 1 / r2), Wh = m * g0 * (r2 - r1);
+      const E = r => S.zero === "inf" ? -gm * m / r : gm * m * (1 / R - 1 / r);
+      const dev = W !== 0 ? (Wh - W) / W * 100 : 0;
+      h = rows([["Hubarbeit W exakt (Fläche unter F(r))", sci(W / 1e9, 4) + " GJ", 1], ["Näherung m·g_0·Δh", sci(Wh / 1e9, 4) + " GJ"],
+                ["Näherung zu groß um", num(dev, 3) + " %"], ["E_{pot} in h_1", sci(E(r1) / 1e9, 4) + " GJ"], ["E_{pot} in h_2", sci(E(r2) / 1e9, 4) + " GJ"],
+                ["Energie bis ins Unendliche ab h_1", sci(gm * m / r1 / 1e9, 4) + " GJ"]]);
+    } else if (S.scene === "flucht") {
+      const r0 = R + S.val.h0 * 1000, v1 = Math.sqrt(gm / r0), vF = Math.sqrt(2 * gm / r0);
+      const list = [["v_1 (Kreisbahn) in Abschusshöhe", num(v1 / 1000) + " km/s", 1], ["v_F (Fluchtgeschw.) in Abschusshöhe", num(vF / 1000) + " km/s", 1],
+                    ["v_1 / v_F an der Oberfläche", num(Math.sqrt(gm / R) / 1000) + " / " + num(Math.sqrt(2 * gm / R) / 1000) + " km/s"]];
+      const o = S.shot;
+      if (o) {
+        const r = Math.hypot(o.x, o.y), v = o.state === "hit" ? 0 : Math.hypot(o.vx, o.vy);
+        list.push(["Kugel: Höhe h", thou(Math.max(0, r - R) / 1000) + " km"], ["Kugel: Geschwindigkeit v", num(v / 1000) + " km/s"]);
+        list.push([o.cls]);
+        if (o.al === 90 && o.el.E < 0) {
+          const hmax = -gm / o.el.E - R, hh = o.h0 * 1000 + Math.pow(o.v0 * 1000, 2) / 2 / g0;
+          list.push(["Gipfelhöhe exakt", thou(hmax / 1000) + " km", 1], ["Gipfelhöhe mit homogenem Feld (h_0 + v_0²/2g_0)", thou(hh / 1000) + " km"]);
+        }
+        if (o.state === "hit") list.push([{ t:"Aufgeschlagen nach " + dur(o.t), c:"warn" }]);
+        if (o.state === "away") list.push([{ t:"Verlässt die Ansicht, kommt nie zurück", c:"res" }]);
+      } else list.push([{ t:"Stelle v_0 ein und tippe auf „Abschießen“.", c:"res" }]);
+      h = rows(list);
+    } else {
+      const o = S.sat; if (!o) satReset();
+      const s = S.sat, r = Math.hypot(s.x, s.y), v = Math.hypot(s.vx, s.vy), el = elements(s.x, s.y, s.vx, s.vy);
+      const list = [["Abstand r vom Mittelpunkt", thou(r / 1000) + " km"], ["Höhe h über dem Boden", thou((r - R) / 1000) + " km"], ["Bahngeschwindigkeit v", num(v / 1000) + " km/s", 1]];
+      if (s.state === "fly" && el.E < 0) {
+        if (el.e < 0.01) {
+          list.push(["Umlaufdauer T", num(el.T / 3600) + " h (" + dur(el.T) + ")", 1], ["Winkelgeschwindigkeit ω", sci(2 * Math.PI / el.T) + " Hz"]);
+        } else {
+          list.push(["Ellipse: kleinste Höhe (Perizentrum)", thou((el.rp - R) / 1000) + " km"], ["Ellipse: größte Höhe (Apozentrum)", thou((el.ra - R) / 1000) + " km"],
+                    ["große Halbachse a", thou(el.a / 1000) + " km"], ["Umlaufdauer T", num(el.T / 3600) + " h (" + dur(el.T) + ")", 1]);
+          if (el.rp < R) list.push([{ t:"Achtung: Diese Bahn schneidet den Planeten!", c:"warn" }]);
+        }
+      } else if (s.state === "fly") list.push([{ t:"Gesamtenergie ≥ 0: der Satellit entkommt", c:"warn" }]);
+      h = rows(list);
+    }
+    $("out").innerHTML = h;
+  }
+
+  // ---------- Texte ----------
+  const EXPL = {
+    feld: "<b>Auftrag:</b> Tippe oder ziehe den Probekörper und beobachte Richtung und Länge des Feldstärkepfeils. " +
+          "Vergrößere dann in der <b>Lupe</b> den Ausschnitt s: Bis zu welcher Größe darf man das Feld als <b>homogen</b> ansehen (parallele Feldlinien, überall gleiches g)?",
+    energie: "<b>Auftrag:</b> Ein Körper wird von h<sub>1</sub> auf h<sub>2</sub> gehoben (auch durch Ziehen im Bild). Die Hubarbeit W ist die Fläche unter F(r). " +
+             "Vergleiche sie mit der Näherung m·g<sub>0</sub>·h. Ab welcher Höhe weicht die Näherung um mehr als 1 % ab?",
+    flucht: "<b>Newtons Kanone:</b> Schieße die Kugel waagerecht mit wachsender Geschwindigkeit ab. Ab welcher Geschwindigkeit fällt sie nicht mehr herunter, ab welcher kommt sie nie zurück? " +
+            "Achte auf die Gesamtenergie E<sub>ges</sub>. Probiere auch den senkrechten Schuss (90°).",
+    sat: "<b>Auftrag:</b> Wähle verschiedene Bahnhöhen und notiere die Bahnen. Wie hängen v und T vom Bahnradius r ab? " +
+         "Gib dann einen <b>Schub</b>: Aus der Kreisbahn wird eine Ellipse. Mit einem zweiten Schub im höchsten Punkt („Kreisbahn hier“) erreichst du eine höhere Kreisbahn."
+  };
+  const fr = (a, b) => "<span class='frac'><span>" + a + "</span><span>" + b + "</span></span>";
+  const FORM = {
+    feld: "<div>Gravitationsfeldstärke: <span class='k'>g = " + fr("F", "m") + " = " + fr("G·M", "r²") + "</span></div>" +
+          "<div>an der Oberfläche: <span class='k'>g<sub>0</sub> = " + fr("G·M", "R²") + "</span></div>" +
+          "<div>Für h ≪ R gilt <span class='k'>g ≈ g<sub>0</sub></span>: Das Feld ist näherungsweise homogen.</div>",
+    energie: "<div><span class='k'>W = " + fr("G·M·m", "r<sub>1</sub>") + " − " + fr("G·M·m", "r<sub>2</sub>") + " = G·M·m·(" + fr("1", "r<sub>1</sub>") + " − " + fr("1", "r<sub>2</sub>") + ")</span></div>" +
+             "<div>Nullniveau im Unendlichen: <span class='k'>E<sub>pot</sub>(r) = −" + fr("G·M·m", "r") + "</span></div>" +
+             "<div>Für h ≪ R: <span class='k'>ΔE<sub>pot</sub> ≈ m·g<sub>0</sub>·h</span> (homogenes Feld)</div>",
+    flucht: "<div><span class='k'>E<sub>ges</sub> = " + fr("1", "2") + "m·v² − " + fr("G·M·m", "r") + "</span></div>" +
+            "<div>Entkommen, wenn E<sub>ges</sub> ≥ 0: <span class='k'>v<sub>F</sub> = √(" + fr("2·G·M", "r") + ")</span></div>" +
+            "<div>Kreisbahn: <span class='k'>v<sub>1</sub> = √(" + fr("G·M", "r") + ")</span>, also <span class='k'>v<sub>F</sub> = √2 · v<sub>1</sub></span></div>",
+    sat: "<div><span class='k'>F<sub>G</sub> = F<sub>Z</sub></span> ⇒ <span class='k'>" + fr("G·M·m", "r²") + " = " + fr("m·v²", "r") + "</span> ⇒ <span class='k'>v = √(" + fr("G·M", "r") + ")</span></div>" +
+         "<div><span class='k'>T = " + fr("2π·r", "v") + " = 2π·√(" + fr("r³", "G·M") + ")</span> ⇒ <span class='k'>" + fr("T²", "r³") + " = " + fr("4π²", "G·M") + "</span> (3. Keplersches Gesetz)</div>" +
+         "<div>Ellipse: r durch große Halbachse a ersetzen.</div>"
+  };
+  const SIMPL0 = "Der Himmelskörper ist eine Kugel mit kugelsymmetrischer Masseverteilung. Außerhalb wirkt er deshalb wie ein Massenpunkt im Mittelpunkt. " +
+                 "Die Drehung des Planeten ist nicht berücksichtigt: g<sub>0</sub> der Erde ist hier 9,82 N/kg (gemessen je nach Ort 9,78 bis 9,83 N/kg). " +
+                 "Werte: Erde 5,97·10²⁴ kg, 6371 km; Mond 7,35·10²² kg, 1737 km; Mars 6,42·10²³ kg, 3390 km; Jupiter 1,90·10²⁷ kg, 69 911 km (mittlere Radien). Beim schnell rotierenden, abgeplatteten Jupiter ergibt das g<sub>0</sub> = 25,9 N/kg; oft liest man 24,8 N/kg (Äquatorradius, mit Drehung). ";
+  const SIMPL = {
+    feld: "Feldlinien zeigen die Richtung der Kraft auf einen Probekörper, ihre Dichte die Stärke des Feldes. Das Innere des Planeten wird nicht betrachtet. " +
+          "Äquipotentiallinien (gestrichelt) verbinden Orte gleicher potentieller Energie, zwischen zwei Linien ändert sich E<sub>pot</sub> pro kg immer um denselben Betrag. Die Lupe zeigt einen Ausschnitt oben auf dem Planeten, s breit und s hoch.",
+    energie: "Der Körper wird langsam gehoben (keine Reibung, keine kinetische Energie). Die Näherung m·g<sub>0</sub>·h rechnet überall mit dem Wert g<sub>0</sub> an der Oberfläche. Der Nullpunkt der potentiellen Energie ist frei wählbar; Differenzen ΔE<sub>pot</sub> hängen nicht davon ab.",
+    flucht: "Keine Luft, keine Drehung des Planeten (am Äquator gäbe die Erddrehung bis zu 0,47 km/s dazu), nur dieser eine Himmelskörper: v<sub>F</sub> gilt für das Feld dieses Körpers. " +
+            "Um von der Erde aus auch das Sonnensystem zu verlassen, braucht man etwa 16,7 km/s. Der „Berg“ steht für die Abschusshöhe, so hohe Berge gibt es nicht. Die Bahnen werden Schritt für Schritt numerisch berechnet.",
+    sat: "Der Satellit ist viel leichter als der Planet, der Planet bleibt in Ruhe. Mond: In Wirklichkeit kreisen Erde und Mond um den gemeinsamen Schwerpunkt, die Bahn ist leicht elliptisch und T = 27,3 d (hier 27,5 d, weil die Masse des Mondes vernachlässigt ist). " +
+         "Geostationär: T = 1 Sterntag = 23 h 56 min, Höhe 35 786 km über dem Äquator. Ein Schub wirkt hier schlagartig, in Wirklichkeit dauert er einige Minuten. Die gestrichelte Linie zeigt die Bahn, die sich aus Ort und Geschwindigkeit ergibt."
+  };
+
+  // ---------- Regler ----------
+  function nearest(list, v) { let bi = 0; list.forEach((x, i) => { if (Math.abs(x - v) < Math.abs(list[bi] - v)) bi = i; }); return bi; }
+  function syncInputs() {
+    document.querySelectorAll(".par").forEach(el => {
+      const k = el.dataset.k, d = PARS[k], inp = el.querySelector("input");
+      inp.min = 0; inp.max = d.list.length - 1; inp.step = 1; inp.value = nearest(d.list, S.val[k]);
+      el.querySelector("output").textContent = d.txt(S.val[k]);
+    });
+  }
+  function setPar(k, v) {
+    S.val[k] = v; syncInputs();
+    if (k === "hs") { S.satName = ""; satReset(); }
+    if (k === "h0" || k === "v0" || k === "al") { if (S.shot && S.shot.state === "fly") { /* laufender Schuss bleibt */ } }
+    draw(); showOut();
+  }
+  document.querySelectorAll(".par").forEach(el => {
+    const k = el.dataset.k, d = PARS[k], inp = el.querySelector("input");
+    inp.addEventListener("input", () => setPar(k, d.list[+inp.value]));
+    el.querySelector(".minus").onclick = () => { const v = S.val[k]; const c = d.list.filter(x => x < v - 1e-9); if (c.length) setPar(k, c[c.length - 1]); };
+    el.querySelector(".plus").onclick = () => { const v = S.val[k]; const c = d.list.filter(x => x > v + 1e-9); if (c.length) setPar(k, c[0]); };
+  });
+  function fillSelects() {
+    const st = $("stageSel");
+    if (S.scene === "energie") st.innerHTML = EST.map((v, i) => "<option value='" + i + "'>r-Achse bis " + thou(v) + " km</option>").join(""), st.value = S.est;
+    else st.innerHTML = STG.map((v, i) => "<option value='" + i + "'>±" + thou(v) + " km um den Mittelpunkt</option>").join(""), st.value = S.stage[S.scene];
+    const sp = $("speed"), sc = S.scene === "flucht" || S.scene === "sat" ? S.scene : "sat";
+    sp.innerHTML = SPEEDS.map((v, i) => "<option value='" + i + "'>" + thou(v) + "-fach</option>").join(""); sp.value = S.speed[sc];
+  }
+  $("body").innerHTML = Object.keys(BODIES).map(k => "<option value='" + k + "'>" + BODIES[k].n + "</option>").join("");
+  $("gSel").innerHTML = GSEL.map((v, i) => "<option value='" + i + "'>g-Achse bis " + v + " N/kg</option>").join("");
+  $("axSel").innerHTML = AXS.map((v, i) => "<option value='" + i + "'>" + v.t + "</option>").join("");
+  $("gSel").value = S.gsel; $("axSel").value = S.ax;
+  $("stageSel").onchange = () => { const v = +$("stageSel").value; if (S.scene === "energie") S.est = v; else S.stage[S.scene] = v; draw(); };
+  $("speed").onchange = () => { S.speed[S.scene] = +$("speed").value; };
+  $("gSel").onchange = () => { S.gsel = +$("gSel").value; draw(); };
+  $("axSel").onchange = () => { S.ax = +$("axSel").value; draw(); };
+  $("body").onchange = () => {
+    S.body = $("body").value; const R = B().R;
+    S.probe.r = R * 2.5;
+    S.shot = null; S.traces = []; S.satName = ""; satReset();
+    $("presets").classList.toggle("hidden", S.scene !== "sat" || S.body !== "erde");
+    draw(); showOut();
+  };
+  $("zInf").onclick = () => { S.zero = "inf"; $("zInf").classList.add("on"); $("zSur").classList.remove("on"); draw(); showOut(); };
+  $("zSur").onclick = () => { S.zero = "sur"; $("zSur").classList.add("on"); $("zInf").classList.remove("on"); draw(); showOut(); };
+  ["cbLines", "cbVec", "cbEqui", "cbLupe", "cbGraph", "cbMgh", "cbBars", "cbArrows", "cbRot"].forEach(id => $(id).addEventListener("change", () => { draw(); showOut(); }));
+  $("shoot").onclick = launch;
+  $("setV1").onclick = () => { const r0 = B().R + S.val.h0 * 1000; S.val.v0 = Math.round(Math.sqrt(GM() / r0) / 10) / 100; S.val.al = 0; syncInputs(); draw(); showOut(); };
+  $("setV2").onclick = () => { const r0 = B().R + S.val.h0 * 1000; S.val.v0 = Math.round(Math.sqrt(2 * GM() / r0) / 10) / 100; syncInputs(); draw(); showOut(); };
+  $("clearTr").onclick = () => { S.traces = []; S.shot = null; draw(); showOut(); };
+  document.querySelectorAll("#presets button").forEach(bt => bt.onclick = () => {
+    const q = PRE[bt.dataset.pre]; S.val.hs = q.h; syncInputs(); satReset(); S.satName = q.n;
+    const need = (B().R + q.h * 1000) / 1000 * 1.08; let i = STG.findIndex(v => v >= need); if (i < 0) i = STG.length - 1;
+    if (STG[S.stage.sat] < need) { S.stage.sat = i; $("stageSel").value = i; }
+    if (q.h > 30000 && S.speed.sat < 4) { S.speed.sat = q.h > 100000 ? 5 : 4; $("speed").value = S.speed.sat; }
+    S.satRun = true; $("satPlay").textContent = "Pause"; startLoop(); draw(); showOut();
+  });
+  $("boost").onclick = () => {
+    const o = S.sat; if (!o || o.state !== "fly") return;
+    const v = Math.hypot(o.vx, o.vy), nv = Math.max(0, v + S.val.dv * 1000);
+    o.vx *= nv / v; o.vy *= nv / v; o.circ = false; o.boosts++;
+    S.satRun = true; $("satPlay").textContent = "Pause"; startLoop(); draw(); showOut();
+  };
+  $("circHere").onclick = () => {
+    const o = S.sat; if (!o || o.state !== "fly") return;
+    const r = Math.hypot(o.x, o.y), v = Math.sqrt(GM() / r), sg = Math.sign(o.x * o.vy - o.y * o.vx) || 1;
+    o.vx = -o.y / r * v * sg; o.vy = o.x / r * v * sg; o.circ = true; S.satName = "";
+    startLoop(); draw(); showOut();
+  };
+  $("satPlay").onclick = () => { S.satRun = !S.satRun; $("satPlay").textContent = S.satRun ? "Pause" : "Weiter"; startLoop(); };
+
+  // ---------- Animation ----------
+  let raf = 0, last = 0, outT = 0;
+  function startLoop() { if (!raf) { last = 0; raf = requestAnimationFrame(loop); } }
+  function loop(ts) {
+    raf = 0;
+    const dt = last ? Math.min(0.05, (ts - last) / 1000) : 0; last = ts;
+    let busy = false;
+    if (S.scene === "flucht" && S.shot && S.shot.state === "fly") {
+      const o = S.shot, k = orbitView(cv.clientWidth, cv.clientHeight, "flucht").k;
+      const res = advance(o, dt * SPEEDS[S.speed.flucht], Math.max(STG[S.stage.flucht] * 1000 * 8, B().R * 30));
+      const lq = o.trail[o.trail.length - 1];
+      if (Math.hypot(o.x - lq[0], o.y - lq[1]) * k > 1.5) o.trail.push([o.x, o.y]);
+      if (res) { o.state = res; o.trail.push([o.x, o.y]); }
+      busy = o.state === "fly";
+    }
+    if (S.scene === "sat" && S.sat && S.sat.state === "fly" && S.satRun) {
+      const o = S.sat, k = orbitView(cv.clientWidth, cv.clientHeight, "sat").k, step = dt * SPEEDS[S.speed.sat];
+      const res = advance(o, step, Math.max(STG[STG.length - 1] * 1000 * 4, B().R * 40));
+      S.rotA += step / B().rot * 2 * Math.PI;
+      if (!o.circ) {
+        const lq = o.trail[o.trail.length - 1];
+        if (!lq || Math.hypot(o.x - lq[0], o.y - lq[1]) * k > 1.5) o.trail.push([o.x, o.y]);
+        if (o.trail.length > 3000) o.trail.shift();
+      } else o.trail = [];
+      if (res) o.state = res;
+      busy = o.state === "fly";
+    }
+    if (busy || (S.scene === "sat" && S.satRun && S.sat && S.sat.state === "fly")) { draw(); if (ts - outT > 150) { showOut(); outT = ts; } raf = requestAnimationFrame(loop); }
+    else { draw(); showOut(); }
+  }
+
+  // ---------- Hauptzeichnung ----------
+  function draw() {
+    const W = cv.clientWidth, H = cv.clientHeight; if (!W || !H) return;
+    const d3 = S.view === "3d", fz = Math.max(12, Math.min(17, W / 48)) * S.fs;
+    background(W, H, d3);
+    if (S.scene === "feld") drawFeld(W, H, d3, fz);
+    else if (S.scene === "energie") drawEnergie(W, H, d3, fz);
+    else if (S.scene === "flucht") drawFlucht(W, H, d3, fz);
+    else drawSat(W, H, d3, fz);
+  }
+
+  // ---------- Finger: Probekörper ziehen (Feld), Zielhöhe ziehen (Energie) ----------
+  function pos(ev) { const r = cv.getBoundingClientRect(); return { x:ev.clientX - r.left, y:ev.clientY - r.top }; }
+  function pointerAt(q, start) {
+    const W = cv.clientWidth, H = cv.clientHeight, fz = Math.max(12, Math.min(17, W / 48)) * S.fs;
+    if (S.scene === "feld") {
+      const L = feldLayout(W, H);
+      if (q.y > L.mh) return false;
+      if (start && L.lupe) { const Lw = Math.min(Math.min(W, L.mh) * 0.42, 290); if (q.x < 10 + Lw && q.y < 10 + Lw * 1.12 + fz * 1.6) return false; }
+      const dx = (q.x - L.cx) / L.k, dy = (q.y - L.cy) / L.k;
+      S.probe.r = Math.max(Math.hypot(dx, dy), B().R * 1.0); S.probe.a = Math.atan2(dy, dx);
+      draw(); showOut(); return true;
+    }
+    if (S.scene === "energie") {
+      const Lo = energieLayout(W, H, fz);
+      const r = (q.x - Lo.gA.x) / Lo.gA.w * Lo.rmax, h = Math.max(0, (r - B().R) / 1000);
+      const st = h < 100 ? 1 : h < 1000 ? 10 : h < 10000 ? 100 : 1000;
+      S.val.h2 = Math.min(400000, Math.round(h / st) * st); syncInputs(); draw(); showOut(); return true;
+    }
+    return false;
+  }
+  cv.addEventListener("pointerdown", ev => { const q = pos(ev); if (pointerAt(q, true)) { S.drag = true; cv.setPointerCapture(ev.pointerId); ev.preventDefault(); } });
+  cv.addEventListener("pointermove", ev => { if (S.drag) pointerAt(pos(ev), false); });
+  const up = () => { S.drag = false; };
+  cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
+
+  /* Direktlink: Gravitationsfeld.html#energie öffnet diesen Reiter; beim Umschalten zeigt die Adresse den Reiter */
+  const LINKS = { feld:"feld", energie:"energie", flucht:"fluchtgeschwindigkeit", sat:"satelliten" };
+  function linkGet() { let h = ""; try { h = decodeURIComponent(location.hash.slice(1)).toLowerCase(); } catch (e) {} return Object.keys(LINKS).find(k => LINKS[k] === h); }
+  function linkSet(k) { try { if (location.hash !== "#" + LINKS[k]) history.replaceState(null, "", "#" + LINKS[k]); } catch (e) {} }
+  window.addEventListener("hashchange", () => { const k = linkGet(); if (k && k !== S.scene) setScene(k); });
+  function setScene(s) {
+    S.scene = s; linkSet(s);
+    document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === s));
+    document.querySelectorAll("[data-sc]").forEach(e => e.classList.toggle("hidden", !e.dataset.sc.split(" ").includes(s)));
+    $("presets").classList.toggle("hidden", s !== "sat" || S.body !== "erde");
+    $("expl").innerHTML = EXPL[s]; $("formel").innerHTML = FORM[s]; $("simpl").innerHTML = SIMPL[s] + " " + SIMPL0;
+    if (s === "sat" && !S.sat) satReset();
+    fillSelects(); syncInputs(); showNotes(); draw(); showOut();
+    if (s === "sat" || (s === "flucht" && S.shot && S.shot.state === "fly")) startLoop();
+  }
+  function setFs(v) {
+    S.fs = Math.max(0.8, Math.min(1.6, Math.round(v * 10) / 10));
+    document.documentElement.style.fontSize = (14 * S.fs) + "px";
+    store.set("gfeld_fs", S.fs); resize();
+  }
+  function setView(v) {
+    S.view = v; $("view").textContent = v === "3d" ? "Symbol" : "3D";
+    $("view").title = v === "3d" ? "Zur Symbolansicht wechseln" : "Zur 3D-Ansicht wechseln";
+    store.set("gfeld_view", v); draw();
+  }
+  $("fsMinus").onclick = () => setFs(S.fs - 0.1);
+  $("fsPlus").onclick = () => setFs(S.fs + 0.1);
+  $("view").onclick = () => setView(S.view === "3d" ? "sym" : "3d");
+  $("panelBtn").onclick = () => { document.body.classList.toggle("nopanel"); resize(); };
+  const docEl = document.documentElement, reqFS = docEl.requestFullscreen || docEl.webkitRequestFullscreen;
+  if (!reqFS) $("full").classList.add("hidden");
+  $("full").onclick = () => {
+    const cur = document.fullscreenElement || document.webkitFullscreenElement;
+    if (cur) (document.exitFullscreen || document.webkitExitFullscreen).call(document); else reqFS.call(docEl);
+  };
+  $("rotGo").onclick = () => document.body.classList.add("quer");
+  document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => setScene(b.dataset.tab));
+  $("reset").onclick = () => {
+    const s = S.scene;
+    const keys = { feld:["s"], energie:["m", "h1", "h2"], flucht:["v0", "al", "h0"], sat:["hs", "dv"] }[s];
+    keys.forEach(k => S.val[k] = PARS[k].def);
+    if (s === "feld") { S.probe = { r:B().R * 2.5, a:-0.75 }; S.stage.feld = 1; S.gsel = 1; $("gSel").value = 1;
+      $("cbLines").checked = true; $("cbVec").checked = false; $("cbEqui").checked = false; $("cbLupe").checked = true; $("cbGraph").checked = true; }
+    if (s === "energie") { S.est = 1; S.ax = 1; $("axSel").value = 1; $("zInf").click(); $("cbMgh").checked = true; }
+    if (s === "flucht") { S.stage.flucht = 0; S.speed.flucht = 1; S.shot = null; S.traces = []; $("cbBars").checked = true; }
+    if (s === "sat") { S.stage.sat = 0; S.speed.sat = 2; S.satName = ""; satReset(); S.satRun = true; $("satPlay").textContent = "Pause"; }
+    fillSelects(); syncInputs(); draw(); showOut(); if (s === "sat") startLoop();
+  };
+
+  window.addEventListener("resize", resize);
+  if (window.ResizeObserver) new ResizeObserver(resize).observe(cv);
+  S.view = store.get("gfeld_view") === "sym" ? "sym" : "3d"; $("view").textContent = S.view === "3d" ? "Symbol" : "3D";
+  S.probe.r = B().R * 2.5;
+  setScene(linkGet() || "feld");
+  setFs(+store.get("gfeld_fs") || 1);
+})();
+</script>
+<!-- KI-Hinweis: einheitlich in allen Simulationen, immer sichtbar unten rechts -->
+<style>
+#ki-hinweis{position:fixed;right:0;bottom:0;z-index:2147483000;pointer-events:none;
+  font:10px/16px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  color:#5b6270;background:rgba(243,244,246,.92);border-top:1px solid rgba(0,0,0,.08);border-left:1px solid rgba(0,0,0,.08);
+  border-top-left-radius:6px;padding:0 max(7px,env(safe-area-inset-right)) env(safe-area-inset-bottom) 8px;white-space:nowrap}
+.ki-platz::after{content:"";display:block;height:20px;flex:none}
+@media print{#ki-hinweis{position:static;text-align:right;border:0;background:none}}
+</style>
+<div id="ki-hinweis" role="note">Mit KI erstellt · Physik nicht geprüft · Ergebnisse kritisch prüfen</div>
+<script>
+/* Scrollbereiche, die bis unter den Hinweis reichen, bekommen unten 20 px Luft,
+   damit ihr letzter Inhalt nicht dauerhaft vom Hinweis verdeckt wird. */
+(function(){
+  var hin=document.getElementById('ki-hinweis');
+  function platz(){
+    var alt=document.querySelectorAll('.ki-platz');
+    for(var i=0;i<alt.length;i++)alt[i].classList.remove('ki-platz');
+    var vw=innerWidth,vh=innerHeight,hb=hin.getBoundingClientRect();
+    var els=document.body.querySelectorAll('*');
+    function passt(el){
+      var cs=getComputedStyle(el);
+      if(cs.display==='block'||cs.display==='flow-root')return true;
+      return cs.display==='flex'&&/column/.test(cs.flexDirection);
+    }
+    for(var j=0;j<els.length;j++){
+      var el=els[j];if(el===hin||el.closest('svg'))continue;
+      var oy=getComputedStyle(el).overflowY;
+      if(oy!=='auto'&&oy!=='scroll')continue;
+      var r=el.getBoundingClientRect();
+      if(r.height<40||r.bottom<vh-hb.height-4||r.right<hb.left+20||r.left>vw)continue;
+      if(passt(el))el.classList.add('ki-platz');
+    }
+    var se=document.scrollingElement||document.documentElement;
+    if(se.scrollHeight>vh+2&&passt(document.body))document.body.classList.add('ki-platz');
+  }
+  var t;function spaeter(){clearTimeout(t);t=setTimeout(platz,150);}
+  addEventListener('resize',spaeter);addEventListener('load',spaeter);
+  document.addEventListener('click',spaeter,true);
+  platz();
+})();
+</script>
+</body>
+</html>
