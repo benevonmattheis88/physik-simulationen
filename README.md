@@ -21,6 +21,7 @@ aenderungen.html              Änderungsliste aller Simulationen (Daten für „
 mechanik/
   oberstufe/
     Bewegungsdiagramme.html
+    Gravitationsfeld.html      Gravitationsfeld, potentielle Energie, Fluchtgeschwindigkeit, Satelliten
     Gravitationslabor.html
     Kreisbewegung.html
     Kurvenlabor.html
@@ -154,6 +155,15 @@ Mit Elektronen als Ladungsträgern: `?ladung=elektronen` vor das `#` setzen, z. 
 | Selbst steuern | https://simulationen.familiemueller.space/mechanik/oberstufe/Bewegungsdiagramme.html#selbst-steuern |
 | Nachfahren | https://simulationen.familiemueller.space/mechanik/oberstufe/Bewegungsdiagramme.html#nachfahren |
 | Übersicht (Ergebnisse beim Nachfahren) | https://simulationen.familiemueller.space/mechanik/oberstufe/Bewegungsdiagramme.html#uebersicht |
+
+### Gravitationsfeld
+
+| Reiter | Direktlink |
+|---|---|
+| Feld | https://simulationen.familiemueller.space/mechanik/oberstufe/Gravitationsfeld.html#feld |
+| Energie | https://simulationen.familiemueller.space/mechanik/oberstufe/Gravitationsfeld.html#energie |
+| Fluchtgeschwindigkeit | https://simulationen.familiemueller.space/mechanik/oberstufe/Gravitationsfeld.html#fluchtgeschwindigkeit |
+| Satelliten | https://simulationen.familiemueller.space/mechanik/oberstufe/Gravitationsfeld.html#satelliten |
 
 ### Gravitationslabor
 
