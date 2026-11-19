@@ -306,7 +306,7 @@
     hs: { list:[200, 300, 400, 500, 700, 1000, 1500, 2000, 3000, 5000, 7000, 10000, 15000, 20000, 25000, 30000, 35000, 40000, 50000, 70000, 100000, 150000, 200000, 300000, 400000], def:400, txt:km },
     dv: { list:rng(-2, 3, 0.1), def:0.5, txt:v => (v > 0 ? "+" : "") + de(v, 1) + " km/s" }
   };
-  const PRE = { iss:{ h:420, n:"ISS" }, gps:{ h:20200, n:"GPS" }, geo:{ h:35786, n:"geostationär" }, mond:{ h:378029, n:"Mond" } };
+  const PRE = { iss:{ h:420, n:"ISS", sp:2 }, gps:{ h:20200, n:"GPS", sp:3 }, geo:{ h:35786, n:"geostationär", sp:4 }, mond:{ h:378029, n:"Mond", sp:5 } };
 
   const S = { scene:"feld", view:"3d", fs:1, body:"erde", val:{},
               stage:{ feld:1, flucht:0, sat:0 }, est:1, gsel:1, ax:1, zero:"inf",
@@ -403,7 +403,10 @@
     const base = { erde:["#2f74c0", "#7fb8f0", "#0c2a55"], mond:["#9a9a9a", "#d6d6d6", "#3d3d3d"],
                    mars:["#c2562d", "#f0a070", "#4d1a0a"], jupiter:["#c9a77c", "#f2dfc2", "#5a4128"] }[b];
     ball(cx, cy, R, base[0], base[1], base[2]);
+    const pole = S.scene === "sat";      // Satelliten: Blick von oben auf den Nordpol
     ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.clip();
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(-rot); ctx.translate(-cx, -cy);   // ganze Oberfläche dreht starr
+    rot = 0;
     if (b === "erde") {
       for (let i = 0; i < 14; i++) {
         const q = BLOBS[i], a = q[0] * 6.283 + rot, rr = Math.sqrt(q[1]) * 0.85 * R;
@@ -411,10 +414,11 @@
         ctx.beginPath(); ctx.ellipse(cx + Math.cos(a) * rr, cy - Math.sin(a) * rr, R * (0.08 + q[2] * 0.16), R * (0.06 + q[3] * 0.1), a, 0, 7); ctx.fill();
       }
       ctx.fillStyle = "rgba(255,255,255,.85)";
-      ctx.beginPath(); ctx.ellipse(cx, cy - R * 0.985, R * 0.22, R * 0.05, 0, 0, 7); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(cx, cy + R * 0.98, R * 0.3, R * 0.06, 0, 0, 7); ctx.fill();
+      if (pole) { ctx.beginPath(); ctx.ellipse(cx, cy, R * 0.2, R * 0.16, 0.5, 0, 7); ctx.fill(); }
+      else { ctx.beginPath(); ctx.ellipse(cx, cy - R * 0.985, R * 0.22, R * 0.05, 0, 0, 7); ctx.fill();
+             ctx.beginPath(); ctx.ellipse(cx, cy + R * 0.98, R * 0.3, R * 0.06, 0, 0, 7); ctx.fill(); }
       ctx.globalAlpha = 0.35;
-      for (let i = 14; i < 22; i++) { const q = BLOBS[i], a = q[0] * 6.283 + rot * 1.1, rr = (0.3 + q[1] * 0.6) * R;
+      for (let i = 14; i < 22; i++) { const q = BLOBS[i], a = q[0] * 6.283 + rot, rr = (0.3 + q[1] * 0.6) * R;
         ctx.beginPath(); ctx.ellipse(cx + Math.cos(a) * rr, cy - Math.sin(a) * rr, R * 0.2, R * 0.035, a + 1.4, 0, 7); ctx.fill(); }
       ctx.globalAlpha = 1;
     } else if (b === "mond") {
@@ -425,15 +429,29 @@
     } else if (b === "mars") {
       for (let i = 0; i < 10; i++) { const q = BLOBS[i], a = q[0] * 6.283 + rot, rr = Math.sqrt(q[1]) * 0.8 * R;
         ctx.fillStyle = "rgba(90,30,10,.35)"; ctx.beginPath(); ctx.ellipse(cx + Math.cos(a) * rr, cy - Math.sin(a) * rr, R * (0.1 + q[2] * 0.15), R * (0.05 + q[3] * 0.08), a, 0, 7); ctx.fill(); }
-      ctx.fillStyle = "rgba(255,255,255,.85)"; ctx.beginPath(); ctx.ellipse(cx, cy - R * 0.97, R * 0.28, R * 0.09, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,.85)"; ctx.beginPath();
+      if (pole) ctx.ellipse(cx, cy, R * 0.22, R * 0.18, 0.4, 0, 7); else ctx.ellipse(cx, cy - R * 0.97, R * 0.28, R * 0.09, 0, 0, 7); ctx.fill();
     } else {
       const bands = ["#e8d5b5", "#b98d5f", "#efe2c8", "#a8784d", "#e3cba3", "#c49a6c", "#efe2c8", "#9d6d43", "#e3cba3"];
-      for (let i = 0; i < bands.length; i++) { ctx.fillStyle = bands[i]; ctx.globalAlpha = 0.55;
-        ctx.fillRect(cx - R, cy - R + i * 2 * R / bands.length, 2 * R, 2 * R / bands.length + 1); }
-      ctx.globalAlpha = 1;
-      const sx = cx + Math.cos(rot) * R * 0.45;
-      ctx.fillStyle = "rgba(180,70,40,.75)"; ctx.beginPath(); ctx.ellipse(sx, cy + R * 0.38, R * 0.14, R * 0.08, 0, 0, 7); ctx.fill();
+      if (pole) {   // vom Pol aus: Bänder als Ringe
+        for (let i = bands.length - 1; i >= 0; i--) { ctx.fillStyle = bands[i]; ctx.globalAlpha = 0.55;
+          ctx.beginPath(); ctx.arc(cx, cy, R * (i + 1) / bands.length, 0, 7); ctx.fill(); }
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = "rgba(180,70,40,.75)"; ctx.beginPath(); ctx.ellipse(cx + R * 0.8, cy, R * 0.07, R * 0.14, 0, 0, 7); ctx.fill();
+      } else {
+        for (let i = 0; i < bands.length; i++) { ctx.fillStyle = bands[i]; ctx.globalAlpha = 0.55;
+          ctx.fillRect(cx - R, cy - R + i * 2 * R / bands.length, 2 * R, 2 * R / bands.length + 1); }
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = "rgba(180,70,40,.75)"; ctx.beginPath(); ctx.ellipse(cx + R * 0.45, cy + R * 0.38, R * 0.14, R * 0.08, 0, 0, 7); ctx.fill();
+      }
     }
+    if (pole && $("cbRot").checked) {   // markierter Ort auf dem Äquator mit Linie zum Pol: zeigt die Drehung deutlich
+      ctx.strokeStyle = "#ff5a47"; ctx.lineWidth = Math.max(2, R * 0.02);
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + R, cy); ctx.stroke();
+      ctx.fillStyle = "#ff5a47"; ctx.strokeStyle = "#fff"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(cx + R * 0.96, cy, Math.max(5, R * 0.035), 0, 7); ctx.fill(); ctx.stroke();
+    }
+    ctx.restore();
     // Licht und Schatten
     const gs = ctx.createRadialGradient(cx - R * 0.45, cy - R * 0.45, R * 0.1, cx, cy, R * 1.05);
     gs.addColorStop(0, "rgba(255,255,255,.28)"); gs.addColorStop(0.5, "rgba(255,255,255,0)"); gs.addColorStop(1, "rgba(0,0,0,.55)");
@@ -745,7 +763,10 @@
       const r = Math.hypot(o.x, o.y), v = Math.hypot(o.vx, o.vy);
       let h = 0.004 * 2 * Math.PI * Math.sqrt(r * r * r / gm);
       h = Math.min(h, 0.01 * r / Math.max(v, 1), left);
+      const a0 = Math.atan2(o.y, o.x);
       rk4(o, h); o.t += h; left -= h; n++;
+      let da = Math.atan2(o.y, o.x) - a0; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI;
+      o.ang = (o.ang || 0) + da;
       const rn = Math.hypot(o.x, o.y);
       if (rn < R) { const f = R / rn; o.x *= f; o.y *= f; o.vx = 0; o.vy = 0; return "hit"; }
       if (rn > rAway) return "away";
@@ -901,6 +922,11 @@
       const [X, Y] = P(o.x, o.y); ctx.lineTo(X, Y); ctx.stroke();
     }
     planet(cx, cy, R * k, d3, $("cbRot").checked ? S.rotA : 0);
+    if ($("cbRot").checked) {   // Richtung des markierten Ortes nach außen verlängert: geostationär zeigt sie immer auf den Satelliten
+      ctx.strokeStyle = d3 ? "rgba(255,90,71,.55)" : "rgba(192,57,43,.5)"; ctx.lineWidth = 1.5; ctx.setLineDash([5, 6]);
+      const ca = Math.cos(S.rotA), sa = Math.sin(S.rotA), far = Math.hypot(W, H);
+      ctx.beginPath(); ctx.moveTo(cx + ca * R * k, cy - sa * R * k); ctx.lineTo(cx + ca * far, cy - sa * far); ctx.stroke(); ctx.setLineDash([]);
+    }
     // Satellit
     const [sx, sy] = P(o.x, o.y), r = Math.hypot(o.x, o.y);
     const isMoon = S.satName === "Mond" && S.body === "erde" && o.circ;
@@ -930,6 +956,10 @@
     scaleBar(12, H - 14, k, Math.min(W, H) * 0.3, p.ink, fz);
     txt("Satellit nicht maßstäblich · Pfeile: 8 km/s bzw. 10 N/kg ≙ " + (fz * 5 | 0) + " px", W - 12, H - 14, fz * 0.75, p.sub, "right");
     txt("t = " + dur(o.t), 12, fz * 1.2, fz, p.ink, "left", true);
+    if ($("cbRot").checked) {
+      txt(b.n + ": " + de(S.rotA / 2 / Math.PI, 2) + " Umdrehungen", 12, fz * 2.6, fz * 0.9, d3 ? "#ff8a7a" : "#C0392B", "left", true);
+      txt((S.satName === "Mond" ? "Mond" : "Satellit") + ": " + de((o.ang || 0) / 2 / Math.PI, 2) + " Umläufe", 12, fz * 3.85, fz * 0.9, p.v, "left", true);
+    }
   }
 
   // ======================================================================
@@ -1004,7 +1034,7 @@
     } else {
       const o = S.sat; if (!o) satReset();
       const s = S.sat, r = Math.hypot(s.x, s.y), v = Math.hypot(s.vx, s.vy), el = elements(s.x, s.y, s.vx, s.vy);
-      const list = [["Abstand r vom Mittelpunkt", thou(r / 1000) + " km"], ["Höhe h über dem Boden", thou((r - R) / 1000) + " km"], ["Bahngeschwindigkeit v", num(v / 1000) + " km/s", 1]];
+      const list = [["Drehdauer des Planeten (Sterntag)", dur(b.rot)], ["Abstand r vom Mittelpunkt", thou(r / 1000) + " km"], ["Höhe h über dem Boden", thou((r - R) / 1000) + " km"], ["Bahngeschwindigkeit v", num(v / 1000) + " km/s", 1]];
       if (s.state === "fly" && el.E < 0) {
         if (el.e < 0.01) {
           list.push(["Umlaufdauer T", num(el.T / 3600) + " h (" + dur(el.T) + ")", 1], ["Winkelgeschwindigkeit ω", sci(2 * Math.PI / el.T) + " Hz"]);
@@ -1055,6 +1085,7 @@
     flucht: "Keine Luft, keine Drehung des Planeten (am Äquator gäbe die Erddrehung bis zu 0,47 km/s dazu), nur dieser eine Himmelskörper: v<sub>F</sub> gilt für das Feld dieses Körpers. " +
             "Um von der Erde aus auch das Sonnensystem zu verlassen, braucht man etwa 16,7 km/s. Der „Berg“ steht für die Abschusshöhe, so hohe Berge gibt es nicht. Die Bahnen werden Schritt für Schritt numerisch berechnet.",
     sat: "Der Satellit ist viel leichter als der Planet, der Planet bleibt in Ruhe. Mond: In Wirklichkeit kreisen Erde und Mond um den gemeinsamen Schwerpunkt, die Bahn ist leicht elliptisch und T = 27,3 d (hier 27,5 d, weil die Masse des Mondes vernachlässigt ist). " +
+         "Blick von oben auf den Nordpol: Planet und Satelliten drehen sich gegen den Uhrzeigersinn, der rote Strich markiert einen Ort auf dem Äquator. "+
          "Geostationär: T = 1 Sterntag = 23 h 56 min, Höhe 35 786 km über dem Äquator. Ein Schub wirkt hier schlagartig, in Wirklichkeit dauert er einige Minuten. Die gestrichelte Linie zeigt die Bahn, die sich aus Ort und Geschwindigkeit ergibt."
   };
 
@@ -1111,8 +1142,8 @@
   document.querySelectorAll("#presets button").forEach(bt => bt.onclick = () => {
     const q = PRE[bt.dataset.pre]; S.val.hs = q.h; syncInputs(); satReset(); S.satName = q.n;
     const need = (B().R + q.h * 1000) / 1000 * 1.08; let i = STG.findIndex(v => v >= need); if (i < 0) i = STG.length - 1;
-    if (STG[S.stage.sat] < need) { S.stage.sat = i; $("stageSel").value = i; }
-    if (q.h > 30000 && S.speed.sat < 4) { S.speed.sat = q.h > 100000 ? 5 : 4; $("speed").value = S.speed.sat; }
+    S.stage.sat = i; $("stageSel").value = i;
+    S.speed.sat = q.sp; $("speed").value = q.sp;
     S.satRun = true; $("satPlay").textContent = "Pause"; startLoop(); draw(); showOut();
   });
   $("boost").onclick = () => {
