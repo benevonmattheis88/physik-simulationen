@@ -21,7 +21,7 @@
   body.nopanel #panel { display:none; }
   #ctrl, #info { display:flex; flex-direction:column; gap:.45rem; min-width:0; }
   h1 { font-size:1.2rem; margin:0; color:var(--blue); }
-  .tabs { display:flex; gap:5px; }
+  .tabs { display:flex; gap:5px; flex-wrap:wrap; }
   .tabs button { flex:1 1 auto; padding-left:.25rem; padding-right:.25rem; }
   button { font:inherit; font-size:1rem; padding:.5rem .6rem; border-radius:8px; border:1px solid var(--line);
            background:#eef2f7; color:var(--ink); cursor:pointer; touch-action:manipulation; min-height:2.6rem; }
@@ -133,9 +133,10 @@
         <button data-tab="energie">Energie</button>
         <button data-tab="flucht">Flucht&shy;geschw.</button>
         <button data-tab="sat">Satelliten</button>
+        <button data-tab="tm">Tag &amp; Monat</button>
       </div>
-      <div class="row"><label for="body">Himmels&shy;körper</label><select id="body"></select></div>
-      <div class="row"><label for="stageSel">Ansicht</label><select id="stageSel"></select></div>
+      <div class="row" data-sc="feld energie flucht sat"><label for="body">Himmels&shy;körper</label><select id="body"></select></div>
+      <div class="row" data-sc="feld energie flucht sat"><label for="stageSel">Ansicht</label><select id="stageSel"></select></div>
 
       <!-- Feld -->
       <div class="par" data-k="s" data-sc="feld">
@@ -216,6 +217,21 @@
         <label><input id="cbRot" type="checkbox" checked>Planet dreht sich</label>
       </div>
 
+      <!-- Tag und Monat -->
+      <div class="row" data-sc="tm"><label>Vergleich</label>
+        <div class="seg" style="flex:1"><button id="tmMon" class="on">Monat</button><button id="tmDay">Tag</button></div></div>
+      <div class="par" data-k="yj" data-sc="tm">
+        <div class="head"><span>Dauer eines Erdjahres</span><output></output></div>
+        <div class="line"><button class="minus">−</button><input type="range"><button class="plus">+</button></div>
+      </div>
+      <div class="btns" data-sc="tm">
+        <button id="tmPlay" class="go">Start</button>
+        <button id="tmReset">Von vorn</button>
+      </div>
+      <div class="checks" data-sc="tm">
+        <label><input id="cbStop" type="checkbox" checked>Bei jedem Ereignis anhalten</label>
+      </div>
+      <div class="row" data-sc="tm"><label for="tmSpeed">Zeitraffer</label><select id="tmSpeed"></select></div>
       <div class="row" data-sc="flucht sat"><label for="speed">Zeitraffer</label><select id="speed"></select></div>
     </div>
     <div id="info">
@@ -304,6 +320,7 @@
     al: { list:rng(0, 90, 5), def:0, txt:v => v === 0 ? "0° (waagerecht)" : v === 90 ? "90° (senkrecht)" : v + "°" },
     h0: { list:[0, 10, 50, 100, 200, 500, 1000, 2000, 5000], def:500, txt:km },
     hs: { list:[200, 300, 400, 500, 700, 1000, 1500, 2000, 3000, 5000, 7000, 10000, 15000, 20000, 25000, 30000, 35000, 40000, 50000, 70000, 100000, 150000, 200000, 300000, 400000], def:400, txt:km },
+    yj: { list:[10, 30, 60, 90, 180, 365.26], def:365.26, txt:v => v === 365.26 ? "365,26 d (echt)" : v + " d (gedacht)" },
     dv: { list:rng(-2, 3, 0.1), def:0.5, txt:v => (v > 0 ? "+" : "") + de(v, 1) + " km/s" }
   };
   const PRE = { iss:{ h:420, n:"ISS", sp:2 }, gps:{ h:20200, n:"GPS", sp:3 }, geo:{ h:35786, n:"geostationär", sp:4 }, mond:{ h:378029, n:"Mond", sp:5 } };
@@ -312,7 +329,8 @@
               stage:{ feld:1, flucht:0, sat:0 }, est:1, gsel:1, ax:1, zero:"inf",
               speed:{ flucht:1, sat:2 },
               probe:{ r:1.6e7, a:-0.75 }, drag:null,
-              shot:null, traces:[], sat:null, satRun:true, rotA:0, satName:"" };
+              shot:null, traces:[], sat:null, satRun:true, rotA:0, satName:"",
+              tm:{ mode:"monat", t:0, run:false, ev:[], msg:"", spd:{ monat:5, tag:1 } } };
   for (const k in PARS) S.val[k] = PARS[k].def;
 
   // ---------- Zeichenhilfen ----------
@@ -386,7 +404,7 @@
     if (!d3) {
       ctx.fillStyle = "#e7ebf0"; ctx.strokeStyle = "#1d2733"; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.fill(); ctx.stroke();
-      if (S.scene === "sat" && $("cbRot").checked) {   // Ort auf dem Planeten, dreht mit
+      if (S.scene === "sat" && $("cbRot").checked) {   // Ort auf dem Planeten, dreht mit (Tag und Monat: eigener Ort)
         const x = cx + Math.cos(-rot) * R, y = cy + Math.sin(-rot) * R;
         ctx.strokeStyle = "#1d2733"; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
         ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x, y); ctx.stroke(); ctx.setLineDash([]);
@@ -403,7 +421,7 @@
     const base = { erde:["#2f74c0", "#7fb8f0", "#0c2a55"], mond:["#9a9a9a", "#d6d6d6", "#3d3d3d"],
                    mars:["#c2562d", "#f0a070", "#4d1a0a"], jupiter:["#c9a77c", "#f2dfc2", "#5a4128"] }[b];
     ball(cx, cy, R, base[0], base[1], base[2]);
-    const pole = S.scene === "sat";      // Satelliten: Blick von oben auf den Nordpol
+    const pole = S.scene === "sat" || S.scene === "tm";      // Blick von oben auf den Nordpol
     ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.clip();
     ctx.save(); ctx.translate(cx, cy); ctx.rotate(-rot); ctx.translate(-cx, -cy);   // ganze Oberfläche dreht starr
     rot = 0;
@@ -963,6 +981,123 @@
   }
 
   // ======================================================================
+  // Reiter 5: Tag und Monat (Sonne, Erde, Mond; Bewegungen vorgegeben)
+  // ======================================================================
+  const T_SID_M = 27.32166, T_SID_D = 86164.0905 / 86400;   // siderischer Monat, Sterntag (in Tagen)
+  const TMSPD = [ { v:1 / 24, t:"1 h pro Sekunde" }, { v:3 / 24, t:"3 h pro Sekunde" }, { v:6 / 24, t:"6 h pro Sekunde" }, { v:0.5, t:"12 h pro Sekunde" },
+                  { v:1, t:"1 d pro Sekunde" }, { v:2, t:"2 d pro Sekunde" }, { v:5, t:"5 d pro Sekunde" } ];
+  const TH0 = -0.3;                                              // Startwinkel der Erde auf ihrer Bahn
+  function tmPer() {   // Perioden in Tagen für die eingestellte Jahreslänge
+    const TJ = S.val.yj;
+    return { TJ, sidM:T_SID_M, synM:1 / (1 / T_SID_M - 1 / TJ), sidD:T_SID_D, solD:1 / (1 / T_SID_D - 1 / TJ) };
+  }
+  function tmEvents() {
+    const P = tmPer();
+    return S.tm.mode === "monat" ? [[P.sidM, "Siderischer Monat: Der Mond steht wieder in Richtung desselben Sterns. Aber es ist noch kein Vollmond!"], [P.synM, "Synodischer Monat: wieder Vollmond (Mond genau gegenüber der Sonne)."]]
+                                 : [[P.sidD, "Sterntag: Der Ort zeigt wieder zum selben Stern. Aber die Sonne steht noch nicht im Süden!"], [P.solD, "Sonnentag: Die Sonne steht wieder im Süden (Mittag)."]];
+  }
+  function tmStep(dd) {   // dd in Tagen
+    const z = S.tm; let t1 = z.t + dd;
+    for (;;) {
+      let best = null;
+      for (const [P, txt] of tmEvents()) { const e = (Math.floor(z.t / P + 1e-9) + 1) * P; if (e <= t1 + 1e-12 && (!best || e < best[0])) best = [e, txt, P]; }
+      if (!best) break;
+      z.t = best[0] + 1e-9; z.ev.push([best[0], best[1].split(":")[0]]); if (z.ev.length > 8) z.ev.shift();
+      if ($("cbStop").checked) { z.run = false; z.msg = best[1]; $("tmPlay").textContent = "Weiter"; return; }
+    }
+    z.t = t1;
+  }
+  function litBall(x, y, r, sunAng, base, light, dark, d3) {   // Kugel mit beleuchteter Hälfte zur Sonne
+    if (d3) ball(x, y, r, base, light, dark); else { ctx.fillStyle = "#ffffff"; ctx.strokeStyle = "#1d2733"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); ctx.stroke(); }
+    ctx.fillStyle = d3 ? "rgba(0,0,10,.62)" : "rgba(29,39,51,.55)";
+    ctx.beginPath(); ctx.arc(x, y, r, -sunAng + Math.PI / 2, -sunAng + 3 * Math.PI / 2); ctx.closePath(); ctx.fill();
+  }
+  function starArrow(x, y, len, col, fz, lab) {
+    arrow(x, y, x + len, y, col, 2.4);
+    ctx.fillStyle = col; ctx.font = Math.round(fz * 1.1) + "px " + FONT; ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText("✶", x + len + 4, y);
+    if (lab) txt(lab, x + len + 4, y + fz * 1.1, fz * 0.78, col, "left", true);
+  }
+  function drawTM(W, H, d3, fz) {
+    const oy = W < 560 ? 50 : 0, p = pal(d3), z = S.tm, P = tmPer(), mon = z.mode === "monat";
+    const m = Math.min(W, H), cx = W * 0.17, cy = H * 0.5, Ro = Math.min(W * 0.5, H * 0.46);
+    const thE = TH0 + 2 * Math.PI * z.t / P.TJ;
+    const ex = cx + Math.cos(thE) * Ro, ey = cy - Math.sin(thE) * Ro;
+    const starCol = d3 ? "#a8c8ff" : "#1F4E79", sunCol = d3 ? "#ffd166" : "#b8860b";
+    // Sonne
+    if (d3) { const gl = ctx.createRadialGradient(cx, cy, 0, cx, cy, m * 0.11); gl.addColorStop(0, "rgba(255,230,140,.9)"); gl.addColorStop(1, "rgba(255,200,80,0)");
+      ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(cx, cy, m * 0.11, 0, 7); ctx.fill(); ball(cx, cy, m * 0.045, "#ffcc33", "#fff6c0", "#e08a00"); }
+    else { ctx.fillStyle = "#ffe08a"; ctx.strokeStyle = "#1d2733"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(cx, cy, m * 0.045, 0, 7); ctx.fill(); ctx.stroke(); }
+    txt("Sonne", cx, cy + m * 0.045 + fz * 0.9, fz * 0.85, p.ink, "center", true);
+    // Erdbahn, bisher zurückgelegter Bogen
+    ctx.strokeStyle = d3 ? "rgba(255,255,255,.22)" : "rgba(0,0,0,.18)"; ctx.lineWidth = 1.2; ctx.setLineDash([5, 6]);
+    ctx.beginPath(); ctx.arc(cx, cy, Ro, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+    if (z.t > 0) {
+      ctx.strokeStyle = sunCol; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cx, cy, Ro, -thE, -TH0); ctx.stroke();
+      ctx.strokeStyle = d3 ? "rgba(255,209,102,.5)" : "rgba(184,134,11,.5)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(TH0) * Ro, cy - Math.sin(TH0) * Ro); if (mon) { ctx.moveTo(cx, cy); ctx.lineTo(ex, ey); } ctx.stroke();
+      const dg = (thE - TH0) * 180 / Math.PI;
+      if (dg > 1.5) label("Erde " + num(dg % 360 < 0.05 && dg > 1 ? 360 : dg % 360, 3) + "° weiter", cx + Math.cos((thE + TH0) / 2) * Ro * (mon ? 0.55 : 0.4), cy - Math.sin((thE + TH0) / 2) * Ro * (mon ? 0.55 : 0.4) - (mon ? 0 : fz * 1.6), fz * 0.8, sunCol, "center", d3);
+    }
+    if (mon) {
+      const rm = m * 0.13, thM = TH0 + 2 * Math.PI * z.t / P.sidM;
+      // Startstellung blass
+      const sx0 = cx + Math.cos(TH0) * Ro, sy0 = cy - Math.sin(TH0) * Ro;
+      ctx.globalAlpha = 0.28;
+      ctx.strokeStyle = p.ink; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(sx0, sy0, rm, 0, 7); ctx.stroke();
+      ctx.fillStyle = "#9a9a9a"; ctx.beginPath(); ctx.arc(sx0 + Math.cos(TH0) * rm, sy0 - Math.sin(TH0) * rm, 5, 0, 7); ctx.fill();
+      ctx.globalAlpha = 1;
+      // Mondbahn und Bezugsrichtungen
+      ctx.strokeStyle = d3 ? "rgba(255,255,255,.3)" : "rgba(0,0,0,.25)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(ex, ey, rm, 0, 7); ctx.stroke();
+      ctx.strokeStyle = sunCol; ctx.lineWidth = 2; ctx.setLineDash([7, 5]);
+      ctx.beginPath(); ctx.moveTo(ex, ey); ctx.lineTo(ex + Math.cos(thE) * rm * 1.55, ey - Math.sin(thE) * rm * 1.55); ctx.stroke(); ctx.setLineDash([]);
+      txt("von der Sonne weg", ex + Math.cos(thE) * rm * 1.62, ey - Math.sin(thE) * rm * 1.62 - fz * 0.7, fz * 0.75, sunCol, "center", true);
+      // Sternrichtung: immer dieselbe (Richtung des Mondes beim Start)
+      ctx.save(); ctx.translate(ex, ey); ctx.rotate(-TH0); starArrow(0, 0, rm * 1.45, starCol, fz, ""); ctx.restore();
+      txt("zum fernen Stern", ex + Math.cos(TH0) * rm * 1.5, ey - Math.sin(TH0) * rm * 1.5 + fz * 1.2, fz * 0.75, starCol, "center", true);
+      // Erde und Mond (beleuchtet von der Sonne)
+      const sunAng = thE + Math.PI;
+      const old = S.body; S.body = "erde"; planet(ex, ey, m * 0.032, d3, 2 * Math.PI * z.t / P.sidD); S.body = old;
+      ctx.fillStyle = "rgba(0,0,10,.55)"; ctx.beginPath(); ctx.arc(ex, ey, m * 0.032, -sunAng + Math.PI / 2, -sunAng + 3 * Math.PI / 2); ctx.closePath(); ctx.fill();
+      const mx = ex + Math.cos(thM) * rm, my = ey - Math.sin(thM) * rm;
+      litBall(mx, my, Math.max(6, m * 0.016), sunAng, "#9a9a9a", "#e0e0e0", "#4a4a4a", d3);
+      label("Mond", mx, my - Math.max(6, m * 0.016) - fz * 0.9, fz * 0.8, p.ink, "center", d3);
+    } else {
+      const re = m * 0.085, phi = TH0 + Math.PI + 2 * Math.PI * z.t / P.sidD, sunAng = thE + Math.PI;
+      // Startstellung blass
+      ctx.globalAlpha = 0.25; ctx.strokeStyle = p.ink; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(cx + Math.cos(TH0) * Ro, cy - Math.sin(TH0) * Ro, re, 0, 7); ctx.stroke(); ctx.globalAlpha = 1;
+      // Richtung zur Sonne
+      ctx.strokeStyle = sunCol; ctx.lineWidth = 2; ctx.setLineDash([7, 5]);
+      ctx.beginPath(); ctx.moveTo(ex, ey); ctx.lineTo(cx, cy); ctx.stroke(); ctx.setLineDash([]);
+      label("zur Sonne (Mittag)", ex + (cx - ex) * 0.62, ey + (cy - ey) * 0.62 + fz * 1.1, fz * 0.75, sunCol, "center", d3);
+      // Sternrichtung: Richtung des Ortes beim Start
+      const sa = TH0 + Math.PI;
+      ctx.save(); ctx.translate(ex, ey); ctx.rotate(-sa); starArrow(re * 1.05, 0, re * 1.3, starCol, fz, ""); ctx.restore();
+      label("zum fernen Stern", ex + Math.cos(sa) * re * 2.45, ey - Math.sin(sa) * re * 2.45 - fz * 1.2, fz * 0.75, starCol, "center", d3);
+      const old = S.body; S.body = "erde"; planet(ex, ey, re, d3, phi); S.body = old;
+      ctx.fillStyle = "rgba(0,0,10,.5)"; ctx.beginPath(); ctx.arc(ex, ey, re, -sunAng + Math.PI / 2, -sunAng + 3 * Math.PI / 2); ctx.closePath(); ctx.fill();
+      const ox = ex + Math.cos(phi) * re, oy = ey - Math.sin(phi) * re;
+      ctx.fillStyle = "#ff5a47"; ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(ox, oy, 5.5, 0, 7); ctx.fill(); ctx.stroke();
+    }
+    // Zähler und Meldung
+    const tt = mon ? de(z.t, 2) + " d" : hms(z.t);
+    txt("t = " + tt, 12, oy + fz * 1.2, fz, p.ink, "left", true);
+    if (mon) {
+      txt("Umläufe des Mondes bezogen auf die Sterne: " + de(z.t / P.sidM, 3), 12, oy + fz * 2.6, fz * 0.85, starCol, "left", true);
+      txt("bezogen auf die Sonne (Vollmonde): " + de(z.t / P.synM, 3), 12, oy + fz * 3.8, fz * 0.85, sunCol, "left", true);
+    } else {
+      txt("roter Punkt = ein Ort auf dem Äquator", 12, oy + fz * 5.0 + (S.val.yj < 365 ? fz * 1.2 : 0), fz * 0.8, d3 ? "#ff8a7a" : "#C0392B", "left", true);
+      txt("Drehungen der Erde bezogen auf die Sterne: " + de(z.t / P.sidD, 3), 12, oy + fz * 2.6, fz * 0.85, starCol, "left", true);
+      txt("bezogen auf die Sonne (Mittage): " + de(z.t / P.solD, 3), 12, oy + fz * 3.8, fz * 0.85, sunCol, "left", true);
+    }
+    if (z.msg) { ctx.font = "600 " + Math.round(fz) + "px " + FONT; const lines = z.msg.split(/(?<=[.!]) /);
+      lines.forEach((l, i) => label(l, W / 2, H - fz * (2.2 + (lines.length - 1 - i) * 1.6) - 18, fz, d3 ? "#ffffff" : "#1d2733", "center", d3)); }
+    txt("Abstand Erde–Mond und alle Größen nicht maßstäblich, Blick auf den Nordpol", W - 12, H - 14, fz * 0.72, p.sub, "right");
+    if (S.val.yj < 365) txt("Gedankenexperiment: Jahr nur " + num(S.val.yj) + " d lang", 12, oy + fz * 5.0, fz * 0.85, p.lupe, "left", true);
+  }
+  function hms(d) { const s = Math.round(d * 86400); return s >= 172800 ? Math.floor(s / 86400) + " d " + Math.floor(s % 86400 / 3600) + " h " + String(Math.floor(s % 3600 / 60)).padStart(2, "0") + " min" : Math.floor(s / 3600) + " h " + String(Math.floor(s % 3600 / 60)).padStart(2, "0") + " min " + String(s % 60).padStart(2, "0") + " s"; }
+
+  // ======================================================================
   // Messwerte (Satelliten)
   // ======================================================================
   const NOTES = [];
@@ -1031,6 +1166,14 @@
         if (o.state === "away") list.push([{ t:"Verlässt die Ansicht, kommt nie zurück", c:"res" }]);
       } else list.push([{ t:"Stelle v_0 ein und tippe auf „Abschießen“.", c:"res" }]);
       h = rows(list);
+    } else if (S.scene === "tm") {
+      const P = tmPer(), z = S.tm, mon = z.mode === "monat";
+      const list = mon ? [["Siderischer Monat (bezogen auf die Sterne)", num(P.sidM, 4) + " d", 1], ["Synodischer Monat (Vollmond bis Vollmond)", num(P.synM, 4) + " d", 1],
+                          ["Unterschied", num((P.synM - P.sidM) * 24, 3) + " h"], ["Dauer des Erdjahres", String(P.TJ).replace(".", ",") + " d"]]
+                       : [["Sterntag (bezogen auf die Sterne)", hms(P.sidD), 1], ["Sonnentag (Mittag bis Mittag)", hms(P.solD), 1],
+                          ["Unterschied", num((P.solD - P.sidD) * 1440, 3) + " min"], ["Dauer des Erdjahres", String(P.TJ).replace(".", ",") + " d"]];
+      z.ev.forEach(e => list.push([{ t:e[1] + " nach " + (mon ? de(e[0], 2) + " d" : hms(e[0])), c:"res" }]));
+      h = rows(list);
     } else {
       const o = S.sat; if (!o) satReset();
       const s = S.sat, r = Math.hypot(s.x, s.y), v = Math.hypot(s.vx, s.vy), el = elements(s.x, s.y, s.vx, s.vy);
@@ -1051,6 +1194,9 @@
 
   // ---------- Texte ----------
   const EXPL = {
+    tm: "<b>Auftrag:</b> Starte bei Vollmond. Die Animation hält, wenn der Mond einmal bezogen auf die fernen Sterne herum ist (siderischer Monat). Ist dann wieder Vollmond? " +
+        "Lass weiterlaufen bis zum nächsten Vollmond und erkläre den Unterschied. Vergleiche danach mit „Tag“: Sterntag und Sonnentag. " +
+        "Verkürze das Erdjahr (Gedankenexperiment), dann wird der Unterschied größer.",
     feld: "<b>Auftrag:</b> Tippe oder ziehe den Probekörper und beobachte Richtung und Länge des Feldstärkepfeils. " +
           "Vergrößere dann in der <b>Lupe</b> den Ausschnitt s: Bis zu welcher Größe darf man das Feld als <b>homogen</b> ansehen (parallele Feldlinien, überall gleiches g)?",
     energie: "<b>Auftrag:</b> Ein Körper wird von h<sub>1</sub> auf h<sub>2</sub> gehoben (auch durch Ziehen im Bild). Die Hubarbeit W ist die Fläche unter F(r). " +
@@ -1062,6 +1208,9 @@
   };
   const fr = (a, b) => "<span class='frac'><span>" + a + "</span><span>" + b + "</span></span>";
   const FORM = {
+    tm: "<div>In der Zeit T<sub>syn</sub> muss der Mond einmal herum <b>und</b> den Winkel aufholen, um den die Erde weitergelaufen ist:</div>" +
+        "<div><span class='k'>" + fr("2π", "T<sub>sid</sub>") + "·T<sub>syn</sub> = 2π + " + fr("2π", "T<sub>J</sub>") + "·T<sub>syn</sub></span> ⇒ <span class='k'>" + fr("1", "T<sub>syn</sub>") + " = " + fr("1", "T<sub>sid</sub>") + " − " + fr("1", "T<sub>J</sub>") + "</span></div>" +
+        "<div>Genauso für die Erddrehung: <span class='k'>" + fr("1", "T<sub>Sonnentag</sub>") + " = " + fr("1", "T<sub>Sterntag</sub>") + " − " + fr("1", "T<sub>J</sub>") + "</span></div>",
     feld: "<div>Gravitationsfeldstärke: <span class='k'>g = " + fr("F", "m") + " = " + fr("G·M", "r²") + "</span></div>" +
           "<div>an der Oberfläche: <span class='k'>g<sub>0</sub> = " + fr("G·M", "R²") + "</span></div>" +
           "<div>Für h ≪ R gilt <span class='k'>g ≈ g<sub>0</sub></span>: Das Feld ist näherungsweise homogen.</div>",
@@ -1079,6 +1228,9 @@
                  "Die Drehung des Planeten ist nicht berücksichtigt: g<sub>0</sub> der Erde ist hier 9,82 N/kg (gemessen je nach Ort 9,78 bis 9,83 N/kg). " +
                  "Werte: Erde 5,97·10²⁴ kg, 6371 km; Mond 7,35·10²² kg, 1737 km; Mars 6,42·10²³ kg, 3390 km; Jupiter 1,90·10²⁷ kg, 69 911 km (mittlere Radien). Beim schnell rotierenden, abgeplatteten Jupiter ergibt das g<sub>0</sub> = 25,9 N/kg; oft liest man 24,8 N/kg (Äquatorradius, mit Drehung). ";
   const SIMPL = {
+    tm: "Hier werden keine Kräfte berechnet, die Bewegungen sind vorgegeben: Erde und Mond laufen gleichförmig auf Kreisbahnen in einer Ebene, alle gegen den Uhrzeigersinn (Blick auf den Nordpol). " +
+        "Werte: siderischer Monat 27,32 d, Jahr 365,26 d, Sterntag 23 h 56 min 4 s. In Wirklichkeit sind die Bahnen leicht elliptisch, deshalb schwankt der synodische Monat zwischen etwa 29,3 und 29,8 d (Mittel 29,53 d) und der Sonnentag um bis zu ±30 s (Mittel 24 h). " +
+        "Weitere Monate: Der drakonitische Monat (27,21 d, Knoten bis Knoten) braucht die um 5° geneigte Mondbahn, der anomalistische Monat (27,55 d, Erdnähe bis Erdnähe) die sich drehende Ellipse; beides zeigt diese Draufsicht nicht. Der Abstand Erde–Mond ist stark vergrößert, die Richtungen stimmen.",
     feld: "Feldlinien zeigen die Richtung der Kraft auf einen Probekörper, ihre Dichte die Stärke des Feldes. Das Innere des Planeten wird nicht betrachtet. " +
           "Äquipotentiallinien (gestrichelt) verbinden Orte gleicher potentieller Energie, zwischen zwei Linien ändert sich E<sub>pot</sub> pro kg immer um denselben Betrag. Die Lupe zeigt einen Ausschnitt oben auf dem Planeten, s breit und s hoch.",
     energie: "Der Körper wird langsam gehoben (keine Reibung, keine kinetische Energie). Die Näherung m·g<sub>0</sub>·h rechnet überall mit dem Wert g<sub>0</sub> an der Oberfläche. Der Nullpunkt der potentiellen Energie ist frei wählbar; Differenzen ΔE<sub>pot</sub> hängen nicht davon ab.",
@@ -1101,6 +1253,7 @@
   function setPar(k, v) {
     S.val[k] = v; syncInputs();
     if (k === "hs") { S.satName = ""; satReset(); }
+    if (k === "yj") tmRestart();
     if (k === "h0" || k === "v0" || k === "al") { if (S.shot && S.shot.state === "fly") { /* laufender Schuss bleibt */ } }
     draw(); showOut();
   }
@@ -1187,6 +1340,7 @@
       if (res) o.state = res;
       busy = o.state === "fly";
     }
+    if (S.scene === "tm" && S.tm.run) { tmStep(dt * TMSPD[S.tm.spd[S.tm.mode]].v); busy = S.tm.run; }
     if (busy || (S.scene === "sat" && S.satRun && S.sat && S.sat.state === "fly")) { draw(); if (ts - outT > 150) { showOut(); outT = ts; } raf = requestAnimationFrame(loop); }
     else { draw(); showOut(); }
   }
@@ -1199,7 +1353,8 @@
     if (S.scene === "feld") drawFeld(W, H, d3, fz);
     else if (S.scene === "energie") drawEnergie(W, H, d3, fz);
     else if (S.scene === "flucht") drawFlucht(W, H, d3, fz);
-    else drawSat(W, H, d3, fz);
+    else if (S.scene === "sat") drawSat(W, H, d3, fz);
+    else drawTM(W, H, d3, fz);
   }
 
   // ---------- Finger: Probekörper ziehen (Feld), Zielhöhe ziehen (Energie) ----------
@@ -1228,7 +1383,7 @@
   cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
 
   /* Direktlink: Gravitationsfeld.html#energie öffnet diesen Reiter; beim Umschalten zeigt die Adresse den Reiter */
-  const LINKS = { feld:"feld", energie:"energie", flucht:"fluchtgeschwindigkeit", sat:"satelliten" };
+  const LINKS = { feld:"feld", energie:"energie", flucht:"fluchtgeschwindigkeit", sat:"satelliten", tm:"tag-und-monat" };
   function linkGet() { let h = ""; try { h = decodeURIComponent(location.hash.slice(1)).toLowerCase(); } catch (e) {} return Object.keys(LINKS).find(k => LINKS[k] === h); }
   function linkSet(k) { try { if (location.hash !== "#" + LINKS[k]) history.replaceState(null, "", "#" + LINKS[k]); } catch (e) {} }
   window.addEventListener("hashchange", () => { const k = linkGet(); if (k && k !== S.scene) setScene(k); });
@@ -1237,10 +1392,10 @@
     document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === s));
     document.querySelectorAll("[data-sc]").forEach(e => e.classList.toggle("hidden", !e.dataset.sc.split(" ").includes(s)));
     $("presets").classList.toggle("hidden", s !== "sat" || S.body !== "erde");
-    $("expl").innerHTML = EXPL[s]; $("formel").innerHTML = FORM[s]; $("simpl").innerHTML = SIMPL[s] + " " + SIMPL0;
+    $("expl").innerHTML = EXPL[s]; $("formel").innerHTML = FORM[s]; $("simpl").innerHTML = SIMPL[s] + (s === "tm" ? "" : " " + SIMPL0);
     if (s === "sat" && !S.sat) satReset();
     fillSelects(); syncInputs(); showNotes(); draw(); showOut();
-    if (s === "sat" || (s === "flucht" && S.shot && S.shot.state === "fly")) startLoop();
+    if (s === "sat" || (s === "tm" && S.tm.run) || (s === "flucht" && S.shot && S.shot.state === "fly")) startLoop();
   }
   function setFs(v) {
     S.fs = Math.max(0.8, Math.min(1.6, Math.round(v * 10) / 10));
@@ -1266,7 +1421,8 @@
   document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => setScene(b.dataset.tab));
   $("reset").onclick = () => {
     const s = S.scene;
-    const keys = { feld:["s"], energie:["m", "h1", "h2"], flucht:["v0", "al", "h0"], sat:["hs", "dv"] }[s];
+    const keys = { feld:["s"], energie:["m", "h1", "h2"], flucht:["v0", "al", "h0"], sat:["hs", "dv"], tm:["yj"] }[s];
+    if (s === "tm") { S.tm.spd = { monat:5, tag:1 }; $("cbStop").checked = true; $("tmMon").click(); }
     keys.forEach(k => S.val[k] = PARS[k].def);
     if (s === "feld") { S.probe = { r:B().R * 2.5, a:-0.75 }; S.stage.feld = 1; S.gsel = 1; $("gSel").value = 1;
       $("cbLines").checked = true; $("cbVec").checked = false; $("cbEqui").checked = false; $("cbLupe").checked = true; $("cbGraph").checked = true; }
@@ -1275,6 +1431,17 @@
     if (s === "sat") { S.stage.sat = 0; S.speed.sat = 2; S.satName = ""; satReset(); S.satRun = true; $("satPlay").textContent = "Pause"; }
     fillSelects(); syncInputs(); draw(); showOut(); if (s === "sat") startLoop();
   };
+
+  // Tag und Monat: Bedienung
+  function tmRestart() { const z = S.tm; z.t = 0; z.ev = []; z.msg = ""; z.run = false; $("tmPlay").textContent = "Start"; draw(); showOut(); }
+  function tmFill() { $("tmSpeed").innerHTML = TMSPD.map((o, i) => "<option value='" + i + "'>" + o.t + "</option>").join(""); $("tmSpeed").value = S.tm.spd[S.tm.mode]; }
+  function tmMode(m) { S.tm.mode = m; $("tmMon").classList.toggle("on", m === "monat"); $("tmDay").classList.toggle("on", m === "tag"); tmFill(); tmRestart(); }
+  $("tmMon").onclick = () => tmMode("monat");
+  $("tmDay").onclick = () => tmMode("tag");
+  $("tmSpeed").onchange = () => { S.tm.spd[S.tm.mode] = +$("tmSpeed").value; };
+  $("tmPlay").onclick = () => { const z = S.tm; z.run = !z.run; z.msg = ""; $("tmPlay").textContent = z.run ? "Pause" : "Weiter"; startLoop(); draw(); };
+  $("tmReset").onclick = tmRestart;
+  tmFill();
 
   window.addEventListener("resize", resize);
   if (window.ResizeObserver) new ResizeObserver(resize).observe(cv);
