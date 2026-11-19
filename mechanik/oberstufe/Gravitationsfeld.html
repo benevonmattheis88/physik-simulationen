@@ -66,6 +66,7 @@
   details.small summary { cursor:pointer; min-height:1.9rem; display:flex; align-items:center; }
   .small { font-size:.86rem; color:var(--muted); line-height:1.35; }
   .hidden { display:none !important; }
+  #lehrerHinweis { font-size:.85rem; font-weight:600; color:#7a4a00; background:#fff3d6; border:1px solid #f0d58a; border-radius:6px; padding:.15rem .5rem; align-self:flex-start; }
 
   /* Werkzeugleiste auf der Simulation */
   #tools { position:absolute; top:8px; right:8px; display:flex; gap:6px; z-index:5; }
@@ -128,12 +129,14 @@
   <div id="panel">
     <div id="ctrl">
       <h1>Gravitationsfeld</h1>
+      <div id="lehrerHinweis" class="hidden">Lehreransicht: mit Formeln</div>
       <div class="tabs">
         <button data-tab="feld">Feld</button>
         <button data-tab="energie">Energie</button>
         <button data-tab="flucht">Flucht&shy;geschw.</button>
         <button data-tab="sat">Satelliten</button>
         <button data-tab="tm">Tag &amp; Monat</button>
+        <button data-tab="kep">Kepler</button>
       </div>
       <div class="row" data-sc="feld energie flucht sat"><label for="body">Himmels&shy;körper</label><select id="body"></select></div>
       <div class="row" data-sc="feld energie flucht sat"><label for="stageSel">Ansicht</label><select id="stageSel"></select></div>
@@ -169,7 +172,7 @@
         <div class="seg" style="flex:1"><button id="zInf" class="on">im Unendlichen</button><button id="zSur">Oberfläche</button></div></div>
       <div class="row" data-sc="energie"><label for="axSel">Achsen</label><select id="axSel"></select></div>
       <div class="checks" data-sc="energie">
-        <label><input id="cbMgh" type="checkbox" checked>Näherung m·g·h (homogenes Feld) zeigen</label>
+        <label><input id="cbMgh" type="checkbox" checked><span id="mghTxt">Näherung homogenes Feld zeigen</span></label>
       </div>
 
       <!-- Fluchtgeschwindigkeit -->
@@ -232,6 +235,26 @@
         <label><input id="cbStop" type="checkbox" checked>Bei jedem Ereignis anhalten</label>
       </div>
       <div class="row" data-sc="tm"><label for="tmSpeed">Zeitraffer</label><select id="tmSpeed"></select></div>
+      <!-- Kepler -->
+      <div class="btns" data-sc="kep" id="kpresets">
+        <button data-kp="merkur">Merkur</button><button data-kp="venus">Venus</button><button data-kp="erde">Erde</button><button data-kp="mars">Mars</button><button data-kp="jupiter">Jupiter</button>
+      </div>
+      <div class="par" data-k="ka" data-sc="kep">
+        <div class="head"><span>große Halbachse a</span><output></output></div>
+        <div class="line"><button class="minus">−</button><input type="range"><button class="plus">+</button></div>
+      </div>
+      <div class="par" data-k="ke" data-sc="kep">
+        <div class="head"><span>numerische Exzentrizität e</span><output></output></div>
+        <div class="line"><button class="minus">−</button><input type="range"><button class="plus">+</button></div>
+      </div>
+      <div class="checks" data-sc="kep">
+        <label><input id="cbFoci" type="checkbox">Brennpunkte und Abstände</label>
+        <label><input id="cbArea" type="checkbox">Flächen in gleichen Zeiten</label>
+        <label><input id="cbKv" type="checkbox" checked>Geschwindigkeit</label>
+      </div>
+      <div class="row" data-sc="kep"><label for="kView">Ansicht</label><select id="kView"></select></div>
+      <div class="row" data-sc="kep"><label for="kSpeed">Zeitraffer</label><select id="kSpeed"></select></div>
+      <div class="btns" data-sc="kep"><button id="kPlay">Pause</button><button id="kNote" class="go">Bahn notieren</button></div>
       <div class="row" data-sc="flucht sat"><label for="speed">Zeitraffer</label><select id="speed"></select></div>
     </div>
     <div id="info">
@@ -240,6 +263,12 @@
       <details class="formel" id="formelBox" open><summary>Formeln</summary><div id="formel"></div></details>
       <div class="btns" data-sc="sat"><button id="noteBtn" class="go">Bahn notieren</button></div>
       <div id="notes" data-sc="sat"></div>
+      <div id="knotes" data-sc="kep"></div>
+      <div class="btns hidden" id="knoteMore">
+        <button id="kUndo">Letzten löschen</button>
+        <button id="kClear">Alle löschen</button>
+        <button id="kCsv">Tabelle speichern</button>
+      </div>
       <div class="btns hidden" id="noteMore">
         <button id="noteUndo">Letzten löschen</button>
         <button id="noteClear">Alle löschen</button>
@@ -320,6 +349,8 @@
     al: { list:rng(0, 90, 5), def:0, txt:v => v === 0 ? "0° (waagerecht)" : v === 90 ? "90° (senkrecht)" : v + "°" },
     h0: { list:[0, 10, 50, 100, 200, 500, 1000, 2000, 5000], def:500, txt:km },
     hs: { list:[200, 300, 400, 500, 700, 1000, 1500, 2000, 3000, 5000, 7000, 10000, 15000, 20000, 25000, 30000, 35000, 40000, 50000, 70000, 100000, 150000, 200000, 300000, 400000], def:400, txt:km },
+    ka: { list:[0.3, 0.4, 0.5, 0.7, 1, 1.5, 2, 2.5, 3, 4, 5, 6], def:1, txt:v => num(v, 3).replace(/,?0+$/, "") + " AE" },
+    ke: { list:rng(0, 0.9, 0.05), def:0.5, txt:v => de(v, v * 100 % 5 ? 3 : 2) },
     yj: { list:[10, 30, 60, 90, 180, 365.26], def:365.26, txt:v => v === 365.26 ? "365,26 d (echt)" : v + " d (gedacht)" },
     dv: { list:rng(-2, 3, 0.1), def:0.5, txt:v => (v > 0 ? "+" : "") + de(v, 1) + " km/s" }
   };
@@ -330,6 +361,7 @@
               speed:{ flucht:1, sat:2 },
               probe:{ r:1.6e7, a:-0.75 }, drag:null,
               shot:null, traces:[], sat:null, satRun:true, rotA:0, satName:"",
+              kep:{ t:0, run:true, view:1, spd:2, name:"" },
               tm:{ mode:"monat", t:0, run:false, ev:[], msg:"", spd:{ monat:5, tag:1 } } };
   for (const k in PARS) S.val[k] = PARS[k].def;
 
@@ -662,8 +694,8 @@
     ctx.restore();
     const g0 = gm / R / R;
     if (R / 1e6 < rmax) {
-      txt("homogene Näherung: g = g_0 = " + num(g0) + " N/kg", a.x + a.w - 4, Math.max(Yg(g0) - fz * 0.75, a.y + fz * 0.4), fz * 0.82, p.mgh, "right", true);
-      txt("g(r) = G·M/r²", Math.min(X(R) + fz * 0.6, a.x + a.w - fz * 7), Math.min(Yg(g0) + fz * 1.6, a.y + a.h - fz * 0.8), fz * 0.82, p.g, "left", true);
+      txt((S.teach ? "homogene Näherung: g = g_0 = " : "homogene Näherung: g_0 = ") + num(g0) + " N/kg", a.x + a.w - 4, Math.max(Yg(g0) - fz * 0.75, a.y + fz * 0.4), fz * 0.82, p.mgh, "right", true);
+      txt(TF("g(r) = G·M/r²", "g(r)"), Math.min(X(R) + fz * 0.6, a.x + a.w - fz * 7), Math.min(Yg(g0) + fz * 1.6, a.y + a.h - fz * 0.8), fz * 0.82, p.g, "left", true);
     }
   }
 
@@ -726,8 +758,8 @@
     for (let i = 0; i <= 240; i++) { const r = R + (rmax - R) * i / 240; const y = YF(gm * m / r / r); i ? ctx.lineTo(X(r), y) : ctx.moveTo(X(r), y); }
     ctx.stroke();
     ctx.restore();
-    txt("F(r) = G·M·m/r²", gA.x + gA.w - 4, gA.y + fz * 0.6, fz * 0.85, p.g, "right", true);
-    if ($("cbMgh").checked) txt("homogen: F = m·g_0", gA.x + gA.w - 4, Math.max(YF(m * g0) - fz * 0.7, gA.y + fz * 1.8), fz * 0.82, p.mgh, "right", true);
+    txt(TF("F(r) = G·M·m/r²", "F(r)"), gA.x + gA.w - 4, gA.y + fz * 0.6, fz * 0.85, p.g, "right", true);
+    if ($("cbMgh").checked) txt(TF("homogen: F = m·g_0", "homogenes Feld"), gA.x + gA.w - 4, Math.max(YF(m * g0) - fz * 0.7, gA.y + fz * 1.8), fz * 0.82, p.mgh, "right", true);
     if (X(rb) - X(ra) > fz * 2.5) txt("W", (X(ra) + X(rb)) / 2, YF(0) - fz * 0.9, fz, d3 ? "#5fe07a" : "#2E7D32", "center", true);
     // ----- E_pot(r)-Diagramm -----
     const inf = S.zero === "inf", Em = ax.E;
@@ -757,8 +789,8 @@
     for (const [r, e] of [[r1, e1], [r2, e2]]) { ctx.fillStyle = p.fieldS; ctx.beginPath(); ctx.arc(X(r), YE(e), 5.5, 0, 7); ctx.fill(); }
     ctx.restore();
     if (Math.abs(YE(e2) - YE(e1)) > fz * 1.2) txt("ΔE_{pot} = W", X(Math.max(r1, r2)) + 22, (YE(e1) + YE(e2)) / 2, fz * 0.85, d3 ? "#5fe07a" : "#2E7D32", "left", true);
-    txt(inf ? "E_{pot}(r) = −G·M·m/r" : "E_{pot}(r) = G·M·m·(1/R − 1/r)", gA.x + gA.w - 4, inf ? eA.y + eA.h - fz * 0.8 : eA.y + eA.h - fz * 0.8, fz * 0.85, p.fieldS, "right", true);
-    if ($("cbMgh").checked) txt("homogen: E_{pot} = m·g_0·h" + (inf ? " + E_{pot}(R)" : ""), gA.x + gA.w - 4, inf ? eA.y + eA.h - fz * 2.1 : eA.y + eA.h - fz * 2.1, fz * 0.82, p.mgh, "right", true);
+    txt(TF(inf ? "E_{pot}(r) = −G·M·m/r" : "E_{pot}(r) = G·M·m·(1/R − 1/r)", "E_{pot}(r)"), gA.x + gA.w - 4, inf ? eA.y + eA.h - fz * 0.8 : eA.y + eA.h - fz * 0.8, fz * 0.85, p.fieldS, "right", true);
+    if ($("cbMgh").checked) txt(TF("homogen: E_{pot} = m·g_0·h" + (inf ? " + E_{pot}(R)" : ""), "homogenes Feld"), gA.x + gA.w - 4, inf ? eA.y + eA.h - fz * 2.1 : eA.y + eA.h - fz * 2.1, fz * 0.82, p.mgh, "right", true);
     if (gm * m / R > Em * 1.02) label("Kurve reicht über die Achse hinaus: Achsen „groß“ oder kleinere Masse wählen", W / 2, eA.y + eA.h / 2, fz * 0.9, p.lupe, "center", d3);
   }
 
@@ -1098,6 +1130,102 @@
   function hms(d) { const s = Math.round(d * 86400); return s >= 172800 ? Math.floor(s / 86400) + " d " + Math.floor(s % 86400 / 3600) + " h " + String(Math.floor(s % 3600 / 60)).padStart(2, "0") + " min" : Math.floor(s / 3600) + " h " + String(Math.floor(s % 3600 / 60)).padStart(2, "0") + " min " + String(s % 60).padStart(2, "0") + " s"; }
 
   // ======================================================================
+  // Reiter 6: Keplersche Gesetze (Sonne im Brennpunkt, Ort aus der Keplergleichung)
+  // ======================================================================
+  const AE = 1.495978707e11, GMS = 1.32712440018e20, YR = 365.25 * 86400;
+  const KST = [1.5, 3, 6, 12];                                        // Ansicht: ± … AE
+  const KSPD = [ { v:0.05, t:"0,05 Jahre pro Sekunde" }, { v:0.1, t:"0,1 Jahre pro Sekunde" }, { v:0.25, t:"0,25 Jahre pro Sekunde" },
+                 { v:0.5, t:"0,5 Jahre pro Sekunde" }, { v:1, t:"1 Jahr pro Sekunde" }, { v:2, t:"2 Jahre pro Sekunde" } ];
+  const KPRE = { merkur:{ n:"Merkur", a:0.387, e:0.206 }, venus:{ n:"Venus", a:0.723, e:0.007 }, erde:{ n:"Erde", a:1, e:0.017 },
+                 mars:{ n:"Mars", a:1.524, e:0.093 }, jupiter:{ n:"Jupiter", a:5.203, e:0.048 } };
+  const kT = a => 2 * Math.PI * Math.sqrt(Math.pow(a * AE, 3) / GMS) / YR;     // Umlaufdauer in Jahren
+  function kPos(a, e, t, T) {   // Ort zur Zeit t (Jahre) ab Perihel; Ergebnis in AE, Sonne im Ursprung, Perihel rechts
+    const M = 2 * Math.PI * ((t / T) % 1); let E = e < 0.8 ? M : Math.PI;
+    for (let i = 0; i < 30; i++) E -= (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E));
+    return [a * (Math.cos(E) - e), a * Math.sqrt(1 - e * e) * Math.sin(E)];
+  }
+  function drawKep(W, H, d3, fz) {
+    const p = pal(d3), z = S.kep, a = S.val.ka, e = S.val.ke, T = kT(a), b = a * Math.sqrt(1 - e * e);
+    const cx = W / 2, cy = H / 2 + (W < 560 ? 20 : 0), k = Math.min(W, H) / 2 * 0.9 / KST[z.view];
+    const P = (x, y) => [cx + x * k, cy - y * k];
+    // notierte Bahnen mit eigenem Planeten
+    KNOTES.forEach((n, i) => {
+      ctx.strokeStyle = d3 ? "rgba(255,255,255,.25)" : "rgba(0,0,0,.2)"; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.ellipse(cx - n.a * n.e * k, cy, n.a * k, n.a * Math.sqrt(1 - n.e * n.e) * k, 0, 0, 7); ctx.stroke();
+      const [x, y] = kPos(n.a, n.e, z.t + n.t0, n.T), [X, Y] = P(x, y);
+      ctx.fillStyle = d3 ? "rgba(255,255,255,.7)" : "rgba(0,0,0,.5)"; ctx.beginPath(); ctx.arc(X, Y, 4, 0, 7); ctx.fill();
+      txt(String(i + 1), X + 7, Y - 7, fz * 0.75, d3 ? "rgba(255,255,255,.75)" : "#5b6675", "left", true);
+    });
+    // Flächen in gleichen Zeiten (12 Zwölftel eines Umlaufs)
+    if ($("cbArea").checked) {
+      const N = 12;
+      for (let j = 0; j < N; j++) {
+        ctx.fillStyle = j % 2 ? (d3 ? "rgba(130,185,255,.28)" : "rgba(31,78,121,.16)") : (d3 ? "rgba(255,179,71,.28)" : "rgba(211,84,0,.14)");
+        ctx.beginPath(); ctx.moveTo(cx, cy);
+        for (let i = 0; i <= 24; i++) { const [x, y] = kPos(a, e, (j + i / 24) * T / N, T), [X, Y] = P(x, y); ctx.lineTo(X, Y); }
+        ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = d3 ? "rgba(255,255,255,.35)" : "rgba(0,0,0,.25)"; ctx.lineWidth = 1; ctx.stroke();
+      }
+      // gerade überstrichene Fläche
+      const t0 = Math.floor(z.t / (T / N)) * (T / N);
+      ctx.fillStyle = d3 ? "rgba(255,209,102,.55)" : "rgba(184,134,11,.4)"; ctx.beginPath(); ctx.moveTo(cx, cy);
+      for (let i = 0; i <= 30; i++) { const [x, y] = kPos(a, e, t0 + (z.t - t0) * i / 30, T), [X, Y] = P(x, y); ctx.lineTo(X, Y); }
+      ctx.closePath(); ctx.fill();
+    }
+    // Bahn
+    ctx.strokeStyle = d3 ? "rgba(255,255,255,.75)" : "#1d2733"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(cx - a * e * k, cy, a * k, b * k, 0, 0, 7); ctx.stroke();
+    const [px, py] = kPos(a, e, z.t, T), [PX, PY] = P(px, py), r1 = Math.hypot(px, py), r2 = Math.hypot(px + 2 * a * e, py);
+    // Brennpunkte und Abstände
+    if ($("cbFoci").checked) {
+      const [FX, FY] = P(-2 * a * e, 0);
+      ctx.strokeStyle = d3 ? "#ffd166" : "#b8860b"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(PX, PY); ctx.stroke();
+      ctx.strokeStyle = d3 ? "#82b9ff" : "#1F4E79"; ctx.beginPath(); ctx.moveTo(FX, FY); ctx.lineTo(PX, PY); ctx.stroke();
+      ctx.strokeStyle = p.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(FX - 6, FY - 6); ctx.lineTo(FX + 6, FY + 6); ctx.moveTo(FX + 6, FY - 6); ctx.lineTo(FX - 6, FY + 6); ctx.stroke();
+      label("zweiter Brennpunkt", FX, FY + fz * 1.3, fz * 0.75, p.ink, "center", d3);
+      label("r_1 = " + num(r1) + " AE", (cx + PX) / 2, (cy + PY) / 2 - fz * 0.8, fz * 0.8, d3 ? "#ffd166" : "#b8860b", "center", d3);
+      label("r_2 = " + num(r2) + " AE", (FX + PX) / 2, (FY + PY) / 2 + fz * 0.8, fz * 0.8, d3 ? "#82b9ff" : "#1F4E79", "center", d3);
+      // Perihel und Aphel
+      const [AX] = P(-a * (1 + e), 0), [QX] = P(a * (1 - e), 0);
+      ctx.fillStyle = p.sub; ctx.beginPath(); ctx.arc(AX, cy, 3, 0, 7); ctx.arc(QX, cy, 3, 0, 7); ctx.fill();
+      txt("Aphel", AX - 6, cy - fz * 0.8, fz * 0.75, p.sub, "right", true); txt("Perihel", QX + 6, cy - fz * 0.8, fz * 0.75, p.sub, "left", true);
+    }
+    // Sonne
+    if (d3) { const gl = ctx.createRadialGradient(cx, cy, 0, cx, cy, 30); gl.addColorStop(0, "rgba(255,230,140,.9)"); gl.addColorStop(1, "rgba(255,200,80,0)");
+      ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(cx, cy, 30, 0, 7); ctx.fill(); ball(cx, cy, 11, "#ffcc33", "#fff6c0", "#e08a00"); }
+    else { ctx.fillStyle = "#ffe08a"; ctx.strokeStyle = "#1d2733"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(cx, cy, 10, 0, 7); ctx.fill(); ctx.stroke(); }
+    txt("Sonne", cx, cy + fz * 1.6, fz * 0.8, p.ink, "center", true);
+    // Geschwindigkeitspfeil
+    const v = Math.sqrt(GMS * (2 / (r1 * AE) - 1 / (a * AE))) / 1000;
+    if ($("cbKv").checked) {
+      const [qx, qy] = kPos(a, e, z.t + T * 1e-4, T), dx = qx - px, dy = qy - py, l = Math.hypot(dx, dy) || 1, kv = fz * 4.5 / 30;   // 30 km/s ≙ 4,5 fz
+      arrow(PX, PY, PX + dx / l * v * kv, PY - dy / l * v * kv, p.v, 2.6, d3 ? "rgba(0,0,0,.5)" : "#fff");
+      { const lf = dx < 0; txt("v = " + num(v) + " km/s", PX + dx / l * v * kv + (lf ? -8 : 8), PY - dy / l * v * kv + (dy > 0 ? -10 : 14), fz * 0.8, p.v, lf ? "right" : "left", true); }
+    }
+    // Planet
+    if (d3) ball(PX, PY, 7, "#3f8fd8", "#bfe0ff", "#0b2d5c"); else { ctx.fillStyle = "#1d2733"; ctx.beginPath(); ctx.arc(PX, PY, 6, 0, 7); ctx.fill(); }
+    if (z.name) label(z.name, PX, PY - fz * 1.4, fz * 0.8, p.ink, "center", d3);
+    // Zeit, Maßstab
+    const oy = W < 560 ? 50 : 0;
+    txt("t = " + de(z.t, 2) + " Jahre", 12, oy + fz * 1.2, fz, p.ink, "left", true);
+    txt("Umläufe: " + de(z.t / T, 2), 12, oy + fz * 2.5, fz * 0.85, p.sub, "left", true);
+    const L = niceStep(KST[z.view] * 0.4), lx = 12, ly = H - 14;
+    ctx.strokeStyle = p.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(lx, ly - 6); ctx.lineTo(lx, ly); ctx.lineTo(lx + L * k, ly); ctx.lineTo(lx + L * k, ly - 6); ctx.stroke();
+    txt(String(L).replace(".", ",") + " AE", lx + L * k / 2, ly - fz * 0.75, fz * 0.9, p.ink, "center", true);
+    txt("Sonne und Planeten nicht maßstäblich · Pfeil: 30 km/s ≙ " + (fz * 4.5 | 0) + " px", W - 12, H - 14, fz * 0.72, p.sub, "right");
+    if (a * (1 + e) > KST[z.view] * 1.05) label("Bahn größer als die Ansicht: größere Ansicht wählen", W / 2, H - fz * 2.6, fz * 0.9, p.lupe, "center", d3);
+  }
+  const KNOTES = [];
+  function kShowNotes() {
+    $("knotes").innerHTML = KNOTES.length
+      ? "<table><tr><th>Nr.</th><th>Bahn</th><th>a in AE</th><th>e</th><th>T in Jahren</th>" + (S.teach ? "<th>T²/a³ in Jahre²/AE³</th>" : "") + "</tr>" +
+        KNOTES.map((q, i) => "<tr><td>" + (i + 1) + "</td><td>" + q.row.join("</td><td>") + "</td>" + (S.teach ? "<td>" + num(q.T * q.T / Math.pow(q.a, 3), 4) + "</td>" : "") + "</tr>").join("") + "</table>"
+      : "<div class='empty'>Noch keine Bahn notiert. Notierte Bahnen bleiben mit ihrem Planeten sichtbar.</div>";
+    $("knoteMore").classList.toggle("hidden", !KNOTES.length || S.scene !== "kep");
+  }
+
+  // ======================================================================
   // Messwerte (Satelliten)
   // ======================================================================
   const NOTES = [];
@@ -1146,7 +1274,7 @@
       const m = S.val.m, r1 = R + S.val.h1 * 1000, r2 = R + S.val.h2 * 1000, W = gm * m * (1 / r1 - 1 / r2), Wh = m * g0 * (r2 - r1);
       const E = r => S.zero === "inf" ? -gm * m / r : gm * m * (1 / R - 1 / r);
       const dev = W !== 0 ? (Wh - W) / W * 100 : 0;
-      h = rows([["Hubarbeit W exakt (Fläche unter F(r))", sci(W / 1e9, 4) + " GJ", 1], ["Näherung m·g_0·Δh", sci(Wh / 1e9, 4) + " GJ"],
+      h = rows([["Hubarbeit W exakt (Fläche unter F(r))", sci(W / 1e9, 4) + " GJ", 1], [TF("Näherung m·g_0·Δh", "Näherung homogenes Feld"), sci(Wh / 1e9, 4) + " GJ"],
                 ["Näherung zu groß um", num(dev, 3) + " %"], ["E_{pot} in h_1", sci(E(r1) / 1e9, 4) + " GJ"], ["E_{pot} in h_2", sci(E(r2) / 1e9, 4) + " GJ"],
                 ["Energie bis ins Unendliche ab h_1", sci(gm * m / r1 / 1e9, 4) + " GJ"]]);
     } else if (S.scene === "flucht") {
@@ -1160,11 +1288,21 @@
         list.push([o.cls]);
         if (o.al === 90 && o.el.E < 0) {
           const hmax = -gm / o.el.E - R, hh = o.h0 * 1000 + Math.pow(o.v0 * 1000, 2) / 2 / g0;
-          list.push(["Gipfelhöhe exakt", thou(hmax / 1000) + " km", 1], ["Gipfelhöhe mit homogenem Feld (h_0 + v_0²/2g_0)", thou(hh / 1000) + " km"]);
+          list.push(["Gipfelhöhe exakt", thou(hmax / 1000) + " km", 1], [TF("Gipfelhöhe mit homogenem Feld (h_0 + v_0²/2g_0)", "Gipfelhöhe, gerechnet mit homogenem Feld"), thou(hh / 1000) + " km"]);
         }
         if (o.state === "hit") list.push([{ t:"Aufgeschlagen nach " + dur(o.t), c:"warn" }]);
         if (o.state === "away") list.push([{ t:"Verlässt die Ansicht, kommt nie zurück", c:"res" }]);
       } else list.push([{ t:"Stelle v_0 ein und tippe auf „Abschießen“.", c:"res" }]);
+      h = rows(list);
+    } else if (S.scene === "kep") {
+      const a = S.val.ka, e = S.val.ke, T = kT(a), [x, y] = kPos(a, e, S.kep.t, T), r = Math.hypot(x, y), r2 = Math.hypot(x + 2 * a * e, y);
+      const v = rr => Math.sqrt(GMS * (2 / (rr * AE) - 1 / (a * AE))) / 1000;
+      const list = [["Umlaufdauer T", num(T, 4) + " Jahre (" + thou(T * 365.25) + " d)", 1], ["kleinster Abstand (Perihel)", num(a * (1 - e)) + " AE"], ["größter Abstand (Aphel)", num(a * (1 + e)) + " AE"],
+                    ["Geschwindigkeit im Perihel", num(v(a * (1 - e))) + " km/s"], ["Geschwindigkeit im Aphel", num(v(a * (1 + e))) + " km/s"],
+                    ["jetzt: Abstand r_1 zur Sonne", num(r) + " AE"], ["jetzt: Geschwindigkeit v", num(v(r)) + " km/s"]];
+      if ($("cbFoci").checked) list.push(["jetzt: Abstand r_2 zum zweiten Brennpunkt", num(r2) + " AE"]);
+      if ($("cbArea").checked) list.push(["Fläche je Zwölftel der Umlaufdauer", num(Math.PI * a * a * Math.sqrt(1 - e * e) / 12) + " AE²", 1]);
+      if (S.teach) list.push(["T²/a³", num(T * T / Math.pow(a, 3), 4) + " Jahre²/AE³"]);
       h = rows(list);
     } else if (S.scene === "tm") {
       const P = tmPer(), z = S.tm, mon = z.mode === "monat";
@@ -1194,6 +1332,9 @@
 
   // ---------- Texte ----------
   const EXPL = {
+    kep: "<b>1.</b> Welche Form hat die Bahn, wo steht die Sonne? Schalte „Brennpunkte und Abstände“ ein und beobachte r<sub>1</sub> und r<sub>2</sub>. " +
+         "<b>2.</b> Schalte „Flächen in gleichen Zeiten“ ein: Was fällt dir an den Flächen auf? Wo ist der Planet schnell, wo langsam? " +
+         "<b>3.</b> Notiere mehrere Bahnen (z. B. Merkur bis Jupiter) und suche einen Zusammenhang zwischen a und T.",
     tm: "<b>Auftrag:</b> Starte bei Vollmond. Die Animation hält, wenn der Mond einmal bezogen auf die fernen Sterne herum ist (siderischer Monat). Ist dann wieder Vollmond? " +
         "Lass weiterlaufen bis zum nächsten Vollmond und erkläre den Unterschied. Vergleiche danach mit „Tag“: Sterntag und Sonnentag. " +
         "Verkürze das Erdjahr (Gedankenexperiment), dann wird der Unterschied größer.",
@@ -1206,8 +1347,16 @@
     sat: "<b>Auftrag:</b> Wähle verschiedene Bahnhöhen und notiere die Bahnen. Wie hängen v und T vom Bahnradius r ab? " +
          "Gib dann einen <b>Schub</b>: Aus der Kreisbahn wird eine Ellipse. Mit einem zweiten Schub im höchsten Punkt („Kreisbahn hier“) erreichst du eine höhere Kreisbahn."
   };
+  // Schüleransicht: ohne Formeln (Lehreransicht über #…-lehrer)
+  const TF = (withF, without) => S.teach ? withF : without;
+  const EXPL_S = { energie: "<b>Auftrag:</b> Ein Körper wird von h<sub>1</sub> auf h<sub>2</sub> gehoben (auch durch Ziehen im Bild). Die Hubarbeit W ist die Fläche unter F(r). " +
+                            "Vergleiche sie mit der Näherung für ein homogenes Feld (gestrichelt). Ab welcher Höhe weicht die Näherung um mehr als 1 % ab?" };
+  const SIMPL_S = { energie: "Der Körper wird langsam gehoben (keine Reibung, keine kinetische Energie). Die Näherung für ein homogenes Feld rechnet überall mit dem Wert g<sub>0</sub> an der Oberfläche. Der Nullpunkt der potentiellen Energie ist frei wählbar; Differenzen ΔE<sub>pot</sub> hängen nicht davon ab." };
   const fr = (a, b) => "<span class='frac'><span>" + a + "</span><span>" + b + "</span></span>";
   const FORM = {
+    kep: "<div><b>1. Gesetz:</b> Die Planeten laufen auf Ellipsen, in einem Brennpunkt steht die Sonne: <span class='k'>r<sub>1</sub> + r<sub>2</sub> = 2a</span>, <span class='k'>r<sub>P</sub> = a·(1 − e)</span>, <span class='k'>r<sub>A</sub> = a·(1 + e)</span></div>" +
+         "<div><b>2. Gesetz:</b> Der Fahrstrahl überstreicht in gleichen Zeiten gleiche Flächen: <span class='k'>" + fr("ΔA", "Δt") + " = " + fr("π·a·b", "T") + " = konstant</span>, daraus <span class='k'>v<sub>P</sub>·r<sub>P</sub> = v<sub>A</sub>·r<sub>A</sub></span></div>" +
+         "<div><b>3. Gesetz:</b> <span class='k'>" + fr("T²", "a³") + " = " + fr("4π²", "G·M<sub>Sonne</sub>") + "</span> ist für alle Planeten gleich (≈ 1 Jahr²/AE³)</div>",
     tm: "<div>In der Zeit T<sub>syn</sub> muss der Mond einmal herum <b>und</b> den Winkel aufholen, um den die Erde weitergelaufen ist:</div>" +
         "<div><span class='k'>" + fr("2π", "T<sub>sid</sub>") + "·T<sub>syn</sub> = 2π + " + fr("2π", "T<sub>J</sub>") + "·T<sub>syn</sub></span> ⇒ <span class='k'>" + fr("1", "T<sub>syn</sub>") + " = " + fr("1", "T<sub>sid</sub>") + " − " + fr("1", "T<sub>J</sub>") + "</span></div>" +
         "<div>Genauso für die Erddrehung: <span class='k'>" + fr("1", "T<sub>Sonnentag</sub>") + " = " + fr("1", "T<sub>Sterntag</sub>") + " − " + fr("1", "T<sub>J</sub>") + "</span></div>",
@@ -1228,6 +1377,8 @@
                  "Die Drehung des Planeten ist nicht berücksichtigt: g<sub>0</sub> der Erde ist hier 9,82 N/kg (gemessen je nach Ort 9,78 bis 9,83 N/kg). " +
                  "Werte: Erde 5,97·10²⁴ kg, 6371 km; Mond 7,35·10²² kg, 1737 km; Mars 6,42·10²³ kg, 3390 km; Jupiter 1,90·10²⁷ kg, 69 911 km (mittlere Radien). Beim schnell rotierenden, abgeplatteten Jupiter ergibt das g<sub>0</sub> = 25,9 N/kg; oft liest man 24,8 N/kg (Äquatorradius, mit Drehung). ";
   const SIMPL = {
+    kep: "Zentralkörper ist die Sonne (1,99·10³⁰ kg). Die Masse des Planeten und Störungen durch andere Planeten sind vernachlässigt. Alle Bahnen liegen in einer Ebene, das Perihel liegt jeweils rechts (in Wirklichkeit sind die Bahnen verschieden ausgerichtet). " +
+         "Planetenwerte gerundet. Sonne und Planeten sind nicht maßstäblich gezeichnet. Der Ort wird zu jeder Zeit aus der Keplergleichung berechnet. 1 AE = 149,6 Mio. km.",
     tm: "Hier werden keine Kräfte berechnet, die Bewegungen sind vorgegeben: Erde und Mond laufen gleichförmig auf Kreisbahnen in einer Ebene, alle gegen den Uhrzeigersinn (Blick auf den Nordpol). " +
         "Werte: siderischer Monat 27,32 d, Jahr 365,26 d, Sterntag 23 h 56 min 4 s. In Wirklichkeit sind die Bahnen leicht elliptisch, deshalb schwankt der synodische Monat zwischen etwa 29,3 und 29,8 d (Mittel 29,53 d) und der Sonnentag um bis zu ±30 s (Mittel 24 h). " +
         "Weitere Monate: Der drakonitische Monat (27,21 d, Knoten bis Knoten) braucht die um 5° geneigte Mondbahn, der anomalistische Monat (27,55 d, Erdnähe bis Erdnähe) die sich drehende Ellipse; beides zeigt diese Draufsicht nicht. Der Abstand Erde–Mond ist stark vergrößert, die Richtungen stimmen.",
@@ -1254,6 +1405,7 @@
     S.val[k] = v; syncInputs();
     if (k === "hs") { S.satName = ""; satReset(); }
     if (k === "yj") tmRestart();
+    if (k === "ka" || k === "ke") S.kep.name = "";
     if (k === "h0" || k === "v0" || k === "al") { if (S.shot && S.shot.state === "fly") { /* laufender Schuss bleibt */ } }
     draw(); showOut();
   }
@@ -1340,6 +1492,7 @@
       if (res) o.state = res;
       busy = o.state === "fly";
     }
+    if (S.scene === "kep" && S.kep.run) { S.kep.t += dt * KSPD[S.kep.spd].v; busy = true; }
     if (S.scene === "tm" && S.tm.run) { tmStep(dt * TMSPD[S.tm.spd[S.tm.mode]].v); busy = S.tm.run; }
     if (busy || (S.scene === "sat" && S.satRun && S.sat && S.sat.state === "fly")) { draw(); if (ts - outT > 150) { showOut(); outT = ts; } raf = requestAnimationFrame(loop); }
     else { draw(); showOut(); }
@@ -1354,7 +1507,8 @@
     else if (S.scene === "energie") drawEnergie(W, H, d3, fz);
     else if (S.scene === "flucht") drawFlucht(W, H, d3, fz);
     else if (S.scene === "sat") drawSat(W, H, d3, fz);
-    else drawTM(W, H, d3, fz);
+    else if (S.scene === "tm") drawTM(W, H, d3, fz);
+    else drawKep(W, H, d3, fz);
   }
 
   // ---------- Finger: Probekörper ziehen (Feld), Zielhöhe ziehen (Energie) ----------
@@ -1383,19 +1537,29 @@
   cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
 
   /* Direktlink: Gravitationsfeld.html#energie öffnet diesen Reiter; beim Umschalten zeigt die Adresse den Reiter */
-  const LINKS = { feld:"feld", energie:"energie", flucht:"fluchtgeschwindigkeit", sat:"satelliten", tm:"tag-und-monat" };
-  function linkGet() { let h = ""; try { h = decodeURIComponent(location.hash.slice(1)).toLowerCase(); } catch (e) {} return Object.keys(LINKS).find(k => LINKS[k] === h); }
-  function linkSet(k) { try { if (location.hash !== "#" + LINKS[k]) history.replaceState(null, "", "#" + LINKS[k]); } catch (e) {} }
-  window.addEventListener("hashchange", () => { const k = linkGet(); if (k && k !== S.scene) setScene(k); });
+  const LINKS = { feld:"feld", energie:"energie", flucht:"fluchtgeschwindigkeit", sat:"satelliten", tm:"tag-und-monat", kep:"kepler" };
+  /* Lehreransicht mit Formeln: #lehrer oder #<reiter>-lehrer (z. B. #energie-lehrer); bleibt beim Umschalten der Reiter erhalten */
+  function linkParse() {
+    let h = ""; try { h = decodeURIComponent(location.hash.slice(1)).toLowerCase(); } catch (e) {}
+    let t = false; if (h === "lehrer") return { k:null, t:true };
+    if (h.endsWith("-lehrer")) { t = true; h = h.slice(0, -7); }
+    return { k:Object.keys(LINKS).find(k => LINKS[k] === h), t };
+  }
+  function linkSet(k) { const want = "#" + LINKS[k] + (S.teach ? "-lehrer" : ""); try { if (location.hash !== want) history.replaceState(null, "", want); } catch (e) {} }
+  window.addEventListener("hashchange", () => { const L = linkParse(); if (L.t !== S.teach || (L.k && L.k !== S.scene)) { S.teach = L.t; setScene(L.k || S.scene); } });
   function setScene(s) {
     S.scene = s; linkSet(s);
     document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === s));
     document.querySelectorAll("[data-sc]").forEach(e => e.classList.toggle("hidden", !e.dataset.sc.split(" ").includes(s)));
     $("presets").classList.toggle("hidden", s !== "sat" || S.body !== "erde");
-    $("expl").innerHTML = EXPL[s]; $("formel").innerHTML = FORM[s]; $("simpl").innerHTML = SIMPL[s] + (s === "tm" ? "" : " " + SIMPL0);
+    $("expl").innerHTML = (!S.teach && EXPL_S[s]) || EXPL[s]; $("formel").innerHTML = FORM[s];
+    $("simpl").innerHTML = ((!S.teach && SIMPL_S[s]) || SIMPL[s]) + (s === "tm" || s === "kep" ? "" : " " + SIMPL0);
+    kShowNotes();
+    $("formelBox").classList.toggle("hidden", !S.teach); $("lehrerHinweis").classList.toggle("hidden", !S.teach);
+    $("mghTxt").textContent = S.teach ? "Näherung m·g·h (homogenes Feld) zeigen" : "Näherung homogenes Feld zeigen";
     if (s === "sat" && !S.sat) satReset();
     fillSelects(); syncInputs(); showNotes(); draw(); showOut();
-    if (s === "sat" || (s === "tm" && S.tm.run) || (s === "flucht" && S.shot && S.shot.state === "fly")) startLoop();
+    if (s === "sat" || (s === "kep" && S.kep.run) || (s === "tm" && S.tm.run) || (s === "flucht" && S.shot && S.shot.state === "fly")) startLoop();
   }
   function setFs(v) {
     S.fs = Math.max(0.8, Math.min(1.6, Math.round(v * 10) / 10));
@@ -1421,7 +1585,9 @@
   document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => setScene(b.dataset.tab));
   $("reset").onclick = () => {
     const s = S.scene;
-    const keys = { feld:["s"], energie:["m", "h1", "h2"], flucht:["v0", "al", "h0"], sat:["hs", "dv"], tm:["yj"] }[s];
+    const keys = { feld:["s"], energie:["m", "h1", "h2"], flucht:["v0", "al", "h0"], sat:["hs", "dv"], tm:["yj"], kep:["ka", "ke"] }[s];
+    if (s === "kep") { S.kep = { t:0, run:true, view:1, spd:2, name:"" }; $("kView").value = 1; $("kSpeed").value = 2; $("kPlay").textContent = "Pause";
+      $("cbFoci").checked = false; $("cbArea").checked = false; $("cbKv").checked = true; }
     if (s === "tm") { S.tm.spd = { monat:5, tag:1 }; $("cbStop").checked = true; $("tmMon").click(); }
     keys.forEach(k => S.val[k] = PARS[k].def);
     if (s === "feld") { S.probe = { r:B().R * 2.5, a:-0.75 }; S.stage.feld = 1; S.gsel = 1; $("gSel").value = 1;
@@ -1429,7 +1595,36 @@
     if (s === "energie") { S.est = 1; S.ax = 1; $("axSel").value = 1; $("zInf").click(); $("cbMgh").checked = true; }
     if (s === "flucht") { S.stage.flucht = 0; S.speed.flucht = 1; S.shot = null; S.traces = []; $("cbBars").checked = true; }
     if (s === "sat") { S.stage.sat = 0; S.speed.sat = 2; S.satName = ""; satReset(); S.satRun = true; $("satPlay").textContent = "Pause"; }
-    fillSelects(); syncInputs(); draw(); showOut(); if (s === "sat") startLoop();
+    fillSelects(); syncInputs(); draw(); showOut(); if (s === "sat" || s === "kep") startLoop();
+  };
+
+  // Kepler: Bedienung
+  $("kView").innerHTML = KST.map((v, i) => "<option value='" + i + "'>±" + String(v).replace(".", ",") + " AE um die Sonne</option>").join(""); $("kView").value = S.kep.view;
+  $("kSpeed").innerHTML = KSPD.map((o, i) => "<option value='" + i + "'>" + o.t + "</option>").join(""); $("kSpeed").value = S.kep.spd;
+  $("kView").onchange = () => { S.kep.view = +$("kView").value; draw(); };
+  $("kSpeed").onchange = () => { S.kep.spd = +$("kSpeed").value; };
+  $("kPlay").onclick = () => { S.kep.run = !S.kep.run; $("kPlay").textContent = S.kep.run ? "Pause" : "Weiter"; startLoop(); };
+  ["cbFoci", "cbArea", "cbKv"].forEach(id => $(id).addEventListener("change", () => { draw(); showOut(); }));
+  document.querySelectorAll("#kpresets button").forEach(bt => bt.onclick = () => {
+    const q = KPRE[bt.dataset.kp]; S.val.ka = q.a; S.val.ke = q.e; S.kep.t = 0; S.kep.name = q.n; syncInputs();
+    const need = q.a * (1 + q.e) * 1.08; let i = KST.findIndex(v => v >= need); if (i < 0) i = KST.length - 1; S.kep.view = i; $("kView").value = i;
+    S.kep.spd = q.a > 3 ? 5 : q.a > 1.2 ? 3 : 2; $("kSpeed").value = S.kep.spd; draw(); showOut();
+  });
+  $("kNote").onclick = () => {
+    const a = S.val.ka, e = S.val.ke, T = kT(a);
+    KNOTES.push({ a, e, T, t0:0, row:[S.kep.name || "Bahn", num(a, 3).replace(/,?0+$/, ""), de(e, 3), num(T, 4)] });
+    KNOTES[KNOTES.length - 1].t0 = 0; kShowNotes(); draw();
+  };
+  $("kUndo").onclick = () => { KNOTES.pop(); kShowNotes(); draw(); };
+  $("kClear").onclick = () => { if (confirm("Alle notierten Bahnen löschen?")) { KNOTES.length = 0; kShowNotes(); draw(); } };
+  $("kCsv").onclick = () => {
+    if (!KNOTES.length) return;
+    const head = ["Nr", "Bahn", "a in AE", "e", "T in Jahren"].concat(S.teach ? ["T^2/a^3"] : []);
+    const rowsC = [head].concat(KNOTES.map((q, i) => [i + 1].concat(q.row).concat(S.teach ? [num(q.T * q.T / Math.pow(q.a, 3), 4)] : [])));
+    const qt = v => '"' + String(v).replace(/"/g, '""') + '"';
+    const t = "\ufeff" + rowsC.map(r => r.map(v => typeof v === "number" || /^-?\d+(,\d+)?$/.test(v) ? v : qt(v)).join(";")).join("\r\n");
+    const el = document.createElement("a"); el.href = URL.createObjectURL(new Blob([t], { type:"text/csv;charset=utf-8" }));
+    el.download = "Keplerbahnen_Gravitationsfeld.csv"; document.body.appendChild(el); el.click(); setTimeout(() => { URL.revokeObjectURL(el.href); el.remove(); }, 1000);
   };
 
   // Tag und Monat: Bedienung
@@ -1447,7 +1642,7 @@
   if (window.ResizeObserver) new ResizeObserver(resize).observe(cv);
   S.view = store.get("gfeld_view") === "sym" ? "sym" : "3d"; $("view").textContent = S.view === "3d" ? "Symbol" : "3D";
   S.probe.r = B().R * 2.5;
-  setScene(linkGet() || "feld");
+  { const L = linkParse(); S.teach = L.t; setScene(L.k || "feld"); }
   setFs(+store.get("gfeld_fs") || 1);
 })();
 </script>
