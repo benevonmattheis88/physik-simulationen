@@ -26,6 +26,7 @@ mechanik/
     Kreisbewegung.html
     Kurvenlabor.html
     Stosslabor.html
+    Wurflabor.html             Würfe senkrecht, waagerecht, schräg, mit und ohne Luft, früher gedacht (Aristoteles, Impetus), Zielwurf
 elektrizitaet/
   mittelstufe/
     Stromkreis_Labor.html
@@ -202,6 +203,16 @@ Mit Elektronen als Ladungsträgern: `?ladung=elektronen` vor das `#` setzen, z. 
 | F: Gegenstoß | https://simulationen.familiemueller.space/mechanik/oberstufe/Stosslabor.html#fall-f |
 | G: plastischer Gegenstoß | https://simulationen.familiemueller.space/mechanik/oberstufe/Stosslabor.html#fall-g |
 | H: teilelastisch m/2m (früher „Hausaufgabe“) | https://simulationen.familiemueller.space/mechanik/oberstufe/Stosslabor.html#hausaufgabe |
+
+### Wurflabor
+
+| Reiter | Direktlink |
+|---|---|
+| Senkrecht | https://simulationen.familiemueller.space/mechanik/oberstufe/Wurflabor.html#senkrecht |
+| Waagerecht | https://simulationen.familiemueller.space/mechanik/oberstufe/Wurflabor.html#waagerecht |
+| Schräg | https://simulationen.familiemueller.space/mechanik/oberstufe/Wurflabor.html#schraeg |
+| Früher gedacht | https://simulationen.familiemueller.space/mechanik/oberstufe/Wurflabor.html#frueher-gedacht |
+| Zielwurf | https://simulationen.familiemueller.space/mechanik/oberstufe/Wurflabor.html#zielwurf |
 
 ### Prisma-Labor
 
