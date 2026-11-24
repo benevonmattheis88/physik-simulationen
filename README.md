@@ -115,6 +115,8 @@ Hängt man an den Link einer Simulation `#` und den Namen eines Reiters an, öff
 
 Mit Elektronen als Ladungsträgern: `?ladung=elektronen` vor das `#` setzen, z. B. https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Stromkreis_Labor.html?ladung=elektronen#aufgabe-1
 
+Mit Wechselspannung starten: `?spannung=wechsel` vor das `#` setzen, z. B. https://simulationen.familiemueller.space/elektrizitaet/mittelstufe/Stromkreis_Labor.html?spannung=wechsel#lampe (beides zusammen: `?ladung=elektronen&spannung=wechsel`)
+
 ### Ersatzwiderstand herleiten
 
 | Reiter | Direktlink |
